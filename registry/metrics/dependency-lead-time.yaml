@@ -1,0 +1,40 @@
+id: dependency-lead-time
+order: 232
+tab: program
+name: Dependency Lead Time
+short: Dependency lead time P50
+domain: Program
+column: lagging
+levels:
+- lagging
+source: tracker (links)
+unit: d
+decimals: 1
+direction: lower-better
+window: rolling 12 weeks
+windowDays: 84
+question: How long does another team take to deliver what we depend on?
+definition: Time from creating a dependency link (at PI planning) to the provider delivering it, median over links
+  resolved in the last 12 weeks.
+formula: |-
+  links = dependency links resolved in the window
+  value = P50(resolvedAt − createdAt, days); also P85
+events:
+- dependency.created
+- dependency.resolved
+target:
+  op: <=
+  value: 15
+  warn: 25
+  note: Program goal — delivered within three weeks of PI planning (median).
+benchmark:
+  kind: team-goal
+  label: Team goal, not a benchmark
+  summary: No industry benchmark; the threshold is ours.
+  sources: []
+minSample: 10
+xmr: false
+related:
+- overdue-dependencies
+- critical-path-drift
+format: number

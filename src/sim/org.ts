@@ -40,3 +40,33 @@ export const VOCAB: Record<string, { features: string[]; objects: string[] }> = 
 export const STORY_VERBS = ['Add', 'Improve', 'Redesign', 'Refactor', 'Speed up', 'Validate', 'Localise', 'Instrument', 'A/B test', 'Harden']
 export const BUG_SYMPTOMS = ['fails on Safari', 'shows wrong rounding', 'times out under load', 'drops query params', 'double-submits', 'breaks on long names', 'returns 500 intermittently', 'ignores locale']
 export const DEBT_TASKS = ['Remove dead code in', 'Upgrade dependencies of', 'Add tests for', 'Split module:', 'Migrate config of', 'Clean up logging in']
+
+export const POSTMORTEM_ACTIONS = [
+  'add alert on error budget burn',
+  'add canary step to the deploy pipeline',
+  'write runbook for the failure mode',
+  'add contract test for the dependency',
+  'raise test coverage of the failing path',
+  'add feature flag kill switch',
+  'tune autoscaling limits',
+]
+
+export const RISK_TITLES = [
+  'PSP contract renewal may slip',
+  'Key engineer leaving',
+  'Peak season traffic above capacity',
+  'Regulatory change to payment authentication',
+  'Vendor API deprecation',
+  'Data migration may exceed maintenance window',
+  'Security audit findings',
+  'Cross-team dependency on Platform at risk',
+]
+
+/** Requests per hour at peak for each team's service (SLI simulation). */
+export const SERVICE_TRAFFIC: Record<string, number> = {
+  checkout: 18_000,
+  payments: 12_000,
+  catalog: 40_000,
+  onboarding: 2_000,
+  platform: 60_000,
+}

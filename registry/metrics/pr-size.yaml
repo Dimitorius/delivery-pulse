@@ -1,0 +1,37 @@
+id: pr-size
+order: 144
+tab: delivery
+name: PR Size
+short: PR size P50
+domain: Delivery · PR/CI
+column: leading
+levels:
+- leading
+source: vcs
+unit: lines
+decimals: 0
+direction: lower-better
+window: rolling 28 days
+question: How big are our changes?
+definition: Median changed lines per merged merge request. Small batches are reviewed faster and fail less.
+formula: |-
+  value = P50(changed lines of MRs merged in the window); also P85
+events:
+- mr.opened
+- mr.merged
+target:
+  op: <=
+  value: 200
+  warn: 400
+  note: Team goal — median under 200 changed lines.
+benchmark:
+  kind: team-goal
+  label: Team goal, not a benchmark
+  summary: No independent research benchmark for a line count; the threshold is ours.
+  sources: []
+minSample: 10
+xmr: false
+related:
+- time-to-merge
+- pr-pickup-time
+format: number

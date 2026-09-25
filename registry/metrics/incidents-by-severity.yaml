@@ -1,0 +1,38 @@
+id: incidents-by-severity
+order: 314
+tab: quality
+name: Incidents by Severity
+short: SEV1–2 incidents
+domain: Quality & Reliability
+column: lagging
+levels:
+- lagging
+source: monitoring / incident tool
+unit: items
+decimals: 0
+direction: lower-better
+window: rolling 28 days
+question: How many serious incidents did we have?
+definition: Incidents detected in the window with severity 1 or 2; all four severities are shown alongside.
+formula: |-
+  incidents = incidents detected in the window
+  value     = count(SEV1) + count(SEV2); also count per severity
+events:
+- incident.opened
+target:
+  op: <=
+  value: 1
+  warn: 2
+  per: team
+  note: Team goal — at most one SEV1–2 incident per team per 28 days.
+benchmark:
+  kind: team-goal
+  label: Team goal, not a benchmark
+  summary: No research-based benchmark; the threshold is ours.
+  sources: []
+xmr: false
+tileSecondary: 4
+related:
+- incident-mttr
+- change-failure-rate
+format: number

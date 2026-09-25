@@ -1,0 +1,49 @@
+id: pi-predictability
+order: 510
+tab: scale
+name: PI Predictability
+short: PI predictability
+domain: SAFe
+column: lagging
+levels:
+- lagging
+source: PI objectives (Business Owners)
+unit: '%'
+decimals: 0
+direction: higher-better
+window: last scored PI
+question: Did the ART deliver the business value it committed to?
+definition: Actual business value of all PI objectives (committed and uncommitted) divided by the planned business
+  value of the committed objectives, as scored by Business Owners at Inspect & Adapt.
+formula: |-
+  objectives = PI objectives of the last PI scored ≤ asOf
+  value      = 100 · Σ actual BV (all) / Σ planned BV (committed)
+events:
+- objective.planned
+- objective.scored
+target:
+  op: '>='
+  value: 80
+  warn: 70
+  note: Program goal from the elite profile (80–95 %).
+benchmark:
+  kind: research
+  label: SAFe guidance
+  summary: SAFe describes 80–100 % as a predictable ART.
+  flag: ⚠ Single publisher (Scaled Agile) — framework guidance, not research.
+  sources:
+  - safe-measure-and-grow
+  - safe-pi-objectives
+xmr: false
+related:
+- pi-forecast
+- milestone-hit-rate
+aka:
+  safe:
+    name: Flow Predictability
+    eq: ≡
+    note: SAFe’s name for planned vs actual business value.
+    sources:
+    - safe-measure-and-grow
+    - agility-at-scale-flow
+format: number

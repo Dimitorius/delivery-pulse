@@ -1,0 +1,38 @@
+id: critical-path-drift
+order: 236
+tab: program
+name: Critical Path Drift
+short: Critical path drift
+domain: Program
+column: leading
+levels:
+- leading
+source: tracker (links)
+unit: wd
+decimals: 1
+direction: lower-better
+window: current PI
+question: How far has the most-delayed dependency on the critical path slipped?
+definition: 'The largest slip, in working days, of a current-PI dependency link past its need-by date: delivered
+  late, or still open after the need-by date. The chain of cross-team dependencies is the program’s critical path.'
+formula: |-
+  slip(link) = max(0, working days from needBy to (resolvedAt or asOf))
+  value      = max over current-PI links of slip
+events:
+- dependency.created
+- dependency.resolved
+target:
+  op: <=
+  value: 1
+  warn: 3
+  note: Program goal — no link more than one working day late.
+benchmark:
+  kind: team-goal
+  label: Team goal, not a benchmark
+  summary: No industry benchmark; the threshold is ours.
+  sources: []
+xmr: false
+related:
+- overdue-dependencies
+- dependency-lead-time
+format: number

@@ -43,7 +43,7 @@ export class Fixture {
   }
 
   /** Item that starts at `start` and (optionally) reaches Done at `end`. */
-  flow(id: string, teamId: string, start: number, end?: number, opts: Partial<NewWorkItem> = {}): this {
+  flow(id: string, teamId: string, start: number, end?: number, opts: Partial<NewWorkItem> & { createdAt?: number } = {}): this {
     this.item(id, teamId, opts).status(id, 'In Progress', start)
     return end === undefined ? this : this.status(id, 'Done', end)
   }

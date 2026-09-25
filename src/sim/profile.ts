@@ -46,6 +46,12 @@ export const ELITE_PROFILE = {
   recoverySigma: 0.8,
   randomIncidentPerHour: 0.003, // program-wide, not deployment-related
   escapeProb: 0.025, // done item later produces a production bug
+  hotfixShare: 0.35, // failed deployments fixed forward by a hotfix instead of a rollback
+  reopenProb: 0.025, // finished item reopened later
+  aiCulpritWeight: 1.2, // simulation assumption: AI-assisted changes 1.2× as likely to be the cause
+  sliBaseErrorRate: 0.0002, // background failed-request share
+  sliSevErrorRate: { 1: 0.3, 2: 0.08, 3: 0.02, 4: 0.005 } as Record<1 | 2 | 3 | 4, number>,
+  costPerPersonWeek: 2.4, // k€, fully loaded (synthetic finance)
 
   // Planning
   initialVelocityPerDev: 7, // points per dev per sprint before history exists

@@ -1,0 +1,37 @@
+id: mc-how-many
+order: 410
+tab: forecast
+name: Monte Carlo How Many
+short: Items next 2 weeks (85 %)
+domain: Forecast
+column: leading
+levels:
+- leading
+source: tracker
+unit: items
+decimals: 0
+direction: neutral
+window: last 30 development days
+question: How many items can we promise for the next two weeks?
+definition: Monte Carlo (2,000 trials) of the items finished in the next 10 working days, drawing weekly program
+  throughput from the last 30 development days. The value is the amount reached in 85 % of trials ("at least N").
+formula: |-
+  weekly = items finished per development week (last 6 weeks)
+  trial  = two weekly draws → total
+  value  = P15(totals)  (85 % of trials reach at least this)
+events:
+- item.status
+target:
+  note: No target — read it together with its related metrics.
+benchmark:
+  kind: method
+  label: Method, not a benchmark
+  summary: Throughput-based Monte Carlo forecasting; assumes the near future resembles the sampled past.
+  sources:
+  - vacanti-wwibd
+  - vacanti-aamp
+xmr: false
+related:
+- throughput
+- forecast-accuracy
+format: number

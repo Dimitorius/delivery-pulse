@@ -1,4 +1,6 @@
 id: wip
+tab: flow
+pulse: true
 order: 110
 name: Work in Progress
 short: WIP
@@ -27,3 +29,15 @@ benchmark:
   summary: No industry benchmark by design; the relation to cycle time is Little's law.
   sources: [kanban-guide-2025, littles-law]
 xmr: true
+related: [throughput, cycle-time, net-flow]
+aka:
+  safe:
+    name: Flow Load
+    eq: "≡"
+    note: "Total work in process across all steps."
+    sources: [safe-measure-and-grow, agility-at-scale-flow]
+  flow:
+    name: Flow Load
+    eq: "≡"
+    note: "Flow items in progress (active or waiting)."
+    sources: [flow-framework, kersten-p2p]

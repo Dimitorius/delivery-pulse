@@ -1,4 +1,6 @@
 id: flow-efficiency
+tab: flow
+pulse: true
 order: 120
 name: Flow Efficiency
 short: Flow efficiency
@@ -45,3 +47,15 @@ benchmark:
   sources: []
 minSample: 10
 xmr: true
+related: [cycle-time, queue-size, blocked-items]
+aka:
+  safe:
+    name: Flow Efficiency
+    eq: "≡"
+    note: "Active time as a share of total elapsed time."
+    sources: [safe-measure-and-grow, agility-at-scale-flow]
+  flow:
+    name: Flow Efficiency
+    eq: "≡"
+    note: "Active time as a share of flow time."
+    sources: [flow-framework, kersten-p2p]

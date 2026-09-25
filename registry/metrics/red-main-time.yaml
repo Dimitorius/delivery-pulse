@@ -1,0 +1,37 @@
+id: red-main-time
+order: 156
+tab: delivery
+name: Red-main Time
+short: Main red time
+domain: Delivery · PR/CI
+column: current
+levels:
+- current
+source: ci
+unit: '%'
+decimals: 1
+direction: lower-better
+window: rolling 28 days
+question: For how much of the time is main broken?
+definition: 'Share of team-time in the window during which main was red: from a failed run until the next successful
+  run on that team’s main.'
+formula: |-
+  red(team) = Σ intervals from a failed run to the next green run
+  value     = 100 · Σ red(team) / (window length · teams)
+events:
+- pipeline.finished
+target:
+  op: <=
+  value: 3
+  warn: 5
+  note: Team goal — main red less than 3 % of the time.
+benchmark:
+  kind: team-goal
+  label: Team goal, not a benchmark
+  summary: No independent research benchmark; the threshold is ours.
+  sources: []
+xmr: false
+related:
+- main-build-success
+- flaky-rate
+format: number

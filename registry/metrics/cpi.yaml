@@ -1,0 +1,41 @@
+id: cpi
+order: 740
+tab: finance
+name: Cost Performance Index
+short: CPI
+domain: Finance
+column: synthetic
+levels:
+- lagging
+source: finance (synthetic) + tracker
+unit: ×
+decimals: 2
+direction: higher-better
+window: rolling 28 days
+synthetic: true
+question: Are we getting the planned value for the money spent?
+definition: Earned value divided by actual cost (earned value management). Earned value = story points finished
+  × budgeted cost per point (0.56 k€, synthetic plan); actual cost = synthetic people and tooling cost entries.
+  1.0 = on budget.
+formula: |-
+  EV    = Σ points Done in the window × 0.56 k€
+  AC    = Σ cost entries in the window (k€)
+  value = EV / AC
+events:
+- item.status
+- cost.entry
+target:
+  op: '>='
+  value: 0.95
+  warn: 0.85
+  note: Program goal — CPI ≥ 0.95.
+benchmark:
+  kind: method
+  label: Method, not a benchmark
+  summary: CPI = EV / AC as defined in earned value management; 1.0 means on budget.
+  sources:
+  - gao-cost-guide
+xmr: false
+related:
+- throughput
+format: number

@@ -1,4 +1,5 @@
 import { DAY_MS, HOUR_MS } from '../../sim/calendar'
+import type { WorkItem } from '../../domain/model'
 import { activeWaitMs, ageDays, cycleTimeDays, doneInWindow, inWindow, scopedFlowItems, wipAt } from '../flow'
 import { percentile, sum } from '../stats'
 import type { MetricCompute, MetricContext } from '../types'
@@ -89,9 +90,16 @@ function blockedAt(ctx: MetricContext) {
 export const blockedItems: MetricCompute = (ctx) => {
   const wipCount = wipAt(ctx).length
   const blocked = blockedAt(ctx)
+  // Blocked time: median duration of blocks that ended in the window.
+  const ended = scopedFlowItems(ctx).flatMap((i) => i.blocks.filter((b) => inWindow(ctx, b.end)))
+  const blockedDays = ended.map((b) => (b.end! - b.start) / DAY_MS)
   return {
     value: blocked.length,
-    secondary: [{ label: 'of WIP', value: wipCount ? (100 * blocked.length) / wipCount : null, unit: '%' }],
+    secondary: [
+      { label: 'of WIP', value: wipCount ? (100 * blocked.length) / wipCount : null, unit: '%' },
+      { label: 'median blocked time', value: percentile(blockedDays, 50), unit: 'd' },
+      { label: 'blocks ended', value: ended.length },
+    ],
     n: blocked.length,
     recordValue: 'blocked d',
     records: blocked.map(({ item, block }) => ({
@@ -171,5 +179,73 @@ export const unplannedShare: MetricCompute = (ctx) => {
     ],
     n: done.length,
     records: unplanned.map((i) => ({ id: i.id, teamId: i.teamId, label: i.title, to: i.doneAt, value: 1, detail: i.type })),
+  }
+}
+
+// ---- Stage 2 flow metrics ---------------------------------------------------
+
+export const leadTime: MetricCompute = (ctx) => {
+  const done = doneInWindow(ctx)
+  const days = done.map((i) => (i.doneAt! - i.createdAt) / DAY_MS)
+  return {
+    value: percentile(days, 85),
+    secondary: [{ label: 'P50', value: percentile(days, 50), unit: 'd' }],
+    n: done.length,
+    recordValue: 'days',
+    records: done.map((i, k) => ({ id: i.id, teamId: i.teamId, label: i.title, from: i.createdAt, to: i.doneAt, value: days[k], detail: i.type })),
+  }
+}
+
+export const QUEUE_STATUSES = ['Ready for Review', 'Ready for QA'] as const
+
+export const queueSize: MetricCompute = (ctx) => {
+  const statusAt = (i: WorkItem) => {
+    let s = i.transitions[0].to
+    for (const t of i.transitions) if (t.at <= ctx.asOf) s = t.to
+    return s
+  }
+  const waiting = wipAt(ctx).map((i) => ({ i, s: statusAt(i) })).filter((x) => (QUEUE_STATUSES as readonly string[]).includes(x.s))
+  return {
+    value: waiting.length,
+    secondary: QUEUE_STATUSES.map((q) => ({ label: q, value: waiting.filter((x) => x.s === q).length })),
+    n: waiting.length,
+    recordValue: 'waiting h',
+    records: waiting.map(({ i, s }) => {
+      const since = [...i.transitions].reverse().find((t) => t.at <= ctx.asOf && t.to === s)!.at
+      return { id: i.id, teamId: i.teamId, label: i.title, from: since, value: (ctx.asOf - since) / HOUR_MS, detail: s }
+    }),
+  }
+}
+
+/** Share of items finished within their team's SLE, the SLE fixed as of the window start. */
+export const sleAttainment: MetricCompute = (ctx) => {
+  const sleCtx = { ...ctx, asOf: ctx.asOf - ctx.windowDays * DAY_MS }
+  const sle = new Map(ctx.teamIds.map((t) => [t, teamSle(sleCtx, t)]))
+  const done = doneInWindow(ctx).filter((i) => sle.get(i.teamId) != null)
+  const within = done.filter((i) => cycleTimeDays(i) <= sle.get(i.teamId)!)
+  return {
+    value: done.length ? (100 * within.length) / done.length : null,
+    secondary: [
+      { label: 'within SLE', value: within.length },
+      { label: 'done', value: done.length },
+    ],
+    n: done.length,
+    recordValue: 'days',
+    records: done
+      .filter((i) => cycleTimeDays(i) > sle.get(i.teamId)!)
+      .map((i) => ({ id: i.id, teamId: i.teamId, label: i.title, from: i.firstActiveAt, to: i.doneAt, value: cycleTimeDays(i), detail: `SLE ${sle.get(i.teamId)!.toFixed(1)} d — missed` })),
+  }
+}
+
+export const FLOW_TYPES = ['feature', 'defect', 'debt', 'risk'] as const
+
+export const flowDistribution: MetricCompute = (ctx) => {
+  const done = doneInWindow(ctx)
+  const share = (t: string) => (done.length ? (100 * done.filter((i) => i.flowType === t).length) / done.length : null)
+  return {
+    value: share('feature'),
+    secondary: FLOW_TYPES.filter((t) => t !== 'feature').map((t) => ({ label: t, value: share(t), unit: '%' })),
+    n: done.length,
+    records: done.map((i) => ({ id: i.id, teamId: i.teamId, label: i.title, to: i.doneAt, value: 1, detail: i.flowType })),
   }
 }

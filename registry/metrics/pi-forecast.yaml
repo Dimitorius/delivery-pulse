@@ -1,4 +1,6 @@
 id: pi-forecast
+tab: forecast
+pulse: true
 order: 5
 name: PI Forecast (Monte Carlo When)
 short: On track for the PI?
@@ -38,3 +40,4 @@ benchmark:
     future resembles the sampled past. It counts items, not their size.
   sources: [vacanti-wwibd, vacanti-aamp]
 xmr: false
+related: [mc-how-many, forecast-accuracy, pi-predictability]

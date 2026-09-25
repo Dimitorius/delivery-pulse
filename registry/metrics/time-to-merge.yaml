@@ -1,0 +1,40 @@
+id: time-to-merge
+order: 142
+tab: delivery
+name: Time to Merge
+short: Time to merge P50
+domain: Delivery · PR/CI
+column: current
+levels:
+- current
+source: vcs
+unit: h
+decimals: 1
+direction: lower-better
+window: rolling 28 days
+question: How long does a merge request stay open?
+definition: Time from opening a merge request to merging it, median over merge requests merged in the window (calendar
+  hours).
+formula: |-
+  mrs   = merge requests merged in the window
+  value = P50(mergedAt − openedAt); also P85
+events:
+- mr.opened
+- mr.merged
+target:
+  op: <=
+  value: 24
+  warn: 48
+  note: Team goal from the elite profile (under one day).
+benchmark:
+  kind: team-goal
+  label: Team goal, not a benchmark
+  summary: No independent research benchmark. Vendor datasets exist; one is only ever shown labelled "vendor dataset".
+  sources: []
+minSample: 10
+xmr: true
+related:
+- pr-pickup-time
+- pr-size
+- lead-time-for-changes
+format: number

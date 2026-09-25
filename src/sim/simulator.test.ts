@@ -49,7 +49,7 @@ describe('Simulator', () => {
     for (const item of store.itemList) {
       const t = item.transitions
       for (let i = 1; i < t.length; i++) {
-        if (t[i].to === 'In Progress') expect(['Backlog', 'To Do', 'In Review', 'In QA', 'In Progress']).toContain(t[i].from)
+        if (t[i].to === 'In Progress') expect(['Backlog', 'To Do', 'In Review', 'In QA', 'In Progress', 'Done']).toContain(t[i].from) // Done → reopened
       }
     }
     for (const mr of store.mrList) {

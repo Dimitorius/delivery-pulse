@@ -1,4 +1,6 @@
 id: overdue-dependencies
+tab: program
+pulse: true
 order: 230
 name: Overdue Dependencies
 short: Overdue deps
@@ -30,3 +32,10 @@ benchmark:
   summary: No industry benchmark; the zero-overdue goal is ours. Dependencies are made visible at PI Planning on the program board.
   sources: [safe-pi-planning]
 xmr: false
+related: [dependency-lead-time, critical-path-drift, blocked-items]
+aka:
+  safe:
+    name: ART dependencies overdue
+    eq: "≡"
+    note: "Vocabulary only: program = Agile Release Train (ART), dependencies from the ART planning board."
+    sources: [safe-pi-planning]

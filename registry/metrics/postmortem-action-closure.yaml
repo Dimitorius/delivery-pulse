@@ -1,0 +1,39 @@
+id: postmortem-action-closure
+order: 324
+tab: quality
+name: Postmortem Action Closure
+short: Postmortem actions closed
+domain: Quality & Reliability
+column: leading
+levels:
+- leading
+source: tracker + incident tool
+unit: '%'
+decimals: 0
+direction: higher-better
+window: postmortems held 30–120 days ago
+question: Do we actually do what postmortems ask for?
+definition: 'Action items from postmortems of SEV1–2 incidents: share closed within 30 days of the postmortem. Only
+  postmortems at least 30 days old count, so every item had its full 30 days.'
+formula: |-
+  postmortems = held between asOf − 120 d and asOf − 30 d
+  value       = 100 · count(actions Done ≤ 30 d after the postmortem) / count(actions)
+events:
+- incident.postmortem
+- item.status
+target:
+  op: '>='
+  value: 80
+  warn: 60
+  note: Team goal — 80 % of actions closed within 30 days.
+benchmark:
+  kind: method
+  label: Method, not a benchmark
+  summary: Blameless postmortems with owned, tracked action items are Google SRE practice; the 30-day goal is ours.
+  sources:
+  - sre-book-postmortem
+minSample: 10
+xmr: false
+related:
+- incidents-by-severity
+format: number

@@ -1,0 +1,38 @@
+id: flaky-rate
+order: 154
+tab: delivery
+name: Flaky Rate
+short: Flaky runs
+domain: Delivery · PR/CI
+column: current
+levels:
+- current
+- leading
+source: ci
+unit: '%'
+decimals: 1
+direction: lower-better
+window: rolling 28 days
+question: How often does main fail for no real reason?
+definition: Share of main pipeline runs that failed and then passed on a re-run without code changes.
+formula: |-
+  flaky = failed runs followed by a successful re-run of the same commit
+  value = 100 · count(flaky) / count(runs)
+events:
+- pipeline.finished
+target:
+  op: <=
+  value: 2
+  warn: 3
+  note: Team goal from the elite profile (< 2 %).
+benchmark:
+  kind: team-goal
+  label: Team goal, not a benchmark
+  summary: No independent research benchmark. Vendor datasets exist; one is only ever shown labelled "vendor dataset".
+  sources: []
+minSample: 10
+xmr: false
+related:
+- main-build-success
+- red-main-time
+format: number

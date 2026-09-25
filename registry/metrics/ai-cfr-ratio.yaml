@@ -1,0 +1,41 @@
+id: ai-cfr-ratio
+order: 620
+tab: ai
+name: 'CFR: AI vs non-AI'
+short: CFR ratio AI / non-AI
+domain: AI Impact
+column: lagging
+levels:
+- lagging
+source: vcs + incidents
+unit: ×
+decimals: 2
+direction: lower-better
+window: rolling 12 weeks
+windowDays: 84
+question: Do AI-assisted changes fail in production more often than others?
+definition: Change failure rate of AI-assisted changes divided by that of other changes, over changes deployed in
+  the last 12 weeks. A change failed when a postmortem named it as the cause of an incident. 1.0 = no difference.
+formula: |-
+  rate(group) = count(changes named as incident cause) / count(deployed changes)
+  value       = rate(AI-assisted) / rate(other)
+events:
+- mr.opened
+- deployment
+- incident.opened
+target:
+  note: No target — a comparison. In the simulation, AI-assisted changes are assumed 1.2× as likely to be the cause
+    (a modelling assumption, not a finding).
+benchmark:
+  kind: by-design
+  label: No benchmark by design
+  summary: No benchmark by design; DORA reports AI adoption alongside delivery stability.
+  sources:
+  - dora-2024
+  - dora-2025
+minSample: 10
+xmr: false
+related:
+- ai-share
+- change-failure-rate
+format: number

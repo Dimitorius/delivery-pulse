@@ -1,0 +1,36 @@
+id: pipeline-duration
+order: 152
+tab: delivery
+name: Pipeline Duration
+short: Pipeline P95
+domain: Delivery · PR/CI
+column: current
+levels:
+- current
+source: ci
+unit: min
+decimals: 1
+direction: lower-better
+window: rolling 28 days
+question: How long does the main pipeline take in the slow case?
+definition: 95th percentile duration of pipeline runs on main finished in the window.
+formula: |-
+  value = P95(finishedAt − startedAt of main runs, minutes); also P50
+events:
+- pipeline.finished
+target:
+  op: <=
+  value: 12
+  warn: 15
+  note: Team goal from the elite profile (P95 < 12 min).
+benchmark:
+  kind: team-goal
+  label: Team goal, not a benchmark
+  summary: No independent research benchmark. Vendor datasets exist; one is only ever shown labelled "vendor dataset".
+  sources: []
+minSample: 10
+xmr: true
+related:
+- main-build-success
+- flaky-rate
+format: number

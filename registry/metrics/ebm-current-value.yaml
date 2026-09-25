@@ -1,0 +1,35 @@
+id: ebm-current-value
+order: 730
+tab: value
+name: EBM Current Value (CSAT)
+short: Customer satisfaction
+domain: Value
+column: synthetic
+levels:
+- lagging
+source: customer survey (synthetic)
+unit: /5
+decimals: 2
+direction: higher-better
+window: latest monthly survey
+synthetic: true
+question: How satisfied are customers with the product today?
+definition: Evidence-Based Management Current Value, measured by customer satisfaction (CSAT, 1–5) from a monthly
+  survey. Synthetic survey data.
+formula: |-
+  value = latest CSAT value; previous shown alongside
+events:
+- value.snapshot
+target:
+  op: '>='
+  value: 4.2
+  warn: 4.0
+  note: Program goal — CSAT ≥ 4.2.
+benchmark:
+  kind: method
+  label: Method, not a benchmark
+  summary: Current Value is one of the four Key Value Areas of Evidence-Based Management.
+  sources:
+  - ebm-guide
+xmr: false
+format: number

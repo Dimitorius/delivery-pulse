@@ -4,14 +4,14 @@
 
 import type { Store } from '../domain/store'
 import { statusFor, targetLabel, type Status } from '../metrics/evaluate'
-import { METRICS, type MetricDef } from '../metrics/registry'
+import { METRICS, windowOf, type MetricDef } from '../metrics/registry'
 import type { MetricResult } from '../metrics/types'
 import { xmrCheck } from '../metrics/xmr'
 import { SIM_EPOCH, WEEK_MS } from '../sim/calendar'
 import { fmtValue } from './format'
 import type { Stabilizer } from './hysteresis'
 
-export const WINDOW_DAYS = 28
+export { DEFAULT_WINDOW_DAYS as WINDOW_DAYS } from '../metrics/registry'
 export const TREND_WEEKS = 12
 export const XMR_WEEKS = 20
 
@@ -89,8 +89,8 @@ export function weeklySeries(def: MetricDef, store: Store, asOf: number, teamIds
 }
 
 export function computeTile(def: MetricDef, store: Store, asOf: number, teamIds: string[]): TileData {
-  const result = def.compute({ store, asOf, teamIds, windowDays: WINDOW_DAYS })
-  const trend = [...weeklySeries(def, store, asOf, teamIds, TREND_WEEKS, WINDOW_DAYS).map((p) => p.v), result.value]
+  const result = def.compute({ store, asOf, teamIds, windowDays: windowOf(def) })
+  const trend = [...weeklySeries(def, store, asOf, teamIds, TREND_WEEKS, windowOf(def)).map((p) => p.v), result.value]
   return { def, result, status: statusFor(def, result, teamIds.length), trend }
 }
 
@@ -170,7 +170,7 @@ export function targetSignals(tiles: TileData[], teams: number): Signal[] {
 
 export function computePulse(store: Store, asOf: number, scope: string): PulseData {
   const teamIds = scopeTeams(store, scope)
-  const all = METRICS.map((def) => computeTile(def, store, asOf, teamIds))
+  const all = METRICS.filter((m) => m.pulse).map((def) => computeTile(def, store, asOf, teamIds))
   const forecast = all.find((t) => t.def.column === 'forecast')
   const tiles = all.filter((t) => t.def.column !== 'forecast')
   const xmr = computeXmrSignals(store, asOf, teamIds, tiles)

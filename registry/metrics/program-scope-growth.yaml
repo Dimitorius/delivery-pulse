@@ -1,0 +1,39 @@
+id: program-scope-growth
+order: 238
+tab: program
+name: Program Scope Growth
+short: PI scope growth
+domain: Program
+column: leading
+levels:
+- leading
+source: tracker
+unit: '%'
+decimals: 0
+direction: lower-better
+window: current PI
+question: How much committed scope has been added since PI planning?
+definition: Committed stories of the current PI created after PI planning, as a share of the committed stories at
+  planning.
+formula: |-
+  planned = committed PI stories created at PI planning
+  added   = committed PI stories created later
+  value   = 100 · count(added) / count(planned)
+events:
+- iteration.planned
+- item.created
+target:
+  op: <=
+  value: 10
+  warn: 20
+  note: Program goal — at most 10 % growth per PI.
+benchmark:
+  kind: team-goal
+  label: Team goal, not a benchmark
+  summary: No research-based benchmark; the threshold is ours.
+  sources: []
+xmr: false
+related:
+- pi-forecast
+- sprint-scope-change
+format: number

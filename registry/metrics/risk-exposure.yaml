@@ -1,0 +1,39 @@
+id: risk-exposure
+order: 240
+tab: program
+name: Risk Exposure (EMV)
+short: Risk exposure
+domain: Program
+column: leading
+levels:
+- leading
+source: risk register
+unit: pd
+decimals: 0
+direction: lower-better
+window: at this moment
+question: How much could open risks cost us, weighted by likelihood?
+definition: 'Expected monetary value of open risks: Σ probability × impact, in person-days, using each risk’s latest
+  review.'
+formula: |-
+  open  = risks raised ≤ asOf and not closed at asOf
+  value = Σ probability × impact (person-days)
+events:
+- risk.raised
+- risk.updated
+- risk.closed
+target:
+  op: <=
+  value: 8
+  warn: 15
+  per: team
+  note: Program goal — at most 8 person-days of exposure per team.
+benchmark:
+  kind: method
+  label: Method, not a benchmark
+  summary: Expected monetary value is a standard risk analysis technique; the threshold is ours.
+  sources: []
+xmr: false
+related:
+- pi-forecast
+format: number

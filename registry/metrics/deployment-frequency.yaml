@@ -1,4 +1,6 @@
 id: deployment-frequency
+tab: delivery
+pulse: true
 order: 40
 name: Deployment Frequency
 short: Deploys / service / day
@@ -32,3 +34,4 @@ benchmark:
     In DORA 2025 the elite/high/medium/low clusters were replaced by seven team archetypes; the 2024 clusters are shown as the last published tiers. One primary research program (DORA survey) — accepted by Dmitry (review 25.09.2026).
   sources: [dora-2024, dora-metrics-guide, redmonk-dora-2024, dora-2025, redmonk-dora-2025, agility-at-scale-dora-2025]
 xmr: true
+related: [lead-time-for-changes, change-failure-rate]

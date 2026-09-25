@@ -1,4 +1,6 @@
 id: pr-pickup-time
+tab: delivery
+pulse: true
 order: 140
 name: PR Pickup Time
 short: PR pickup P50
@@ -34,3 +36,4 @@ benchmark:
   sources: []
 minSample: 10
 xmr: true
+related: [time-to-merge, pr-size]

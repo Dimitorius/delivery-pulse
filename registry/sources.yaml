@@ -88,3 +88,57 @@ agility-at-scale-dora-2025:
   publisher: Agility at Scale
   year: 2025
   url: https://agility-at-scale.com/safe/ai-enabled-safe/dora-2025-for-ai-teams-seven-archetypes-every-safe-rte-should-know/
+safe-measure-and-grow:
+  title: Measure and Grow (flow metrics incl. Flow Predictability)
+  publisher: Scaled Agile Framework
+  year: 2023
+  url: https://framework.scaledagile.com/measure-and-grow
+safe-accelerating-flow:
+  title: Accelerating Flow with SAFe
+  publisher: Scaled Agile Framework
+  year: 2023
+  url: https://framework.scaledagile.com/accelerating-flow-with-safe
+safe-pi-objectives:
+  title: PI Objectives
+  publisher: Scaled Agile Framework
+  year: 2023
+  url: https://framework.scaledagile.com/pi-objectives
+agility-at-scale-flow:
+  title: "SAFe Flow Metrics: Flow Distribution, Velocity, Time, Load, Efficiency, and Predictability"
+  publisher: Agility at Scale
+  year: 2024
+  url: https://agility-at-scale.com/safe/team-technical-agility/flow-metrics/
+flow-framework:
+  title: The Flow Framework
+  publisher: flowframework.org (M. Kersten)
+  url: https://flowframework.org/
+kersten-p2p:
+  title: "Project to Product"
+  publisher: M. Kersten (book, IT Revolution)
+  year: 2018
+  url: https://itrevolution.com/product/project-to-product/
+sre-book-slo:
+  title: Service Level Objectives (Site Reliability Engineering, ch. 4)
+  publisher: Google
+  year: 2016
+  url: https://sre.google/sre-book/service-level-objectives/
+sre-workbook-alerting:
+  title: Alerting on SLOs — burn rate (The Site Reliability Workbook)
+  publisher: Google
+  year: 2018
+  url: https://sre.google/workbook/alerting-on-slos/
+sre-book-postmortem:
+  title: "Postmortem Culture: Learning from Failure (Site Reliability Engineering, ch. 15)"
+  publisher: Google
+  year: 2016
+  url: https://sre.google/sre-book/postmortem-culture/
+ebm-guide:
+  title: Evidence-Based Management Guide
+  publisher: Scrum.org
+  year: 2024
+  url: https://www.scrum.org/resources/evidence-based-management-guide
+gao-cost-guide:
+  title: "Cost Estimating and Assessment Guide (earned value management)"
+  publisher: U.S. GAO (GAO-20-195G)
+  year: 2020
+  url: https://www.gao.gov/products/gao-20-195g

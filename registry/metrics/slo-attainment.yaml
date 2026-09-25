@@ -1,0 +1,42 @@
+id: slo-attainment
+order: 320
+tab: quality
+name: SLO Attainment
+short: Availability (SLO 99.9 %)
+domain: Quality & Reliability
+column: current
+levels:
+- current
+- lagging
+source: monitoring
+unit: '%'
+decimals: 3
+direction: higher-better
+window: rolling 28 days
+question: Did our services stay within their availability objective?
+definition: Share of successful requests (good / total) across the services in scope over 28 days, against a 99.9
+  % objective. The remaining error budget is shown alongside.
+formula: |-
+  good, total = Σ over hourly SLI windows in the window
+  value       = 100 · (1 − bad / total)
+  budget left = 100 · (1 − bad / (total · 0.1 %))
+events:
+- sli.windows
+target:
+  op: '>='
+  value: 99.9
+  warn: 99.5
+  note: SLO 99.9 % (elite profile); error budget > 50 % left is healthy.
+benchmark:
+  kind: method
+  label: Method, not a benchmark
+  summary: 'Method: SLOs and error budgets as defined by Google SRE; the 99.9 % objective is ours.'
+  sources:
+  - sre-book-slo
+  - sre-workbook-alerting
+xmr: false
+tileSecondary: 1
+related:
+- error-budget-burn
+- incidents-by-severity
+format: number

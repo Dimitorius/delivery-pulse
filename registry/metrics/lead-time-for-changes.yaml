@@ -1,4 +1,6 @@
 id: lead-time-for-changes
+tab: delivery
+pulse: true
 order: 30
 name: Lead Time for Changes
 short: Change lead time P50
@@ -34,3 +36,4 @@ benchmark:
   sources: [dora-2024, dora-metrics-guide, redmonk-dora-2024, dora-2025, redmonk-dora-2025, agility-at-scale-dora-2025]
 minSample: 10
 xmr: true
+related: [deployment-frequency, time-to-merge, pr-size]

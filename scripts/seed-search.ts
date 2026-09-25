@@ -1,6 +1,7 @@
 // Dev helper: find seeds whose history matches the elite baseline criteria.
 // Run: npx vite-node scripts/seed-search.ts [from] [count]
-import { computePulse, PROGRAM_SCOPE } from '../src/app/pulse'
+import { computePulse, computeTile, PROGRAM_SCOPE } from '../src/app/pulse'
+import { METRICS } from '../src/metrics/registry'
 import { apply, buildStore } from '../src/domain/store'
 import { COMPUTE } from '../src/metrics/defs'
 import { HISTORY_W, PI_W, workToTime } from '../src/sim/calendar'
@@ -25,6 +26,10 @@ for (let seed = from; seed < from + count; seed++) {
     ['lead-time-for-changes', 0, 23.5], ['failed-deployment-recovery-time', 0, 55], ['pr-pickup-time', 0, 3.5], ['main-build-success', 95.5, 100],
   ]
   if (bands.some(([id, lo, hi]) => v(id) < lo || v(id) > hi)) continue
+  // Every metric on every tab: none off target, at most 3 near the limit.
+  const all = METRICS.map((d) => computeTile(d, store, asOf, store.teams.map((t) => t.id)))
+  const allWarn = all.filter((t) => t.status === 'warn').map((t) => t.def.id)
+  if (all.some((t) => t.status === 'bad') || allWarn.length > 3) continue
   // Live PI 4: forecast weekly and tile health daily.
   const teamIds = store.teams.map((t) => t.id)
   const weekly: number[] = []
@@ -39,5 +44,5 @@ for (let seed = from; seed < from + count; seed++) {
       if (t.status === 'warn') warnDays++
     }
   }
-  console.log(`seed ${seed}: forecast ${fc.toFixed(1)} sayDo ${sayDo.toFixed(1)} notGreen ${notGreen.map((t) => t.def.id).join(',') || '-'} | live min ${Math.min(...weekly).toFixed(0)} [${weekly.map((v) => v.toFixed(0)).join(' ')}] bad ${bad} warnDays ${warnDays}`)
+  console.log(`seed ${seed}: all-tabs warn [${allWarn.join(',')}] forecast ${fc.toFixed(1)} sayDo ${sayDo.toFixed(1)} notGreen ${notGreen.map((t) => t.def.id).join(',') || '-'} | live min ${Math.min(...weekly).toFixed(0)} [${weekly.map((v) => v.toFixed(0)).join(' ')}] bad ${bad} warnDays ${warnDays}`)
 }

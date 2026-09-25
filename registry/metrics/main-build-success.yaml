@@ -1,4 +1,6 @@
 id: main-build-success
+tab: delivery
+pulse: true
 order: 150
 name: Main Build Success
 short: Main green
@@ -32,3 +34,4 @@ benchmark:
   sources: []
 minSample: 10
 xmr: false
+related: [flaky-rate, red-main-time, pipeline-duration]

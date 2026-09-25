@@ -1,0 +1,37 @@
+id: mtta
+order: 316
+tab: quality
+name: Mean Time to Acknowledge (median)
+short: Time to acknowledge P50
+domain: Quality & Reliability
+column: current
+levels:
+- current
+source: incident tool
+unit: min
+decimals: 1
+direction: lower-better
+window: rolling 28 days
+question: How fast does on-call pick up an incident?
+definition: Time from detection to acknowledgement by on-call. Traditionally a mean ("MTTA"); reported here as the
+  median so one outlier does not hide the typical case.
+formula: |-
+  value = P50(ackedAt − detectedAt, minutes) over incidents acknowledged in the window; also P85
+events:
+- incident.opened
+- incident.acked
+target:
+  op: <=
+  value: 5
+  warn: 15
+  note: Team goal — acknowledged within 5 minutes.
+benchmark:
+  kind: team-goal
+  label: Team goal, not a benchmark
+  summary: No research-based benchmark; the threshold is ours.
+  sources: []
+minSample: 10
+xmr: false
+related:
+- incident-mttr
+format: number

@@ -1,4 +1,6 @@
 id: change-failure-rate
+tab: delivery
+pulse: true
 order: 50
 name: Change Failure Rate
 short: Change failure rate
@@ -34,3 +36,4 @@ benchmark:
   sources: [dora-2024, dora-metrics-guide, redmonk-dora-2024, dora-2025, redmonk-dora-2025, agility-at-scale-dora-2025]
 minSample: 10
 xmr: false
+related: [rework-rate, failed-deployment-recovery-time, deployment-frequency]

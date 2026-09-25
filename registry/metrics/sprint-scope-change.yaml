@@ -1,0 +1,48 @@
+id: sprint-scope-change
+order: 76
+tab: flow
+name: Sprint Scope Change
+short: Sprint scope change
+domain: Scrum
+column: leading
+levels:
+- leading
+source: tracker
+unit: '%'
+decimals: 0
+direction: lower-better
+window: last 3 closed sprints per team
+question: How much unplanned work entered the sprint after planning?
+definition: Unplanned items (production bugs, urgent requests) added to a sprint after planning, relative to the
+  commitment. Work the team pulled ahead from the backlog because it had capacity is not a scope change and is shown
+  separately.
+formula: |-
+  added = items assigned to the sprint after planning with planned = false
+  value = 100 · count(added) / count(committed)
+events:
+- iteration.committed
+- item.sprint
+- item.created
+target:
+  op: <=
+  value: 20
+  warn: 30
+  note: Team goal — at most 20 % unplanned additions.
+benchmark:
+  kind: team-goal
+  label: Team goal, not a benchmark
+  summary: No research-based benchmark; the threshold is ours.
+  sources: []
+minSample: 10
+xmr: false
+related:
+- unplanned-work
+- carry-over
+aka:
+  safe:
+    name: Iteration scope change
+    eq: ≡
+    note: 'Vocabulary only: SAFe calls sprints iterations.'
+    sources:
+    - safe-pi-objectives
+format: number

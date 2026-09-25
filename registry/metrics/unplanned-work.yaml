@@ -1,4 +1,6 @@
 id: unplanned-work
+tab: program
+pulse: true
 order: 240
 name: Unplanned Work
 short: Unplanned work
@@ -32,3 +34,4 @@ benchmark:
   sources: []
 minSample: 10
 xmr: true
+related: [sprint-scope-change, investment-allocation]

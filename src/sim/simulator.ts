@@ -10,14 +10,23 @@
 
 import type { NewWorkItem, SimEvent } from '../domain/events'
 import type { FlowType, Investment, StatusName, Team, WorkItemType } from '../domain/model'
-import { DEV_ITERATIONS_PER_PI, ITERATIONS_PER_PI, PI_W, SPRINT_W, addWorkingHours, isIpIteration, workToTime } from './calendar'
-import { BUG_SYMPTOMS, DEBT_TASKS, PROGRAM, STORY_VERBS, TEAMS, VOCAB } from './org'
+import {
+  DEV_ITERATIONS_PER_PI,
+  HOUR_MS,
+  ITERATIONS_PER_PI,
+  PI_W,
+  SPRINT_W,
+  addWorkingHours,
+  isIpIteration,
+  workToTime,
+} from './calendar'
+import { BUG_SYMPTOMS, DEBT_TASKS, POSTMORTEM_ACTIONS, PROGRAM, RISK_TITLES, SERVICE_TRAFFIC, STORY_VERBS, TEAMS, VOCAB } from './org'
 import { ELITE_PROFILE, type Profile } from './profile'
 import { Rng } from './rng'
 import { Scheduler } from './scheduler'
 
 // Chosen with scripts/seed-search.ts against the elite baseline criteria (docs/stage-1.md).
-export const DEFAULT_SEED = 399
+export const DEFAULT_SEED = 167
 
 type EventBody = SimEvent extends infer E ? (E extends SimEvent ? Omit<E, 't'> : never) : never
 
@@ -44,6 +53,8 @@ interface ItemRt {
   done: boolean
   sprintId?: string
   dev?: DevRt
+  reopened?: boolean
+  escapeRolled?: boolean
 }
 
 interface DevRt {
@@ -112,11 +123,26 @@ export class Simulator {
   private readonly items = new Map<string, ItemRt>()
   private readonly features = new Map<string, FeatureRt>()
   private readonly providerDeps = new Map<string, DepRt[]>()
-  private readonly seq = { mr: 0, run: 0, deploy: 0, incident: 0, dep: 0 }
+  private readonly seq = { mr: 0, run: 0, deploy: 0, incident: 0, dep: 0, ms: 0, risk: 0, obj: 0, survey: 0, cost: 0, value: 0 }
   private piId?: string
+  // Stage-2 subsystems draw from their own streams so they do not reshuffle
+  // the main history: `ops` for behaviour (hotfix vs rollback, reopen,
+  // postmortems), `obs` for observational data (risks, objectives, surveys,
+  // costs, cause attribution), `sliRng` for service-level indicators.
+  private readonly ops: Rng
+  private readonly obs: Rng
+  private readonly sliRng: Rng
+  private readonly mrAi = new Map<string, boolean>()
+  private readonly outages: { service: string; sev: 1 | 2 | 3 | 4; startedAt: number; resolvedAt?: number }[] = []
+  private milestonesRt: { id: string; features: FeatureRt[]; achieved: boolean }[] = []
+  private objectivesRt: { id: string; feature: FeatureRt; plannedBv: number }[] = []
+  private readonly risksRt = new Map<string, { p: number; impact: number }>()
 
   constructor(seed = DEFAULT_SEED, profile: Profile = ELITE_PROFILE) {
     this.rng = new Rng(seed)
+    this.ops = new Rng((seed ^ 0x9e3779b9) >>> 0)
+    this.obs = new Rng((seed ^ 0x85ebca6b) >>> 0)
+    this.sliRng = new Rng((seed ^ 0xc2b2ae35) >>> 0)
     this.p = profile
     this.now = workToTime(0)
     this.teams = TEAMS.map((team) => ({
@@ -142,6 +168,7 @@ export class Simulator {
     this.emit({ type: 'program.defined', program: PROGRAM, teams: TEAMS })
     this.atWork(0, () => this.sprintBoundary(0))
     this.atWork(0, () => this.hourlyTick(0))
+    this.at(workToTime(0) + HOUR_MS, () => this.sliTick(workToTime(0)))
   }
 
   /** Run every scheduled job up to and including `t`; return the new events. */
@@ -191,7 +218,12 @@ export class Simulator {
 
   private sprintBoundary(k: number): void {
     for (const tr of this.scrumTeams) if (tr.sprint) this.closeSprint(tr)
-    if (k % ITERATIONS_PER_PI === 0) this.startPi(k / ITERATIONS_PER_PI)
+    if (k % ITERATIONS_PER_PI === 0) {
+      this.scoreObjectives()
+      this.startPi(k / ITERATIONS_PER_PI)
+      this.planPiExtras(k / ITERATIONS_PER_PI)
+    }
+    this.observeBoundary(k)
     for (const tr of this.scrumTeams) this.planSprint(tr, k)
     this.atWork((k + 1) * SPRINT_W, () => this.sprintBoundary(k + 1))
   }
@@ -401,19 +433,16 @@ export class Simulator {
 
   // ---- item creation --------------------------------------------------------
 
-  private createItem(
-    tr: TeamRt,
-    spec: Omit<NewWorkItem, 'id' | 'teamId'>,
-  ): ItemRt {
+  private createItem(tr: TeamRt, spec: Omit<NewWorkItem, 'id' | 'teamId'>, rng: Rng = this.rng): ItemRt {
     const id = `${tr.team.key}-${++tr.itemSeq}`
     this.emit({ type: 'item.created', item: { ...spec, id, teamId: tr.team.id } })
     const p = this.p
     const effort =
       spec.type === 'bug'
-        ? this.rng.lognormal(p.bugEffortMedian, p.effortSigma)
+        ? rng.lognormal(p.bugEffortMedian, p.effortSigma)
         : spec.type === 'task' && spec.points === undefined
-          ? this.rng.lognormal(p.taskEffortMedian, p.effortSigma)
-          : this.rng.lognormal(p.hoursPerPoint * (spec.points ?? 2), p.effortSigma)
+          ? rng.lognormal(p.taskEffortMedian, p.effortSigma)
+          : rng.lognormal(p.hoursPerPoint * (spec.points ?? 2), p.effortSigma)
     const it: ItemRt = {
       id,
       teamId: tr.team.id,
@@ -517,6 +546,7 @@ export class Simulator {
       type: 'bug',
       title: `Fix: ${obj} ${this.rng.pick(BUG_SYMPTOMS)}`,
       planned: false,
+      foundIn: 'production',
       flowType: 'defect',
       investment: 'ktlo',
     })
@@ -549,7 +579,15 @@ export class Simulator {
       bug: ['defect', 'ktlo', `Fix: ${obj} ${this.rng.pick(BUG_SYMPTOMS)}`],
     }
     const [flowType, investment, title] = flow[type]
-    const it = this.createItem(tr, { type, title, planned: !expedite, flowType, investment })
+    const it = this.createItem(tr, {
+      type,
+      title,
+      planned: !expedite,
+      flowType,
+      investment,
+      // Expedited merchant bugs come from production; the rest are found internally.
+      foundIn: type === 'bug' ? (expedite ? 'production' : 'internal') : undefined,
+    })
     if (expedite) this.routeUnplanned(tr, it)
     else {
       tr.backlog.push(it)
@@ -680,6 +718,9 @@ export class Simulator {
       const id = `MR-${++this.seq.mr}`
       it.mrId = id
       const lead = addWorkingHours(this.now, -this.rng.lognormal(p.firstCommitLeadMedian, 0.6))
+      const size = Math.max(5, Math.round(this.rng.lognormal(110, 0.8)))
+      const aiAssisted = this.rng.chance(0.4)
+      this.mrAi.set(id, aiAssisted)
       this.emit({
         type: 'mr.opened',
         mr: {
@@ -687,8 +728,8 @@ export class Simulator {
           itemId: it.id,
           teamId: tr.team.id,
           firstCommitAt: Math.max(lead, it.firstActiveAt ?? lead),
-          size: Math.max(5, Math.round(this.rng.lognormal(110, 0.8))),
-          aiAssisted: this.rng.chance(0.4),
+          size,
+          aiAssisted,
         },
       })
     }
@@ -759,13 +800,33 @@ export class Simulator {
       dep.consumer.openDeps.delete(dep.id)
       if (dep.consumer.blockedOnDep === dep.id) this.unblock(this.byTeam.get(dep.consumer.teamId)!, dep.consumer)
     }
+    this.providerDeps.delete(it.id)
     if (it.parentId) {
       const f = this.features.get(it.parentId)
-      if (f && f.stories.every((s) => s.done)) this.setStatus(f.item, 'Done')
+      if (f && f.stories.every((s) => s.done)) {
+        this.setStatus(f.item, 'Done')
+        this.checkMilestones()
+      }
     }
-    if (it.type !== 'task' && this.rng.chance(this.p.escapeProb)) {
-      const obj = VOCAB[tr.team.id].objects.find((o) => it.title.includes(o))
-      this.afterWork(this.rng.lognormal(16, 1), () => this.routeUnplanned(tr, this.createBug(tr, obj)))
+    if (!it.escapeRolled) {
+      it.escapeRolled = true
+      if (it.type !== 'task' && this.rng.chance(this.p.escapeProb)) {
+        const obj = VOCAB[tr.team.id].objects.find((o) => it.title.includes(o))
+        this.afterWork(this.rng.lognormal(16, 1), () => this.routeUnplanned(tr, this.createBug(tr, obj)))
+      }
+    }
+    // A small share of finished work is reopened (found not done after all).
+    if (!it.reopened && this.ops.chance(this.p.reopenProb)) {
+      it.reopened = true
+      this.afterWork(this.ops.lognormal(10, 0.8), () => {
+        it.done = false
+        this.setStatus(it, 'In Progress')
+        it.remaining = it.effort * this.ops.uniform(0.1, 0.3)
+        it.mrId = undefined
+        it.qaRounds = 1
+        tr.resume.push(it)
+        this.tryAssign(tr)
+      })
     }
   }
 
@@ -816,10 +877,10 @@ export class Simulator {
     const id = `DEP-${++this.seq.deploy}`
     const mrIds = tr.pendingDeploy.splice(0)
     this.emit({ type: 'deployment', deployment: { id, teamId: tr.team.id, service: tr.team.service, mrIds, kind: 'regular' } })
-    if (this.rng.chance(this.p.changeFailureProb)) this.failedDeployment(tr, id)
+    if (this.rng.chance(this.p.changeFailureProb)) this.failedDeployment(tr, id, mrIds)
   }
 
-  private failedDeployment(tr: TeamRt, deploymentId: string): void {
+  private failedDeployment(tr: TeamRt, deploymentId: string, mrIds: string[]): void {
     const p = this.p
     const id = `INC-${++this.seq.incident}`
     const startedAt = this.now
@@ -830,22 +891,31 @@ export class Simulator {
       [4, 20],
     ])
     tr.openIncidents++
+    const outage: { service: string; sev: 1 | 2 | 3 | 4; startedAt: number; resolvedAt?: number } = { service: tr.team.service, sev, startedAt }
+    this.outages.push(outage)
+    // Postmortem attribution: the culprit change, AI-assisted changes weighted by the profile.
+    const causeMrId = mrIds.length
+      ? this.obs.weighted(mrIds.map((m) => [m, this.mrAi.get(m) ? p.aiCulpritWeight : 1] as const))
+      : undefined
+    const hotfix = this.ops.chance(p.hotfixShare)
     this.afterMinutes(this.rng.lognormal(p.detectMedianMin, 0.6), () => {
       this.emit({
         type: 'incident.opened',
-        incident: { id, teamId: tr.team.id, service: tr.team.service, sev, title: `errors after deploy on ${tr.team.service}`, startedAt, deploymentId },
+        incident: { id, teamId: tr.team.id, service: tr.team.service, sev, title: `errors after deploy on ${tr.team.service}`, startedAt, deploymentId, causeMrId },
       })
       this.afterMinutes(this.rng.lognormal(p.ackMedianMin, 0.7), () => {
         this.emit({ type: 'incident.acked', incidentId: id })
         this.afterMinutes(this.rng.lognormal(p.recoveryMedianMin, p.recoverySigma), () => {
           this.emit({
             type: 'deployment',
-            deployment: { id: `DEP-${++this.seq.deploy}`, teamId: tr.team.id, service: tr.team.service, mrIds: [], kind: 'rollback' },
+            deployment: { id: `DEP-${++this.seq.deploy}`, teamId: tr.team.id, service: tr.team.service, mrIds: [], kind: hotfix ? 'hotfix' : 'rollback' },
           })
           this.afterMinutes(this.rng.uniform(2, 8), () => {
             this.emit({ type: 'incident.resolved', incidentId: id })
+            outage.resolvedAt = this.now
             tr.openIncidents--
             this.routeUnplanned(tr, this.createBug(tr, `regression from ${deploymentId}:`))
+            if (sev <= 2) this.schedulePostmortem(tr, id)
           })
         })
       })
@@ -861,13 +931,191 @@ export class Simulator {
       [4, 40],
     ])
     const what = this.rng.pick(['latency spike', 'elevated error rate', 'queue backlog', 'degraded dependency'])
+    const outage: { service: string; sev: 1 | 2 | 3 | 4; startedAt: number; resolvedAt?: number } = { service: tr.team.service, sev, startedAt }
+    this.outages.push(outage)
     this.afterMinutes(this.rng.lognormal(10, 0.6), () => {
       this.emit({ type: 'incident.opened', incident: { id, teamId: tr.team.id, service: tr.team.service, sev, title: `${what} on ${tr.team.service}`, startedAt } })
       this.afterMinutes(this.rng.lognormal(5, 0.7), () => {
         this.emit({ type: 'incident.acked', incidentId: id })
-        this.afterMinutes(this.rng.lognormal(60, 0.9), () => this.emit({ type: 'incident.resolved', incidentId: id }))
+        this.afterMinutes(this.rng.lognormal(60, 0.9), () => {
+          this.emit({ type: 'incident.resolved', incidentId: id })
+          outage.resolvedAt = this.now
+        })
       })
     })
+  }
+
+  // ---- Stage 2: postmortems, milestones, objectives, risks, SLI, surveys -----
+
+  private schedulePostmortem(tr: TeamRt, incidentId: string): void {
+    this.afterWork(this.ops.lognormal(6, 0.5), () => {
+      const n = this.ops.int(2, 4)
+      const actions: ItemRt[] = []
+      for (let i = 0; i < n; i++) {
+        actions.push(
+          this.createItem(
+            tr,
+            {
+              type: 'task',
+              title: `Postmortem ${incidentId}: ${this.ops.pick(POSTMORTEM_ACTIONS)}`,
+              points: this.ops.int(1, 2),
+              planned: true,
+              flowType: 'risk',
+              investment: 'ktlo',
+              postmortemOf: incidentId,
+            },
+            this.ops,
+          ),
+        )
+      }
+      this.emit({ type: 'incident.postmortem', incidentId, actionItemIds: actions.map((a) => a.id) })
+      tr.backlog.unshift(...actions) // next planning (or next free Kanban dev) picks them up first
+      if (tr.team.method === 'kanban') this.tryAssign(tr)
+    })
+  }
+
+  private planPiExtras(n: number): void {
+    const piId = `PI-${n + 1}`
+    const startW = n * PI_W
+    const committed = (tr: TeamRt) => tr.features.filter((f) => f.item.piId === piId && !f.item.piStretch)
+    const streams = this.scrumTeams.filter((t) => t.team.kind === 'stream')
+    const plan = (name: string, dueW: number, features: FeatureRt[]) => {
+      if (!features.length) return
+      const id = `MS-${++this.seq.ms}`
+      this.milestonesRt.push({ id, features, achieved: false })
+      this.emit({
+        type: 'milestone.planned',
+        milestone: { id, name: `PI ${n + 1} · ${name}`, piId, due: workToTime(dueW), featureIds: features.map((f) => f.item.id) },
+      })
+    }
+    plan('Beta', startW + 2 * SPRINT_W, streams.flatMap((t) => committed(t).slice(0, 1)))
+    plan('Release', startW + DEV_ITERATIONS_PER_PI * SPRINT_W, this.scrumTeams.flatMap((t) => committed(t).slice(0, 2)))
+    // PI objectives with business value (committed and uncommitted).
+    this.objectivesRt = []
+    for (const tr of this.scrumTeams) {
+      for (const f of tr.features.filter((f) => f.item.piId === piId)) {
+        const id = `OBJ-${++this.seq.obj}`
+        const plannedBv = this.obs.weighted([
+          [3, 1],
+          [5, 2],
+          [7, 3],
+          [8, 3],
+          [10, 2],
+        ] as const)
+        this.objectivesRt.push({ id, feature: f, plannedBv })
+        this.emit({
+          type: 'objective.planned',
+          objective: { id, piId, teamId: tr.team.id, featureId: f.item.id, title: f.item.title, committed: !f.item.piStretch, plannedBv },
+        })
+      }
+    }
+    // Program risks raised at PI planning.
+    const count = 3 + this.obs.int(0, 2)
+    for (let i = 0; i < count; i++) this.raiseRisk(piId)
+    this.checkMilestones()
+  }
+
+  private checkMilestones(): void {
+    for (const m of this.milestonesRt) {
+      if (!m.achieved && m.features.every((f) => f.item.status === 'Done')) {
+        m.achieved = true
+        this.emit({ type: 'milestone.achieved', milestoneId: m.id })
+      }
+    }
+  }
+
+  /** Business Owners score the PI objectives at the end of the PI (Inspect & Adapt). */
+  private scoreObjectives(): void {
+    for (const o of this.objectivesRt) {
+      const done = o.feature.item.status === 'Done'
+      const share = o.feature.stories.length ? o.feature.stories.filter((s) => s.done).length / o.feature.stories.length : 0
+      // Business Owners rarely award full value; partial features earn little.
+      const actual = done ? o.plannedBv * this.obs.uniform(0.65, 0.9) : o.plannedBv * share * this.obs.uniform(0.3, 0.6)
+      this.emit({ type: 'objective.scored', objectiveId: o.id, actualBv: Math.round(actual * 10) / 10 })
+    }
+    this.objectivesRt = []
+  }
+
+  private raiseRisk(piId: string | undefined): void {
+    const id = `RISK-${++this.seq.risk}`
+    const probability = Math.round(this.obs.uniform(0.1, 0.6) * 100) / 100
+    const impact = Math.round(this.obs.lognormal(15, 0.6))
+    const owner = this.obs.pick(this.teams)
+    this.risksRt.set(id, { p: probability, impact })
+    this.emit({
+      type: 'risk.raised',
+      risk: { id, title: `${this.obs.pick(RISK_TITLES)} (${owner.team.key})`, probability, impact, ownerTeamId: owner.team.id, piId },
+    })
+  }
+
+  /** Every iteration boundary: risk review, cost entries, surveys (observational only). */
+  private observeBoundary(k: number): void {
+    for (const [id, r] of this.risksRt) {
+      if (this.obs.chance(0.14)) {
+        this.risksRt.delete(id)
+        this.emit({ type: 'risk.closed', riskId: id, outcome: 'mitigated' })
+      } else if (this.obs.chance(r.p * 0.12)) {
+        this.risksRt.delete(id)
+        this.emit({ type: 'risk.closed', riskId: id, outcome: 'occurred' })
+      } else {
+        r.p = Math.round(Math.min(0.9, Math.max(0.05, r.p * this.obs.uniform(0.75, 1.05))) * 100) / 100
+        r.impact = Math.round(r.impact * this.obs.uniform(0.95, 1.1))
+        this.emit({ type: 'risk.updated', riskId: id, probability: r.p, impact: r.impact })
+      }
+    }
+    if (k % ITERATIONS_PER_PI !== 0 && this.obs.chance(0.4)) this.raiseRisk(this.piId)
+    if (k === 0) return
+    for (const tr of this.teams) {
+      const people = tr.team.devs + tr.team.qa
+      this.emit({
+        type: 'cost.entry',
+        cost: { id: `COST-${++this.seq.cost}`, teamId: tr.team.id, amount: Math.round(people * 2 * this.p.costPerPersonWeek * this.obs.lognormal(1, 0.03) * 10) / 10, category: 'people' },
+      })
+      this.emit({
+        type: 'cost.entry',
+        cost: { id: `COST-${++this.seq.cost}`, teamId: tr.team.id, amount: Math.round(this.obs.lognormal(3, 0.2) * 10) / 10, category: 'tooling' },
+      })
+      if (k % 2 === 0) {
+        this.emit({
+          type: 'survey.snapshot',
+          survey: { id: `SRV-${++this.seq.survey}`, teamId: tr.team.id, instrument: 'DXI', score: Math.round(Math.min(100, Math.max(0, 72 + this.obs.normal() * 3)) * 10) / 10, responses: people - this.obs.int(0, 1) },
+        })
+      }
+      if (k % ITERATIONS_PER_PI === 0) {
+        this.emit({
+          type: 'survey.snapshot',
+          survey: { id: `SRV-${++this.seq.survey}`, teamId: tr.team.id, instrument: 'eNPS', score: Math.round(Math.min(100, Math.max(-100, 35 + this.obs.normal() * 8))), responses: people - this.obs.int(0, 1) },
+        })
+      }
+    }
+    if (k % 2 === 0) {
+      this.emit({ type: 'value.snapshot', value: { id: `VAL-${++this.seq.value}`, measure: 'csat', value: Math.round((4.3 + this.obs.normal() * 0.08) * 100) / 100 } })
+    }
+  }
+
+  /** Hourly service level indicators, 24/7: requests and failed requests per service. */
+  private sliTick(start: number): void {
+    const end = start + HOUR_MS
+    const hour = new Date(start).getUTCHours()
+    const dow = new Date(start).getUTCDay()
+    const diurnal = (hour >= 7 && hour < 22 ? 1 : 0.35) * (dow === 0 || dow === 6 ? 0.7 : 1)
+    const windows = this.teams.map((tr) => {
+      const total = Math.round(SERVICE_TRAFFIC[tr.team.id] * diurnal * this.sliRng.lognormal(1, 0.08))
+      let rate = this.p.sliBaseErrorRate * this.sliRng.lognormal(1, 0.4)
+      for (const o of this.outages) {
+        if (o.service !== tr.team.service) continue
+        const overlap = Math.min(end, o.resolvedAt ?? end) - Math.max(start, o.startedAt)
+        if (overlap > 0) rate += (overlap / HOUR_MS) * this.p.sliSevErrorRate[o.sev]
+      }
+      return { service: tr.team.service, teamId: tr.team.id, start, total, bad: Math.min(total, Math.round(total * rate)) }
+    })
+    this.emit({ type: 'sli.windows', windows })
+    // Drop outages resolved more than an hour ago.
+    for (let i = this.outages.length - 1; i >= 0; i--) {
+      const r = this.outages[i].resolvedAt
+      if (r !== undefined && r < start) this.outages.splice(i, 1)
+    }
+    this.at(end + HOUR_MS, () => this.sliTick(end))
   }
 }
 

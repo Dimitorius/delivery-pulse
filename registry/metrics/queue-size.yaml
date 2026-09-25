@@ -1,0 +1,38 @@
+id: queue-size
+order: 135
+tab: flow
+name: Queue Size by Stage
+short: Waiting in queues
+domain: Flow
+column: current
+levels:
+- current
+- leading
+source: tracker
+unit: items
+decimals: 0
+direction: lower-better
+window: at this moment
+question: Where is work piling up waiting for the next step?
+definition: Work-in-progress items sitting in a waiting status at this moment, split by stage (Ready for Review,
+  Ready for QA). A growing queue in one stage is where the bottleneck is.
+formula: |-
+  waiting = WIP items whose status at asOf is a queue status
+  value   = count(waiting); split by stage
+events:
+- item.status
+target:
+  note: No target — read it together with its related metrics.
+benchmark:
+  kind: by-design
+  label: No benchmark by design
+  summary: No industry benchmark by design; compare stages with each other and with their own history.
+  sources:
+  - kanban-guide-2025
+  - vacanti-aamp
+xmr: true
+tileSecondary: 2
+related:
+- wip
+- flow-efficiency
+format: number

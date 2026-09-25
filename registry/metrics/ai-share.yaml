@@ -1,0 +1,34 @@
+id: ai-share
+order: 610
+tab: ai
+name: AI-assisted Change Share
+short: AI-assisted changes
+domain: AI Impact
+column: current
+levels:
+- current
+source: vcs (commit metadata)
+unit: '%'
+decimals: 0
+direction: neutral
+window: rolling 28 days
+question: How much of our code change is AI-assisted?
+definition: Share of merged merge requests flagged as AI-assisted.
+formula: |-
+  value = 100 · count(merged MRs with aiAssisted) / count(merged MRs)
+events:
+- mr.opened
+- mr.merged
+target:
+  note: No target — adoption is context, not a goal. Read it with the AI vs non-AI failure ratio.
+benchmark:
+  kind: by-design
+  label: No benchmark by design
+  summary: No benchmark by design; adoption levels vary widely by organisation.
+  sources:
+  - dora-2025
+minSample: 10
+xmr: false
+related:
+- ai-cfr-ratio
+format: number

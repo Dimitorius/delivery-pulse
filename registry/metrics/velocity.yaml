@@ -1,0 +1,45 @@
+id: velocity
+order: 78
+tab: flow
+name: Velocity
+short: Velocity
+domain: Scrum
+column: lagging
+levels:
+- lagging
+source: tracker
+unit: pts
+decimals: 0
+direction: neutral
+window: last 3 development sprints per team
+question: How many story points does each team finish per sprint (for its own planning)?
+definition: Median story points finished per development sprint over the last three sprints, per team; the program
+  value is the sum of team medians. A planning aid for the team itself — never compare velocity between teams.
+formula: |-
+  points(sprint) = Σ points of the sprint’s items Done within the sprint
+  team  = median(points of last 3 non-IP sprints)
+  value = Σ team medians
+events:
+- iteration.planned
+- item.sprint
+- item.status
+target:
+  note: No target — velocity is a team planning aid. Do not compare teams.
+benchmark:
+  kind: by-design
+  label: No benchmark by design
+  summary: 'No benchmark by design: story points are team-relative, so velocities are not comparable.'
+  sources:
+  - scrum-guide-2020
+xmr: false
+related:
+- say-do-ratio
+- throughput
+aka:
+  safe:
+    name: Velocity
+    eq: ≡
+    note: SAFe teams use velocity for iteration and PI planning.
+    sources:
+    - safe-pi-objectives
+format: number

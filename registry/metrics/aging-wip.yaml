@@ -1,4 +1,6 @@
 id: aging-wip
+tab: flow
+pulse: true
 order: 220
 name: Aging WIP over SLE
 short: Aging over SLE
@@ -33,3 +35,4 @@ benchmark:
   summary: No industry benchmark by design; Work Item Age against an SLE is a core Kanban practice.
   sources: [kanban-guide-2025, vacanti-wwibd]
 xmr: false
+related: [cycle-time, sle-attainment, wip]

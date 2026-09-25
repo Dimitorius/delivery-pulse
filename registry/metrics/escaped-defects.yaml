@@ -1,0 +1,37 @@
+id: escaped-defects
+order: 310
+tab: quality
+name: Escaped Defects
+short: Escaped defects
+domain: Quality & Reliability
+column: lagging
+levels:
+- lagging
+source: tracker
+unit: /wk
+decimals: 1
+direction: lower-better
+window: rolling 28 days
+question: How many bugs reach customers?
+definition: Bugs found in production (reported by customers or monitoring) created in the window, per week.
+formula: |-
+  bugs  = items of type bug with foundIn = production, created in the window
+  value = count(bugs) / 4 weeks
+events:
+- item.created
+target:
+  op: <=
+  value: 2
+  warn: 3
+  per: team
+  note: Team goal — at most two production bugs per team per week.
+benchmark:
+  kind: team-goal
+  label: Team goal, not a benchmark
+  summary: No research-based benchmark; the threshold is ours.
+  sources: []
+xmr: true
+related:
+- reopen-rate
+- change-failure-rate
+format: number

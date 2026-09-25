@@ -7,6 +7,11 @@ const testSources = import.meta.glob<string>('./*.test.ts', { query: '?raw', imp
 const allTests = Object.values(testSources).join('\n')
 
 describe('metric registry', () => {
+  it('holds the core 50 (SPEC §6) plus the SYNTHETIC tiles', () => {
+    expect(METRICS.filter((m) => !m.synthetic)).toHaveLength(50)
+    expect(METRICS.filter((m) => m.pulse).length).toBeGreaterThanOrEqual(15)
+  })
+
   it('every YAML entry has a compute function and vice versa', () => {
     expect(RAW_METRICS.map((m) => m.id).sort()).toEqual(Object.keys(COMPUTE).sort())
   })
@@ -19,7 +24,9 @@ describe('metric registry', () => {
     for (const k of ['name', 'short', 'domain', 'question', 'definition', 'formula', 'window', 'unit'] as const) {
       expect(m[k], k).toBeTruthy()
     }
-    expect(['lagging', 'current', 'leading', 'forecast']).toContain(m.column)
+    expect(['lagging', 'current', 'leading', 'forecast', 'synthetic']).toContain(m.column)
+    expect(['flow', 'delivery', 'quality', 'program', 'forecast', 'scale', 'value', 'people', 'finance', 'ai']).toContain(m.tab)
+    if (m.column === 'synthetic') expect(m.synthetic).toBe(true)
     expect(m.events.length).toBeGreaterThan(0)
     expect(m.target.note).toBeTruthy()
     // Content rule (CLAUDE.md): research benchmarks need ≥ 2 sources or a ⚠ flag;
@@ -27,6 +34,12 @@ describe('metric registry', () => {
     expect(['research', 'disputed', 'team-goal', 'method', 'by-design']).toContain(m.benchmark.kind)
     expect(m.benchmark.label).toBeTruthy()
     if (m.benchmark.kind === 'research' && m.benchmark.sources.length < 2) expect(m.benchmark.flag).toMatch(/^⚠/)
+    // Framework lens: ≈ pairs are checked against the source and flagged ⚠ (SPEC §6).
+    for (const a of Object.values(m.aka ?? {})) {
+      expect(a!.sources.length).toBeGreaterThan(0)
+      if (a!.eq === '≈') expect(a!.flag).toMatch(/^⚠/)
+    }
+    for (const r of m.related ?? []) expect(METRICS.map((x) => x.id)).toContain(r)
     if (m.benchmark.kind === 'disputed') {
       expect(m.benchmark.positions!.length).toBeGreaterThanOrEqual(2)
       for (const p of m.benchmark.positions!) expect(p.sources.length).toBeGreaterThan(0)

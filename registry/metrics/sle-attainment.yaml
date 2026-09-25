@@ -1,0 +1,41 @@
+id: sle-attainment
+order: 225
+tab: flow
+name: SLE Attainment
+short: SLE attainment
+domain: Flow
+column: leading
+levels:
+- lagging
+- leading
+source: tracker
+unit: '%'
+decimals: 0
+direction: higher-better
+window: rolling 28 days (SLE fixed at window start)
+question: What share of items finished within the service level expectation?
+definition: Share of items finished in the window whose cycle time was within their team's SLE. The SLE is the 85th
+  percentile cycle time of the 12 weeks before the window, so about 85 % is expected when the process is stable.
+formula: |-
+  SLE(team) = P85(cycle time, 84 days before the window start)
+  value     = 100 · count(done with cycle ≤ SLE(team)) / count(done)
+events:
+- item.status
+target:
+  op: '>='
+  value: 80
+  warn: 70
+  note: Team goal ≥ 80 %. The SLE is a P85, so ~85 % is what a stable process delivers.
+benchmark:
+  kind: by-design
+  label: No benchmark by design
+  summary: No industry benchmark by design; an SLE is the team’s own forecast derived from its history.
+  sources:
+  - kanban-guide-2025
+  - vacanti-wwibd
+minSample: 10
+xmr: false
+related:
+- cycle-time
+- aging-wip
+format: number

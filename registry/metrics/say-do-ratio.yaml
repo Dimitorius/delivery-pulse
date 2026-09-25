@@ -1,4 +1,6 @@
 id: say-do-ratio
+tab: flow
+pulse: true
 order: 70
 name: Say/Do Ratio
 short: Say/Do
@@ -38,3 +40,10 @@ benchmark:
   sources: []
 minSample: 10
 xmr: false
+related: [sprint-goal-success, carry-over, velocity]
+aka:
+  safe:
+    name: Iteration Say/Do
+    eq: "≡"
+    note: "Vocabulary only: SAFe calls sprints iterations."
+    sources: [safe-pi-objectives]

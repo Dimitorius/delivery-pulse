@@ -1,4 +1,6 @@
 id: failed-deployment-recovery-time
+tab: delivery
+pulse: true
 order: 60
 name: Failed Deployment Recovery Time
 short: Recovery time P50
@@ -35,3 +37,4 @@ benchmark:
   sources: [dora-2024, dora-metrics-guide, redmonk-dora-2024, dora-2025, redmonk-dora-2025, agility-at-scale-dora-2025]
 minSample: 10
 xmr: false
+related: [change-failure-rate, incident-mttr]

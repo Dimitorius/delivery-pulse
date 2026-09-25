@@ -1,0 +1,41 @@
+id: forecast-accuracy
+order: 420
+tab: forecast
+name: Forecast Accuracy
+short: Forecast accuracy
+domain: Forecast
+column: lagging
+levels:
+- lagging
+source: tracker
+unit: '%'
+decimals: 0
+direction: higher-better
+window: last 12 two-week forecasts
+question: When we forecast "at least N items", do we hit it?
+definition: 'Backtest: at each of the last 12 week starts, the "How many" forecast for the next two weeks is recomputed
+  from data available then and compared with what was actually finished. An 85 % forecast should be met about 85
+  % of the time.'
+formula: |-
+  for each past week start t: forecast(t) = How-many P15 as of t
+  met(t)  = items finished in (t, t + 14 d] ≥ forecast(t)
+  value   = 100 · count(met) / count(forecasts)
+events:
+- item.status
+target:
+  op: '>='
+  value: 70
+  warn: 55
+  note: Goal — met in at least 70 % of cases (85 % expected).
+benchmark:
+  kind: method
+  label: Method, not a benchmark
+  summary: Backtesting a probabilistic forecast against outcomes (calibration).
+  sources:
+  - vacanti-wwibd
+minSample: 10
+xmr: false
+related:
+- mc-how-many
+- pi-forecast
+format: number

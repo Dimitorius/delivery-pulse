@@ -1,0 +1,37 @@
+id: dxi
+order: 710
+tab: people
+name: Developer Experience (DXI-style)
+short: Developer experience
+domain: People
+column: synthetic
+levels:
+- leading
+source: survey (synthetic)
+unit: pts
+decimals: 1
+direction: higher-better
+window: latest survey per team
+synthetic: true
+question: How do engineers rate their developer experience?
+definition: Developer experience score (0–100) from a monthly survey; the program value is the median of the latest
+  team scores. In production this comes from a developer experience survey; here the survey responses are synthetic.
+formula: |-
+  latest = most recent DXI-style survey per team
+  value  = median(latest scores)
+events:
+- survey.snapshot
+target:
+  op: '>='
+  value: 65
+  warn: 55
+  note: Team goal — median score ≥ 65.
+benchmark:
+  kind: by-design
+  label: No benchmark by design
+  summary: 'No benchmark shown: published developer experience indices are proprietary vendor datasets.'
+  sources: []
+xmr: false
+related:
+- enps
+format: number

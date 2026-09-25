@@ -1,0 +1,37 @@
+id: enps
+order: 720
+tab: people
+name: Employee NPS
+short: eNPS
+domain: People
+column: synthetic
+levels:
+- leading
+source: survey (synthetic)
+unit: pts
+decimals: 0
+direction: higher-better
+window: latest survey per team
+synthetic: true
+question: Would our people recommend working here?
+definition: Employee Net Promoter Score (−100…100) from a survey each PI; the program value is the median of the
+  latest team scores. Synthetic survey data.
+formula: |-
+  latest = most recent eNPS survey per team
+  value  = median(latest scores)
+events:
+- survey.snapshot
+target:
+  op: '>='
+  value: 20
+  warn: 0
+  note: Team goal — eNPS ≥ 20.
+benchmark:
+  kind: by-design
+  label: No benchmark by design
+  summary: No benchmark shown; eNPS norms vary by industry and survey method.
+  sources: []
+xmr: false
+related:
+- dxi
+format: number

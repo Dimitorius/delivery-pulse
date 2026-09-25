@@ -1,0 +1,39 @@
+id: incident-mttr
+order: 318
+tab: quality
+name: Incident Time to Restore (median)
+short: Time to restore P50
+domain: Quality & Reliability
+column: lagging
+levels:
+- lagging
+source: incident tool
+unit: min
+decimals: 0
+direction: lower-better
+window: rolling 28 days
+question: How long do customers feel an incident?
+definition: Time from impact start to service restored, for all incidents (not only deployment failures). Traditionally
+  a mean ("MTTR"); reported here as the median.
+formula: |-
+  value = P50(resolvedAt − startedAt, minutes) over incidents resolved in the window; also P85
+events:
+- incident.opened
+- incident.resolved
+target:
+  op: <=
+  value: 60
+  warn: 120
+  note: Team goal — service restored within an hour.
+benchmark:
+  kind: team-goal
+  label: Team goal, not a benchmark
+  summary: DORA measures recovery from failed deployments (see that metric); for all incidents the threshold is
+    ours.
+  sources: []
+minSample: 10
+xmr: false
+related:
+- failed-deployment-recovery-time
+- mtta
+format: number

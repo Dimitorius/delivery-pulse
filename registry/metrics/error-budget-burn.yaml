@@ -1,0 +1,37 @@
+id: error-budget-burn
+order: 322
+tab: quality
+name: Error Budget Burn Rate
+short: Error budget burn (7 d)
+domain: Quality & Reliability
+column: leading
+levels:
+- leading
+source: monitoring
+unit: ×
+decimals: 2
+direction: lower-better
+window: last 7 days
+question: Are we spending the error budget faster than the SLO allows?
+definition: Error rate over the last 7 days divided by the error rate the SLO allows (0.1 %). 1.0 means the budget
+  would be used up exactly at the end of the SLO period; above 1 it runs out early.
+formula: |-
+  value = (bad / total over the last 7 days) / (1 − 99.9 %)
+events:
+- sli.windows
+target:
+  op: <=
+  value: 1
+  warn: 2
+  note: Burn rate ≤ 1 (spending at or below the SLO pace).
+benchmark:
+  kind: method
+  label: Method, not a benchmark
+  summary: 'Method: burn-rate alerting from the Google SRE workbook.'
+  sources:
+  - sre-workbook-alerting
+  - sre-book-slo
+xmr: true
+related:
+- slo-attainment
+format: number

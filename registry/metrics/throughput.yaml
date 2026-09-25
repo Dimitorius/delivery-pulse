@@ -1,4 +1,6 @@
 id: throughput
+tab: flow
+pulse: true
 order: 10
 name: Throughput
 short: Throughput
@@ -27,3 +29,15 @@ benchmark:
   summary: No industry benchmark by design — compare with your own history.
   sources: [kanban-guide-2025, vacanti-aamp]
 xmr: true
+related: [cycle-time, wip, mc-how-many]
+aka:
+  safe:
+    name: Flow Velocity
+    eq: "≡"
+    note: "Items completed per period."
+    sources: [safe-measure-and-grow, agility-at-scale-flow]
+  flow:
+    name: Flow Velocity
+    eq: "≡"
+    note: "Flow items completed per period."
+    sources: [flow-framework, kersten-p2p]

@@ -1,0 +1,43 @@
+id: rework-rate
+order: 65
+tab: delivery
+name: Rework Rate
+short: Rework rate
+domain: Delivery · DORA
+column: lagging
+levels:
+- lagging
+source: deploy tool + incidents
+unit: '%'
+decimals: 1
+direction: lower-better
+window: rolling 28 days
+question: How many deployments are unplanned repairs of production incidents?
+definition: 'Share of all deployments that were unplanned and made because of a production incident: rollbacks and
+  hotfixes. DORA’s fifth software delivery metric.'
+formula: |-
+  deploys = all deployments in the window
+  rework  = deploys of kind rollback or hotfix
+  value   = 100 · count(rework) / count(deploys)
+events:
+- deployment
+target:
+  op: <=
+  value: 6
+  warn: 10
+  note: Team goal — at most 6 % (elite profile ~5 %).
+benchmark:
+  kind: research
+  label: DORA metric definition
+  summary: DORA added rework rate as a fifth software delivery metric (2024). No cluster threshold is quoted here.
+  note: In DORA 2025 the performance clusters were replaced by seven team archetypes.
+  sources:
+  - dora-2024
+  - dora-metrics-guide
+  - dora-2025
+minSample: 10
+xmr: false
+related:
+- change-failure-rate
+- failed-deployment-recovery-time
+format: number

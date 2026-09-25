@@ -3,14 +3,21 @@
 // Every event carries `t`, the moment it happened (epoch ms).
 
 import type {
+  CostEntry,
   DependencyLink,
   Deployment,
   Incident,
   Iteration,
+  Milestone,
+  PiObjective,
   PipelineRun,
   Program,
+  Risk,
+  SliWindow,
   StatusName,
+  SurveySnapshot,
   Team,
+  ValueSnapshot,
   WorkItem,
 } from './model'
 
@@ -48,6 +55,18 @@ export type SimEvent = At<
   | { type: 'incident.opened'; incident: Omit<Incident, 'detectedAt' | 'ackedAt' | 'resolvedAt'> }
   | { type: 'incident.acked'; incidentId: string }
   | { type: 'incident.resolved'; incidentId: string }
+  | { type: 'incident.postmortem'; incidentId: string; actionItemIds: string[] }
+  | { type: 'sli.windows'; windows: Omit<SliWindow, 'end'>[] }
+  | { type: 'milestone.planned'; milestone: Omit<Milestone, 'plannedAt' | 'achievedAt'> }
+  | { type: 'milestone.achieved'; milestoneId: string }
+  | { type: 'risk.raised'; risk: Omit<Risk, 'openedAt' | 'closedAt' | 'outcome' | 'history'> }
+  | { type: 'risk.updated'; riskId: string; probability: number; impact: number }
+  | { type: 'risk.closed'; riskId: string; outcome: 'mitigated' | 'occurred' }
+  | { type: 'objective.planned'; objective: Omit<PiObjective, 'actualBv' | 'scoredAt'> }
+  | { type: 'objective.scored'; objectiveId: string; actualBv: number }
+  | { type: 'survey.snapshot'; survey: Omit<SurveySnapshot, 'at'> }
+  | { type: 'cost.entry'; cost: Omit<CostEntry, 'at'> }
+  | { type: 'value.snapshot'; value: Omit<ValueSnapshot, 'at'> }
 >
 
 export type SimEventType = SimEvent['type']

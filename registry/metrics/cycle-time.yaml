@@ -1,4 +1,6 @@
 id: cycle-time
+tab: flow
+pulse: true
 order: 20
 name: Cycle Time
 short: Cycle time P85
@@ -36,3 +38,4 @@ benchmark:
   sources: [kanban-guide-2025, vacanti-aamp]
 minSample: 10
 xmr: true
+related: [throughput, wip, aging-wip, sle-attainment]

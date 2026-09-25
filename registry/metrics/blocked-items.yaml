@@ -1,4 +1,6 @@
 id: blocked-items
+tab: flow
+pulse: true
 order: 130
 name: Blocked Items
 short: Blocked now
@@ -31,3 +33,4 @@ benchmark:
   summary: No industry benchmark; the threshold is ours. Making blockers visible is standard Kanban practice.
   sources: [kanban-guide-scrum-teams]
 xmr: false
+related: [flow-efficiency, overdue-dependencies]

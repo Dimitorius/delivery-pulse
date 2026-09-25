@@ -1,4 +1,6 @@
 id: net-flow
+tab: flow
+pulse: true
 order: 210
 name: Net Flow
 short: Net flow · arrived − finished
@@ -35,3 +37,4 @@ benchmark:
   sources: [littles-law, vacanti-aamp]
 tileSecondary: 2
 xmr: true
+related: [wip, throughput]

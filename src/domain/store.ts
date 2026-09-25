@@ -4,6 +4,13 @@
 import type { SimEvent } from './events'
 import {
   STATUS_CATEGORY,
+  type CostEntry,
+  type Milestone,
+  type PiObjective,
+  type Risk,
+  type SliWindow,
+  type SurveySnapshot,
+  type ValueSnapshot,
   type DependencyLink,
   type Deployment,
   type Incident,
@@ -17,7 +24,7 @@ import {
 
 export interface FeedEntry {
   t: number
-  kind: 'deploy' | 'rollback' | 'incident' | 'resolved' | 'sprint' | 'blocked' | 'ci' | 'dependency' | 'pi'
+  kind: 'deploy' | 'rollback' | 'incident' | 'resolved' | 'sprint' | 'blocked' | 'ci' | 'dependency' | 'pi' | 'milestone' | 'risk' | 'postmortem'
   tone: 'ok' | 'warn' | 'bad' | 'info'
   teamId?: string
   text: string
@@ -42,6 +49,16 @@ export interface Store {
   incidentList: Incident[]
   dependencies: Map<string, DependencyLink>
   dependencyList: DependencyLink[]
+  sli: SliWindow[]
+  milestones: Map<string, Milestone>
+  milestoneList: Milestone[]
+  risks: Map<string, Risk>
+  riskList: Risk[]
+  objectives: Map<string, PiObjective>
+  objectiveList: PiObjective[]
+  surveys: SurveySnapshot[]
+  costs: CostEntry[]
+  values: ValueSnapshot[]
   feed: FeedEntry[]
 }
 
@@ -66,6 +83,16 @@ export function createStore(): Store {
     incidentList: [],
     dependencies: new Map(),
     dependencyList: [],
+    sli: [],
+    milestones: new Map(),
+    milestoneList: [],
+    risks: new Map(),
+    riskList: [],
+    objectives: new Map(),
+    objectiveList: [],
+    surveys: [],
+    costs: [],
+    values: [],
     feed: [],
   }
 }
@@ -241,13 +268,15 @@ export function apply(s: Store, e: SimEvent): void {
       }
       feed(s, {
         t: e.t,
-        kind: d.kind === 'rollback' ? 'rollback' : 'deploy',
-        tone: d.kind === 'rollback' ? 'warn' : 'ok',
+        kind: d.kind === 'regular' ? 'deploy' : 'rollback',
+        tone: d.kind === 'regular' ? 'ok' : 'warn',
         teamId: d.teamId,
         text:
           d.kind === 'rollback'
             ? `rollback · ${d.service}`
-            : `deployed ${d.service} · ${d.mrIds.length} change${d.mrIds.length === 1 ? '' : 's'}`,
+            : d.kind === 'hotfix'
+              ? `hotfix deployed · ${d.service}`
+              : `deployed ${d.service} · ${d.mrIds.length} change${d.mrIds.length === 1 ? '' : 's'}`,
       })
       break
     }
@@ -279,6 +308,73 @@ export function apply(s: Store, e: SimEvent): void {
         teamId: inc.teamId,
         text: `${inc.id} resolved · ${mins} min`,
       })
+      break
+    }
+    case 'incident.postmortem': {
+      const inc = must(s.incidents.get(e.incidentId), 'incident')
+      inc.postmortemAt = e.t
+      inc.actionItemIds = e.actionItemIds
+      feed(s, { t: e.t, kind: 'postmortem', tone: 'info', teamId: inc.teamId, text: `postmortem ${inc.id} · ${e.actionItemIds.length} actions` })
+      break
+    }
+    case 'sli.windows': {
+      for (const w of e.windows) s.sli.push({ ...w, end: e.t })
+      break
+    }
+    case 'milestone.planned': {
+      const m: Milestone = { ...e.milestone, plannedAt: e.t }
+      s.milestones.set(m.id, m)
+      s.milestoneList.push(m)
+      break
+    }
+    case 'milestone.achieved': {
+      const m = must(s.milestones.get(e.milestoneId), 'milestone')
+      m.achievedAt = e.t
+      feed(s, { t: e.t, kind: 'milestone', tone: e.t <= m.due ? 'ok' : 'warn', text: `milestone ${m.name} reached${e.t > m.due ? ' (late)' : ''}` })
+      break
+    }
+    case 'risk.raised': {
+      const r: Risk = { ...e.risk, openedAt: e.t, history: [{ at: e.t, probability: e.risk.probability, impact: e.risk.impact }] }
+      s.risks.set(r.id, r)
+      s.riskList.push(r)
+      break
+    }
+    case 'risk.updated': {
+      const r = must(s.risks.get(e.riskId), 'risk')
+      r.probability = e.probability
+      r.impact = e.impact
+      r.history.push({ at: e.t, probability: e.probability, impact: e.impact })
+      break
+    }
+    case 'risk.closed': {
+      const r = must(s.risks.get(e.riskId), 'risk')
+      r.closedAt = e.t
+      r.outcome = e.outcome
+      if (e.outcome === 'occurred') feed(s, { t: e.t, kind: 'risk', tone: 'bad', teamId: r.ownerTeamId, text: `risk occurred · ${r.title}` })
+      break
+    }
+    case 'objective.planned': {
+      const o: PiObjective = { ...e.objective }
+      s.objectives.set(o.id, o)
+      s.objectiveList.push(o)
+      break
+    }
+    case 'objective.scored': {
+      const o = must(s.objectives.get(e.objectiveId), 'objective')
+      o.actualBv = e.actualBv
+      o.scoredAt = e.t
+      break
+    }
+    case 'survey.snapshot': {
+      s.surveys.push({ ...e.survey, at: e.t })
+      break
+    }
+    case 'cost.entry': {
+      s.costs.push({ ...e.cost, at: e.t })
+      break
+    }
+    case 'value.snapshot': {
+      s.values.push({ ...e.value, at: e.t })
       break
     }
   }

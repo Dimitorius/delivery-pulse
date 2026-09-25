@@ -1,0 +1,46 @@
+id: carry-over
+order: 74
+tab: flow
+name: Carry-over
+short: Carry-over
+domain: Scrum
+column: lagging
+levels:
+- lagging
+source: tracker
+unit: '%'
+decimals: 0
+direction: lower-better
+window: last 3 closed sprints per team
+question: How much of the sprint commitment rolls into the next sprint?
+definition: Share of items committed at sprint planning that were not Done by the sprint end (they carry over).
+formula: |-
+  committed = items committed at planning (last 3 sprints per team)
+  value     = 100 · count(not Done by sprint end) / count(committed)
+events:
+- iteration.committed
+- iteration.closed
+- item.status
+target:
+  op: <=
+  value: 15
+  warn: 25
+  note: Team goal from the elite profile (< 15 %).
+benchmark:
+  kind: team-goal
+  label: Team goal, not a benchmark
+  summary: No research-based benchmark; < 15 % is our team goal.
+  sources: []
+minSample: 10
+xmr: false
+related:
+- say-do-ratio
+- sprint-scope-change
+aka:
+  safe:
+    name: Iteration carry-over
+    eq: ≡
+    note: 'Vocabulary only: SAFe calls sprints iterations.'
+    sources:
+    - safe-pi-objectives
+format: number

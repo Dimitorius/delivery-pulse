@@ -1,0 +1,40 @@
+id: milestone-hit-rate
+order: 234
+tab: program
+name: Milestone Hit Rate
+short: Milestones hit
+domain: Program
+column: lagging
+levels:
+- lagging
+source: tracker
+unit: '%'
+decimals: 0
+direction: higher-better
+window: milestones due in the last 26 weeks
+windowDays: 182
+question: Do we reach program milestones on time?
+definition: Program milestones (PI Beta, PI Release) due in the last 26 weeks that were reached on or before their
+  due date. A milestone is reached when all its features are Done.
+formula: |-
+  due   = milestones with due date in the window
+  value = 100 · count(achievedAt ≤ due) / count(due)
+events:
+- milestone.planned
+- milestone.achieved
+target:
+  op: '>='
+  value: 90
+  warn: 75
+  note: Program goal — 90 % of milestones on time.
+benchmark:
+  kind: team-goal
+  label: Team goal, not a benchmark
+  summary: No research-based benchmark; the threshold is ours.
+  sources: []
+minSample: 10
+xmr: false
+related:
+- critical-path-drift
+- pi-forecast
+format: number

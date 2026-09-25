@@ -1,0 +1,47 @@
+id: sprint-goal-success
+order: 72
+tab: flow
+name: Sprint Goal Success
+short: Sprint goal success
+domain: Scrum
+column: lagging
+levels:
+- lagging
+source: tracker
+unit: '%'
+decimals: 0
+direction: higher-better
+window: last 6 closed sprints per team
+question: How often do we achieve the sprint goal?
+definition: 'Share of closed sprints whose goal was met: every goal item (up to three stories of the sprint’s main
+  feature) Done by the sprint end.'
+formula: |-
+  sprints = last 6 closed sprints of each Scrum team with a goal
+  value   = 100 · count(goal met) / count(sprints)
+events:
+- iteration.committed
+- iteration.closed
+target:
+  op: '>='
+  value: 80
+  warn: 70
+  note: Team goal from the elite profile (~85 %).
+benchmark:
+  kind: team-goal
+  label: Team goal, not a benchmark
+  summary: No research-based benchmark; the Scrum Guide makes the Sprint Goal the commitment of the sprint.
+  sources: []
+minSample: 10
+xmr: false
+related:
+- say-do-ratio
+- carry-over
+aka:
+  safe:
+    name: Iteration Goals achieved
+    eq: ≈
+    note: SAFe teams set iteration goals; vocabulary differs, the measure is the same idea.
+    flag: ⚠ SAFe does not define this exact ratio.
+    sources:
+    - safe-pi-objectives
+format: number

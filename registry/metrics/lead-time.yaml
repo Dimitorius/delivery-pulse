@@ -1,0 +1,57 @@
+id: lead-time
+order: 25
+tab: flow
+name: Lead Time
+short: Lead time P85
+domain: Flow
+column: lagging
+levels:
+- lagging
+source: tracker
+unit: d
+decimals: 1
+direction: lower-better
+window: rolling 28 days
+question: How long does a request wait from being created until it is done?
+definition: Elapsed calendar time from creating a work item (it enters the backlog) until Done — the customer view,
+  including time waiting in the backlog before anyone starts. Shown as the 85th percentile with the median alongside.
+formula: |-
+  done  = flow items with Done in the window
+  lead  = doneAt − createdAt   (calendar days)
+  value = P85(lead); also P50
+events:
+- item.created
+- item.status
+target:
+  note: No target — read it together with its related metrics.
+benchmark:
+  kind: by-design
+  label: No benchmark by design
+  summary: No industry benchmark by design; lead time depends on how far ahead the backlog is refined.
+  sources:
+  - kanban-guide-2025
+  - vacanti-aamp
+minSample: 10
+xmr: true
+related:
+- cycle-time
+- throughput
+aka:
+  safe:
+    name: Flow Time
+    eq: ≈
+    note: 'SAFe: from when a backlog item enters the workflow to its release; here created → Done.'
+    flag: ⚠ Start and end points differ from SAFe’s wording.
+    sources:
+    - safe-measure-and-grow
+    - agility-at-scale-flow
+  flow:
+    name: Flow Time
+    eq: ≈
+    note: 'Flow Framework: wall-clock time from when a flow item is accepted into the value stream to completion;
+      here created → Done.'
+    flag: ⚠ Start point (created vs accepted) differs.
+    sources:
+    - flow-framework
+    - kersten-p2p
+format: number

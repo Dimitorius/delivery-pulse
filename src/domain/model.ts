@@ -96,6 +96,10 @@ export interface WorkItem {
   piId?: string
   /** SAFe uncommitted (stretch) PI objective: planned, but not in the PI commitment. */
   piStretch?: boolean
+  /** Bugs: where the defect was found. "production" = escaped defect. */
+  foundIn?: 'production' | 'internal'
+  /** Action item from the postmortem of this incident. */
+  postmortemOf?: string
   createdAt: number
   status: StatusName
   transitions: StatusTransition[]
@@ -172,7 +176,8 @@ export interface Deployment {
   service: string
   at: number
   mrIds: string[]
-  kind: 'regular' | 'rollback'
+  /** rollback / hotfix = unplanned deployments made because of a production incident (DORA rework). */
+  kind: 'regular' | 'rollback' | 'hotfix'
 }
 
 export interface Incident {
@@ -186,40 +191,83 @@ export interface Incident {
   ackedAt?: number
   resolvedAt?: number // service restored
   deploymentId?: string // set when a deployment caused it
+  /** The change (MR) identified as the cause in the postmortem. */
+  causeMrId?: string
+  postmortemAt?: number
+  actionItemIds?: string[]
 }
 
-// ---- Canon entities not simulated yet (stage 2+) ---------------------------
+/** Service level indicator for one service over one calendar hour. */
+export interface SliWindow {
+  service: string
+  teamId: TeamId
+  start: number
+  end: number
+  total: number
+  bad: number
+}
+
+// ---- Program & value entities ---------------------------------------------
 
 export interface Risk {
   id: string
   title: string
   probability: number // 0..1
-  impact: number // cost units
+  impact: number // person-days if it occurs
   ownerTeamId?: TeamId
+  piId?: string
   openedAt: number
   closedAt?: number
+  outcome?: 'mitigated' | 'occurred'
+  /** Probability/impact history for the risk register. */
+  history: { at: number; probability: number; impact: number }[]
 }
 
 export interface Milestone {
   id: string
   name: string
+  piId: string
   due: number
+  featureIds: string[]
+  plannedAt: number
   achievedAt?: number
+}
+
+/** SAFe PI objective: one per planned feature, with business value set by Business Owners. */
+export interface PiObjective {
+  id: string
+  piId: string
+  teamId: TeamId
+  featureId: string
+  title: string
+  committed: boolean
+  plannedBv: number
+  actualBv?: number
+  scoredAt?: number
 }
 
 export interface SurveySnapshot {
   id: string
   at: number
-  instrument: string
-  scores: Record<string, number>
+  teamId?: TeamId
+  instrument: 'DXI' | 'eNPS'
+  score: number
+  responses: number
 }
 
 export interface CostEntry {
   id: string
   at: number
-  teamId?: TeamId
-  amount: number
-  category: string
+  teamId: TeamId
+  amount: number // k€
+  category: 'people' | 'tooling'
+}
+
+export interface ValueSnapshot {
+  id: string
+  at: number
+  measure: 'csat'
+  value: number
 }
 
 export interface Annotation {

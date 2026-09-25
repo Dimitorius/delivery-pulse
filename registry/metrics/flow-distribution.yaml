@@ -1,0 +1,53 @@
+id: flow-distribution
+order: 27
+tab: flow
+name: Flow Distribution
+short: Flow distribution · features
+domain: Flow
+column: lagging
+levels:
+- lagging
+source: tracker
+unit: '%'
+decimals: 0
+direction: neutral
+window: rolling 28 days
+question: 'What kinds of work are we finishing: features, defects, debt, risk?'
+definition: 'Share of finished items by flow item type (Flow Framework: features, defects, debt, risks). The tile
+  shows the feature share; the others are alongside.'
+formula: |-
+  done  = flow items with Done in the window
+  share = 100 · count(done of type) / count(done)
+events:
+- item.status
+target:
+  note: No target — read it together with its related metrics.
+benchmark:
+  kind: by-design
+  label: No benchmark by design
+  summary: No universal target mix; the right distribution depends on product strategy.
+  sources:
+  - flow-framework
+  - kersten-p2p
+xmr: false
+tileSecondary: 3
+related:
+- investment-allocation
+- unplanned-work
+aka:
+  safe:
+    name: Flow Distribution
+    eq: ≈
+    note: SAFe splits by backlog item type (e.g. features, enablers, defects); here the four Flow Framework types.
+    flag: ⚠ Category sets differ.
+    sources:
+    - safe-measure-and-grow
+    - agility-at-scale-flow
+  flow:
+    name: Flow Distribution
+    eq: ≡
+    note: Same four flow item types.
+    sources:
+    - flow-framework
+    - kersten-p2p
+format: number
