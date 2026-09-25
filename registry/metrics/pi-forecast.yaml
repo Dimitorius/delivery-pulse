@@ -41,3 +41,8 @@ benchmark:
   sources: [vacanti-wwibd, vacanti-aamp]
 xmr: false
 related: [mc-how-many, forecast-accuracy, pi-predictability]
+changelog:
+  - date: "2026-09-25"
+    change: "Teams are simulated jointly (the PI is done when the last team is done) instead of pooling throughput."
+  - date: "2026-09-25"
+    change: "Throughput sampled in weekly blocks over the last 30 development days, IP iterations excluded; forecast covers committed scope only."

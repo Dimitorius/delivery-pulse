@@ -14,7 +14,7 @@ direction: higher-better
 window: milestones due in the last 26 weeks
 windowDays: 182
 question: Do we reach program milestones on time?
-definition: Program milestones (PI Beta, PI Release) due in the last 26 weeks that were reached on or before their
+definition: Program milestones (PI Beta at the end of development iteration 3, PI Release at the end of iteration 4) due in the last 26 weeks that were reached on or before their
   due date. A milestone is reached when all its features are Done.
 formula: |-
   due   = milestones with due date in the window
@@ -38,3 +38,6 @@ related:
 - critical-path-drift
 - pi-forecast
 format: number
+changelog:
+  - date: "2026-09-25"
+    change: "PI Beta milestone moved from the end of development iteration 2 to iteration 3."

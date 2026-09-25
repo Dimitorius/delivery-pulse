@@ -47,3 +47,8 @@ aka:
     eq: "≡"
     note: "Vocabulary only: SAFe calls sprints iterations."
     sources: [safe-pi-objectives]
+changelog:
+  - date: "2026-09-25"
+    change: "Target changed from \"≥ 80 %\" to the 80–90 % corridor; \"possible sandbagging\" flag when every one of a team's last 3 sprints is above 95 % (Dmitry's review)."
+  - date: "2026-09-25"
+    change: "Sample size n is now the number of committed items with points (low confidence below 10)."

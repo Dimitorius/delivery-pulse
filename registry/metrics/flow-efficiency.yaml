@@ -59,3 +59,6 @@ aka:
     eq: "≡"
     note: "Active time as a share of flow time."
     sources: [flow-framework, kersten-p2p]
+changelog:
+  - date: "2026-09-25"
+    change: "Benchmark shown as disputed: Kanban University and ASOS positions side by side (Dmitry's review)."

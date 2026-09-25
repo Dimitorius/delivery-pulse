@@ -8,8 +8,24 @@ import { DEFAULT_SEED } from '../sim/simulator'
 import type { Status } from '../metrics/evaluate'
 import { Stabilizer } from './hysteresis'
 import { PROGRAM_SCOPE } from './pulse'
+import { parseHash, routeHash, type Route } from './route'
 
 export const SPEEDS = [0, 1, 10, 100] as const
+export type Lens = 'default' | 'safe' | 'flow'
+export const LENSES: { id: Lens; label: string }[] = [
+  { id: 'default', label: 'Default' },
+  { id: 'safe', label: 'SAFe' },
+  { id: 'flow', label: 'Flow Framework' },
+]
+
+function loadLens(): Lens {
+  try {
+    const v = localStorage.getItem('dp.lens')
+    return v === 'safe' || v === 'flow' ? v : 'default'
+  } catch {
+    return 'default'
+  }
+}
 export type Speed = (typeof SPEEDS)[number]
 
 interface AppState {
@@ -18,9 +34,13 @@ interface AppState {
   version: number
   speed: Speed
   scope: string
-  selected: string | null
+  route: Route
+  lens: Lens
   setSpeed(speed: Speed): void
   setScope(scope: string): void
+  setLens(lens: Lens): void
+  navigate(route: Route): void
+  /** Open a metric's page. */
   select(metricId: string | null): void
 }
 
@@ -35,7 +55,8 @@ export const useApp = create<AppState>((set) => ({
   version: 0,
   speed: 1,
   scope: PROGRAM_SCOPE,
-  selected: null,
+  route: typeof location === 'undefined' ? { page: 'pulse' } : parseHash(location.hash),
+  lens: typeof localStorage === 'undefined' ? 'default' : loadLens(),
   setSpeed(speed) {
     post({ type: 'speed', speed })
     set({ speed })
@@ -43,10 +64,28 @@ export const useApp = create<AppState>((set) => ({
   setScope(scope) {
     set({ scope })
   },
-  select(selected) {
-    set({ selected })
+  setLens(lens) {
+    try {
+      localStorage.setItem('dp.lens', lens)
+    } catch {
+      /* per-viewer convenience only */
+    }
+    set({ lens })
+  },
+  navigate(route) {
+    const hash = routeHash(route)
+    if (location.hash !== hash) location.hash = hash
+    set({ route })
+    window.scrollTo(0, 0)
+  },
+  select(metricId) {
+    if (metricId) useApp.getState().navigate({ page: 'metric', metricId })
   },
 }))
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('hashchange', () => useApp.setState({ route: parseHash(location.hash) }))
+}
 
 function post(msg: ToWorker) {
   worker?.postMessage(msg)

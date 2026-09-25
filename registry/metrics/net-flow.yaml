@@ -38,3 +38,6 @@ benchmark:
 tileSecondary: 2
 xmr: true
 related: [wip, throughput]
+changelog:
+  - date: "2026-09-25"
+    change: "Tile label made explicit: \"arrived − finished\"."

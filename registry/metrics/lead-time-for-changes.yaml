@@ -37,3 +37,6 @@ benchmark:
 minSample: 10
 xmr: true
 related: [deployment-frequency, time-to-merge, pr-size]
+changelog:
+  - date: "2026-09-25"
+    change: "Benchmark labelled \"DORA 2024 performance clusters\", with a note on the DORA 2025 archetypes."

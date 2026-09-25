@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { buildStore } from '../domain/store'
 import { HISTORY_W, workToTime } from '../sim/calendar'
 import { DEFAULT_SEED, Simulator } from '../sim/simulator'
-import { PROGRAM_SCOPE, TREND_WEEKS, computePulse, weekAnchor } from './pulse'
+import { METRICS } from '../metrics/registry'
+import { PROGRAM_SCOPE, TREND_WEEKS, computePulse, computeTile, weekAnchor } from './pulse'
 
 describe('Pulse screen data', () => {
   const store = buildStore(new Simulator(DEFAULT_SEED).advanceToWork(HISTORY_W))
@@ -35,6 +36,13 @@ describe('Pulse screen data', () => {
     expect(p.forecast!.result.value).toBeLessThanOrEqual(95)
     expect(p.tiles.filter((t) => t.status === 'bad')).toHaveLength(0)
     expect(p.tiles.filter((t) => t.status === 'warn').length).toBeLessThanOrEqual(1)
+  })
+
+  it('elite baseline on every tab: none of the 54 tiles off target, at most 3 near the limit', () => {
+    const teamIds = store.teams.map((t) => t.id)
+    const tiles = METRICS.map((d) => computeTile(d, store, now, teamIds))
+    expect(tiles.filter((t) => t.status === 'bad').map((t) => t.def.id)).toEqual([])
+    expect(tiles.filter((t) => t.status === 'warn').length).toBeLessThanOrEqual(3)
   })
 
   it('anchors trend points on Monday 00:00 UTC', () => {

@@ -20,7 +20,7 @@ import {
   isIpIteration,
   workToTime,
 } from './calendar'
-import { BUG_SYMPTOMS, DEBT_TASKS, POSTMORTEM_ACTIONS, PROGRAM, RISK_TITLES, SERVICE_TRAFFIC, STORY_VERBS, TEAMS, VOCAB } from './org'
+import { BUG_SYMPTOMS, DEBT_TASKS, FEATURE_SUFFIXES, POSTMORTEM_ACTIONS, PROGRAM, RISK_TITLES, SERVICE_TRAFFIC, STORY_VERBS, TEAMS, VOCAB } from './org'
 import { ELITE_PROFILE, type Profile } from './profile'
 import { Rng } from './rng'
 import { Scheduler } from './scheduler'
@@ -476,8 +476,8 @@ export class Simulator {
   private createFeature(tr: TeamRt, piId: string | undefined, piStretch = false): FeatureRt {
     const names = VOCAB[tr.team.id].features
     const n = tr.featureSeq++
-    const phase = Math.floor(n / names.length)
-    const title = names[n % names.length] + (phase ? ` · phase ${phase + 1}` : '')
+    const round = Math.floor(n / names.length)
+    const title = names[n % names.length] + (round ? ` · ${FEATURE_SUFFIXES[(round - 1) % FEATURE_SUFFIXES.length]}${round > FEATURE_SUFFIXES.length ? ` ${Math.ceil(round / FEATURE_SUFFIXES.length)}` : ''}` : '')
     const item = this.createItem(tr, {
       type: 'feature',
       title,
@@ -988,7 +988,7 @@ export class Simulator {
         milestone: { id, name: `PI ${n + 1} · ${name}`, piId, due: workToTime(dueW), featureIds: features.map((f) => f.item.id) },
       })
     }
-    plan('Beta', startW + 2 * SPRINT_W, streams.flatMap((t) => committed(t).slice(0, 1)))
+    plan('Beta', startW + 3 * SPRINT_W, streams.flatMap((t) => committed(t).slice(0, 1)))
     plan('Release', startW + DEV_ITERATIONS_PER_PI * SPRINT_W, this.scrumTeams.flatMap((t) => committed(t).slice(0, 2)))
     // PI objectives with business value (committed and uncommitted).
     this.objectivesRt = []

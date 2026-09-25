@@ -37,3 +37,6 @@ benchmark:
 minSample: 10
 xmr: false
 related: [rework-rate, failed-deployment-recovery-time, deployment-frequency]
+changelog:
+  - date: "2026-09-25"
+    change: "Benchmark labelled \"DORA 2024 performance clusters\", with a note on the DORA 2025 archetypes."

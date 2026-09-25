@@ -2,7 +2,7 @@
 
 Live delivery, flow and program metrics for Delivery Managers and Technical Program Managers.
 
-**Status:** stage 1 — seeded event simulator, 17 live metrics and the Pulse screen. Live: https://dimitorius.github.io/delivery-pulse/ · Spec: [docs/SPEC.md](docs/SPEC.md) · Stage notes: [docs/stage-1.md](docs/stage-1.md).
+**Status:** stage 2 — seeded event simulator, the core 50 live metrics (+4 synthetic), all domain tabs, full metric pages and a framework lens (Default / SAFe / Flow Framework). Live: https://dimitorius.github.io/delivery-pulse/ · Spec: [docs/SPEC.md](docs/SPEC.md) · Stage notes: [stage 1](docs/stage-1.md), [stage 2](docs/stage-2.md).
 
 ## What it will be
 

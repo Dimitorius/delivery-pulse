@@ -35,3 +35,6 @@ benchmark:
   sources: [dora-2024, dora-metrics-guide, redmonk-dora-2024, dora-2025, redmonk-dora-2025, agility-at-scale-dora-2025]
 xmr: true
 related: [lead-time-for-changes, change-failure-rate]
+changelog:
+  - date: "2026-09-25"
+    change: "Benchmark labelled \"DORA 2024 performance clusters\", with a note on the DORA 2025 archetypes."

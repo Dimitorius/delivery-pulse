@@ -54,7 +54,19 @@ export function currentPi(ctx: MetricContext) {
   return ctx.store.iterationList.find((it) => it.kind === 'pi' && it.start <= ctx.asOf && ctx.asOf < it.end)
 }
 
+/** Trial-level detail of the PI forecast (for the Forecast tab histogram). */
+export function piForecastDetail(ctx: MetricContext): { days: number[]; daysLeft: number } | null {
+  const r = piForecastInternal(ctx)
+  return r.detail ?? null
+}
+
 export const piForecast: MetricCompute = (ctx) => {
+  const { detail: _detail, ...result } = piForecastInternal(ctx)
+  void _detail
+  return result
+}
+
+function piForecastInternal(ctx: MetricContext): MetricResult & { detail?: { days: number[]; daysLeft: number } } {
   const pi = currentPi(ctx)
   const scope = pi
     ? ctx.store.itemList.filter((i) => i.type === 'story' && i.piId === pi.id && !i.piStretch && inScope(ctx, i.teamId) && i.createdAt <= ctx.asOf)
@@ -115,6 +127,7 @@ export const piForecast: MetricCompute = (ctx) => {
       { label: 'working days left', value: daysLeft },
     ],
     n: days.length,
+    detail: { days, daysLeft },
     records: remaining.map((i) => ({ id: i.id, teamId: i.teamId, label: i.title, value: 1, detail: i.status })),
     note: `${pi.name}: ${remaining.length} of ${scope.length} stories remaining · daily samples (newest first) ${samples}`,
   }

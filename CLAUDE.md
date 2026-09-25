@@ -26,15 +26,16 @@ React + TypeScript + Vite, ECharts, Zustand, simulator in a Web Worker, Vitest. 
 - `npm run baseline` — tile statuses at the end of the history and day by day through the live PI 4
 
 ## Current stage
-Stages 0–1 done (live at https://dimitorius.github.io/delivery-pulse/). Stage 1 summary and implementation decisions: `docs/stage-1.md`. Next: stage 2 — core 50 metrics, all tabs, metric page. See SPEC §11.
+Stages 0–2 done (live at https://dimitorius.github.io/delivery-pulse/). Summaries and decisions: `docs/stage-1.md`, `docs/stage-2.md`. Next: stage 3 — catalog ~180, synthetic, Library, symptoms (Diagnose), scenarios (Inject), Learn; Tour. See SPEC §11.
 
 ## Code map
 - `src/domain/` — canonical entities, event log types, projection store (metrics read only this).
 - `src/sim/` — seeded discrete-event simulator (`profile.ts` = elite calibration knobs), calendar, Web Worker.
 - `src/metrics/` — compute functions (`defs/`), stats (nearest-rank percentiles), XmR, targets; reference tests in `reference.test.ts`.
 - `registry/metrics/*.yaml` — metric metadata (source of truth), `registry/sources.yaml` — shared sources.
-- `src/app/` — Pulse data layer + Zustand state; `src/ui/` — React components (ECharts via `EChart.tsx`).
+- `src/app/` — Pulse data layer, Zustand state, hash routes (`route.ts`), framework lens (`lens.ts`), hysteresis; `src/ui/` — React components (ECharts via `EChart.tsx`): `TabPage`/`TabCharts` per tab, `MetricPage` (full metric page).
+- Registry fields: `tab`, `pulse` (on the Pulse screen), `windowDays`, `minSample`, `synthetic`, `related`, `aka` (lens: ≡/≈, ≈ needs a ⚠ flag), `changelog`.
 - Adding a metric = YAML + compute in `defs/index.ts` + `describe('metric:<id>')` reference test (registry test enforces all three).
 - After changing `src/sim/profile.ts` run `npm run calibrate`, `npm run baseline` and `npm test` (calibration bands + elite baseline test).
-- The simulator is chaotic: any change to the order or number of RNG draws reshuffles the whole history. New subsystems must draw from their own `Rng` stream (seeded from the main seed) so the curated history (seed 399, picked by `scripts/seed-search.ts`) stays put. If the main stream must change, re-run the seed search.
+- The simulator is chaotic: any change to the order or number of RNG draws reshuffles the whole history. New subsystems must draw from their own `Rng` stream (seeded from the main seed) so the curated history (seed 167, picked by `scripts/seed-search.ts` against all 50 metrics) stays put. If the main stream must change, re-run the seed search.
 - Status rules (review 25.09): `minSample` → low confidence (not coloured); range targets (Say/Do 80–90 %); hysteresis (3 updates) in `src/app/hysteresis.ts`; Signals = XmR + off-target tiles, Watch items = aging items + overdue deps.

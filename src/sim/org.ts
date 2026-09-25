@@ -70,3 +70,6 @@ export const SERVICE_TRAFFIC: Record<string, number> = {
   onboarding: 2_000,
   platform: 60_000,
 }
+
+/** Suffixes for follow-up features after the base feature names are used up. */
+export const FEATURE_SUFFIXES = ['mobile', 'EU rollout', 'B2B', 'v2', 'accessibility', 'performance', 'analytics', 'partners', 'APAC', 'wallets', 'self-service', 'hardening']
