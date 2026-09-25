@@ -22,6 +22,16 @@ React + TypeScript + Vite, ECharts, Zustand, simulator in a Web Worker, Vitest. 
 - `npm run dev` — local dev server
 - `npm test` — tests
 - `npm run build` — production build (must pass before pushing)
+- `npm run calibrate` — print every metric over the simulated history
 
 ## Current stage
-Stage 0 done (deploy pipeline, live at https://dimitorius.github.io/delivery-pulse/). In progress: stage 1 — event model, seeded simulator, ~15 metrics, Pulse screen. See SPEC §11.
+Stages 0–1 done (live at https://dimitorius.github.io/delivery-pulse/). Stage 1 summary and implementation decisions: `docs/stage-1.md`. Next: stage 2 — core 50 metrics, all tabs, metric page. See SPEC §11.
+
+## Code map
+- `src/domain/` — canonical entities, event log types, projection store (metrics read only this).
+- `src/sim/` — seeded discrete-event simulator (`profile.ts` = elite calibration knobs), calendar, Web Worker.
+- `src/metrics/` — compute functions (`defs/`), stats (nearest-rank percentiles), XmR, targets; reference tests in `reference.test.ts`.
+- `registry/metrics/*.yaml` — metric metadata (source of truth), `registry/sources.yaml` — shared sources.
+- `src/app/` — Pulse data layer + Zustand state; `src/ui/` — React components (ECharts via `EChart.tsx`).
+- Adding a metric = YAML + compute in `defs/index.ts` + `describe('metric:<id>')` reference test (registry test enforces all three).
+- After changing `src/sim/profile.ts` run `npm run calibrate` and `npm test` (calibration bands).

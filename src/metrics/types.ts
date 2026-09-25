@@ -27,6 +27,8 @@ export interface MetricResult {
   /** Sample size the value was computed from. */
   n: number
   records: TraceRecord[]
+  /** Column label for TraceRecord.value when it differs from the metric unit. */
+  recordValue?: string
   note?: string
 }
 

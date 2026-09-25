@@ -17,4 +17,10 @@ function yaml(): Plugin {
 export default defineConfig({
   base: '/delivery-pulse/',
   plugins: [react(), yaml()],
+  build: {
+    chunkSizeWarningLimit: 600, // tree-shaken ECharts is ~530 kB (180 kB gzip), cached separately
+    rollupOptions: {
+      output: { manualChunks: (id) => (id.includes('node_modules/echarts') || id.includes('node_modules/zrender') ? 'echarts' : undefined) },
+    },
+  },
 })

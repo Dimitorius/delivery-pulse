@@ -51,7 +51,8 @@ export const ELITE_PROFILE = {
   initialVelocityPerDev: 7, // points per dev per sprint before history exists
   commitFactor: 1.0, // commitment = velocity × factor
   debtShare: 0.18, // share of sprint commitment reserved for tech debt / KTLO tasks
-  piLoad: 0.75, // share of PI capacity filled with feature stories at PI planning
+  piLoad: 0.6, // share of PI capacity committed to feature stories at PI planning
+  piStretchLoad: 0.15, // uncommitted (stretch) objectives on top of the commitment
   depPerFeature: 0.35, // chance a stream feature needs something from Platform
   scopeGrowthProb: 0.3, // per team per sprint: a story is discovered mid-PI
   unplannedPerHour: 0.04, // scrum team interrupts (bugs, urgent requests)

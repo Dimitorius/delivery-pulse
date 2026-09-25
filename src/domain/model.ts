@@ -94,6 +94,8 @@ export interface WorkItem {
   /** false = unplanned work (interrupts, expedite, production bugs). */
   planned: boolean
   piId?: string
+  /** SAFe uncommitted (stretch) PI objective: planned, but not in the PI commitment. */
+  piStretch?: boolean
   createdAt: number
   status: StatusName
   transitions: StatusTransition[]

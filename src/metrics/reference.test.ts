@@ -300,6 +300,26 @@ describe('metric:pi-forecast', () => {
     expect(ASOF).toBe(Date.UTC(2026, 5, 29))
   })
 
+  it('Monte Carlo: the program is done when the last team is done (no pooling)', () => {
+    const f = new Fixture()
+    f.at(day(-30), { type: 'iteration.planned', iteration: { id: 'PI-9', kind: 'pi', name: 'PI 9', index: 8, start: day(-30), end: Date.UTC(2026, 6, 31) } })
+    for (let i = 0; i < 6; i++) f.item(`A-${i}`, 'a', { piId: 'PI-9', createdAt: day(-30) }) // A: 6 remaining
+    for (let i = 0; i < 2; i++) f.item(`B-${i}`, 'b', { piId: 'PI-9', createdAt: day(-30) }) // B: 2 remaining
+    let n = 0
+    for (let d = 27; n < 20; d--) {
+      const dow = new Date(day(d)).getUTCDay()
+      if (dow === 0 || dow === 6) continue
+      const doneAt = day(d) + hours(12)
+      f.flow(`XA-${n}`, 'a', doneAt - hours(3), doneAt).flow(`XB-${n}`, 'b', doneAt - hours(3), doneAt) // 1/day each
+      n++
+    }
+    // A needs 6 days, B needs 2 → program needs max(6, 2) = 6 working days → Mon 6 Jul 17:00.
+    // (Pooled throughput 2/day would wrongly say 8 / 2 = 4 days.)
+    const r = run('pi-forecast', f)
+    expect(sec(r, 'P50 date')).toBe(Date.UTC(2026, 6, 6, 17))
+    expect(r.value).toBe(100)
+  })
+
   it('Monte Carlo sampler: 4 items, daily throughput 0 or 4 → geometric', () => {
     // P(done on day 1) = 1/2, by day 2 = 3/4, by day 3 = 7/8 → P85 = 3 days
     const { days } = monteCarloWhen(4, [0, 4], 4000)

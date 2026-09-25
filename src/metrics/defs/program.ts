@@ -14,6 +14,7 @@ export const overdueDependencies: MetricCompute = (ctx) => {
     value: overdue.length,
     secondary: [{ label: 'open', value: open.length }],
     n: open.length,
+    recordValue: 'overdue d',
     records: overdue.map((d) => ({
       id: d.id,
       teamId: d.fromTeamId,

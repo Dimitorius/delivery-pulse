@@ -21,6 +21,7 @@ export const cycleTime: MetricCompute = (ctx) => {
     value: percentile(values, 85),
     secondary: [{ label: 'P50', value: percentile(values, 50), unit: 'd' }],
     n: done.length,
+    recordValue: 'days',
     records: done.map((i) => ({
       id: i.id,
       teamId: i.teamId,
@@ -45,6 +46,7 @@ export const flowEfficiency: MetricCompute = (ctx) => {
       { label: 'waiting', value: (total - active) / DAY_MS, unit: 'd' },
     ],
     n: done.length,
+    recordValue: 'flow eff. %',
     records: done.map((i, k) => {
       const t = parts[k].active + parts[k].wait
       return {
@@ -65,6 +67,7 @@ export const wip: MetricCompute = (ctx) => {
   return {
     value: items.length,
     n: items.length,
+    recordValue: 'age d',
     records: items.map((i) => ({
       id: i.id,
       teamId: i.teamId,
@@ -90,6 +93,7 @@ export const blockedItems: MetricCompute = (ctx) => {
     value: blocked.length,
     secondary: [{ label: 'of WIP', value: wipCount ? (100 * blocked.length) / wipCount : null, unit: '%' }],
     n: blocked.length,
+    recordValue: 'blocked d',
     records: blocked.map(({ item, block }) => ({
       id: item.id,
       teamId: item.teamId,
@@ -144,6 +148,7 @@ export const agingWip: MetricCompute = (ctx) => {
     value: over.length,
     secondary: [{ label: 'of WIP', value: items.length ? (100 * over.length) / items.length : null, unit: '%' }],
     n: items.length,
+    recordValue: 'age d',
     records: over.map((i) => ({
       id: i.id,
       teamId: i.teamId,

@@ -15,6 +15,7 @@ export const deploymentFrequency: MetricCompute = (ctx) => {
       { label: 'services', value: services },
     ],
     n: deps.length,
+    recordValue: 'changes',
     records: deps.map((d) => ({ id: d.id, teamId: d.teamId, label: d.service, to: d.at, value: d.mrIds.length, detail: `${d.mrIds.length} changes` })),
   }
 }
@@ -26,6 +27,7 @@ export const leadTimeForChanges: MetricCompute = (ctx) => {
     value: percentile(hours, 50),
     secondary: [{ label: 'P85', value: percentile(hours, 85), unit: 'h' }],
     n: mrs.length,
+    recordValue: 'hours',
     records: mrs.map((m, k) => ({
       id: m.id,
       teamId: m.teamId,
@@ -69,6 +71,7 @@ export const failedDeploymentRecovery: MetricCompute = (ctx) => {
     value: percentile(minutes, 50),
     secondary: [{ label: 'P85', value: percentile(minutes, 85), unit: 'min' }],
     n: rows.length,
+    recordValue: 'minutes',
     records: rows.map((r) => ({
       id: r.i.id,
       teamId: r.i.teamId,
@@ -88,6 +91,7 @@ export const prPickupTime: MetricCompute = (ctx) => {
     value: percentile(hours, 50),
     secondary: [{ label: 'P85', value: percentile(hours, 85), unit: 'h' }],
     n: mrs.length,
+    recordValue: 'hours',
     records: mrs.map((m, k) => ({
       id: m.id,
       teamId: m.teamId,

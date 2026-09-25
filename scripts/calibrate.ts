@@ -44,3 +44,9 @@ for (const pi of store.iterationList.filter((i) => i.kind === 'pi')) {
   const byTeam = store.teams.map((t) => `${t.key}:${scope.filter((i) => i.teamId === t.id).length}/${done.filter((i) => i.teamId === t.id).length}`).join(' ')
   console.log(pi.name, 'scope', scope.length, 'done by end', done.length, `(${((100 * done.length) / scope.length).toFixed(0)}%)`, byTeam)
 }
+const pf: string[] = []
+for (let w = 320; w <= HISTORY_W; w += 40) {
+  const r = COMPUTE['pi-forecast']({ store, asOf: workToTime(w), teamIds, windowDays: 28 })
+  pf.push(`${new Date(workToTime(w)).toISOString().slice(5, 10)}:${r.value?.toFixed(0)}`)
+}
+console.log('pi-forecast weekly', pf.join(' '))

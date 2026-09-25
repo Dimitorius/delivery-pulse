@@ -49,6 +49,7 @@ export const sayDoRatio: MetricCompute = (ctx) => {
       { label: 'committed pts', value: committed },
     ],
     n: sprints.length,
+    recordValue: 'say/do %',
     records,
     note: sprints.length ? undefined : 'No closed sprints in scope (Kanban teams have none).',
   }

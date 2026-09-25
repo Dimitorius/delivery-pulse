@@ -28,6 +28,7 @@ interface ItemRt {
   points?: number
   parentId?: string
   piId?: string
+  piStretch?: boolean
   status: StatusName
   effort: number
   remaining: number
@@ -235,11 +236,12 @@ export class Simulator {
       tr.features = []
       const perSprint = this.velocity(tr) * this.p.commitFactor * (1 - this.p.debtShare)
       // Unfinished PI scope from earlier PIs goes first, the roadmap last.
-      const leftover = tr.backlog.filter((i) => i.piId)
-      const roadmap = tr.backlog.filter((i) => !i.piId)
+      const leftover = tr.backlog.filter((i) => i.piId && !i.piStretch)
+      const roadmap = tr.backlog.filter((i) => !i.piId || i.piStretch)
       const capacity = this.velocity(tr) * SPRINTS_PER_PI * this.p.piLoad
       let points = leftover.reduce((s, i) => s + (i.points ?? 0), 0)
       const planned: ItemRt[] = []
+      const stretch: ItemRt[] = []
       while (points < capacity) {
         const before = points
         const stories = this.createFeatureWithStories(tr, id)
@@ -282,6 +284,14 @@ export class Simulator {
           providers.push({ item: provider, needBy })
         }
       }
+      // SAFe uncommitted objectives: planned into the PI, not in the commitment.
+      const stretchCapacity = this.velocity(tr) * SPRINTS_PER_PI * this.p.piStretchLoad
+      let stretchPoints = 0
+      while (stretchPoints < stretchCapacity) {
+        const stories = this.createFeatureWithStories(tr, id, true)
+        stretchPoints += stories.reduce((s, i) => s + (i.points ?? 0), 0)
+        stretch.push(...stories)
+      }
       // Keep a refined roadmap (not PI-committed) so capacity is never idle.
       let roadmapPoints = roadmap.reduce((s, i) => s + (i.points ?? 0), 0)
       while (roadmapPoints < perSprint * 2) {
@@ -289,7 +299,7 @@ export class Simulator {
         roadmapPoints += stories.reduce((s, i) => s + (i.points ?? 0), 0)
         roadmap.push(...stories)
       }
-      tr.backlog = [...leftover, ...planned, ...roadmap]
+      tr.backlog = [...leftover, ...planned, ...stretch, ...roadmap]
     }
     providers.sort((a, b) => a.needBy - b.needBy)
     platform.backlog.unshift(...providers.map((p) => p.item))
@@ -321,7 +331,7 @@ export class Simulator {
       pts += task.points ?? 0
     }
     if (this.rng.chance(this.p.scopeGrowthProb)) {
-      const open = tr.features.filter((f) => f.item.status !== 'Done')
+      const open = tr.features.filter((f) => f.item.status !== 'Done' && f.item.piId === this.piId && !f.item.piStretch)
       if (open.length) {
         const f = this.rng.pick(open)
         const story = this.createStory(tr, this.piId, f.item.id)
@@ -394,6 +404,7 @@ export class Simulator {
       points: spec.points,
       parentId: spec.parentId,
       piId: spec.piId,
+      piStretch: spec.piStretch,
       status: 'Backlog',
       effort,
       remaining: effort,
@@ -408,27 +419,36 @@ export class Simulator {
     return it
   }
 
-  private createFeatureWithStories(tr: TeamRt, piId: string | undefined): ItemRt[] {
-    const feature = this.createFeature(tr, piId)
+  private createFeatureWithStories(tr: TeamRt, piId: string | undefined, piStretch = false): ItemRt[] {
+    const feature = this.createFeature(tr, piId, piStretch)
     const count = this.rng.int(3, 6)
-    for (let i = 0; i < count; i++) feature.stories.push(this.createStory(tr, piId, feature.item.id))
+    for (let i = 0; i < count; i++) feature.stories.push(this.createStory(tr, piId, feature.item.id, piStretch))
     return feature.stories
   }
 
-  private createFeature(tr: TeamRt, piId: string | undefined): FeatureRt {
+  private createFeature(tr: TeamRt, piId: string | undefined, piStretch = false): FeatureRt {
     const names = VOCAB[tr.team.id].features
     const n = tr.featureSeq++
     const phase = Math.floor(n / names.length)
     const title = names[n % names.length] + (phase ? ` · phase ${phase + 1}` : '')
-    const item = this.createItem(tr, { type: 'feature', title, planned: true, piId, flowType: 'feature', investment: 'feature' })
+    const item = this.createItem(tr, {
+      type: 'feature',
+      title,
+      planned: true,
+      piId,
+      piStretch: piStretch || undefined,
+      flowType: 'feature',
+      investment: 'feature',
+    })
     const f: FeatureRt = { item, stories: [] }
     this.features.set(item.id, f)
     tr.features.push(f)
     return f
   }
 
-  private createStory(tr: TeamRt, piId: string | undefined, parentId?: string): ItemRt {
+  private createStory(tr: TeamRt, piId: string | undefined, parentId?: string, piStretch = false): ItemRt {
     return this.createItem(tr, {
+      piStretch: piStretch || undefined,
       type: 'story',
       title: `${this.rng.pick(STORY_VERBS)} ${this.rng.pick(VOCAB[tr.team.id].objects)}`,
       points: this.rng.weighted(STORY_POINTS),
