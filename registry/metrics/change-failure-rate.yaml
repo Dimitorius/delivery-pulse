@@ -1,0 +1,32 @@
+id: change-failure-rate
+order: 50
+name: Change Failure Rate
+short: Change failure rate
+domain: Delivery · DORA
+column: lagging
+levels: [lagging]
+source: deploy tool + incidents
+unit: "%"
+format: number
+decimals: 1
+direction: lower-better
+window: rolling 28 days
+question: How often does a deployment break production?
+definition: >-
+  Share of regular deployments that caused a production incident (the incident
+  record links the deployment).
+formula: |-
+  deploys = regular deployments in the window
+  failed  = deploys referenced by an incident detected by asOf
+  value   = 100 · count(failed) / count(deploys)
+events: [deployment, incident.opened]
+target:
+  op: "<="
+  value: 5
+  warn: 10
+  note: Team goal from the elite profile (3–5 %).
+benchmark:
+  summary: DORA elite cluster — about 5 %.
+  flag: "⚠ Single primary research program (DORA survey); secondary sources re-report it."
+  sources: [dora-2024, dora-2023, redmonk-dora-2024]
+xmr: false

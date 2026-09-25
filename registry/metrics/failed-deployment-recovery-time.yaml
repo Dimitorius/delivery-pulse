@@ -1,0 +1,33 @@
+id: failed-deployment-recovery-time
+order: 60
+name: Failed Deployment Recovery Time
+short: Recovery time P50
+domain: Delivery · DORA
+column: lagging
+levels: [lagging]
+source: deploy tool + incidents
+unit: min
+format: number
+decimals: 0
+direction: lower-better
+window: rolling 28 days
+question: When a deployment breaks production, how fast do we restore service?
+definition: >-
+  Time from a failed deployment to the resolution (service restored) of the incident it
+  caused. Median over incidents resolved in the window. Incidents not caused by a
+  deployment are excluded (they belong to incident MTTR).
+formula: |-
+  incidents = incidents with a deploymentId, resolved in the window
+  recovery  = resolvedAt − deployment.at   (minutes)
+  value     = P50(recovery); also P85
+events: [deployment, incident.opened, incident.resolved]
+target:
+  op: "<="
+  value: 60
+  warn: 120
+  note: Team goal from the elite profile (under one hour).
+benchmark:
+  summary: DORA elite cluster — under one hour.
+  flag: "⚠ Single primary research program (DORA survey); small samples per window — read with the P85."
+  sources: [dora-2024, dora-metrics-guide, redmonk-dora-2024]
+xmr: false

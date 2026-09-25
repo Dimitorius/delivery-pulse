@@ -1,0 +1,36 @@
+id: say-do-ratio
+order: 70
+name: Say/Do Ratio
+short: Say/Do
+domain: Scrum
+column: lagging
+levels: [lagging]
+source: tracker
+unit: "%"
+format: number
+decimals: 0
+direction: higher-better
+window: last 3 closed sprints per team
+question: Do we deliver what we commit to at sprint planning?
+definition: >-
+  Story points of items committed at sprint planning that were Done by the sprint's
+  end, divided by committed points. Items added mid-sprint are not in the
+  commitment. Kanban teams have no sprints and are skipped.
+formula: |-
+  sprints   = last 3 closed sprints of each Scrum team in scope
+  committed = Σ points of items committed at planning
+  delivered = Σ points of those items with doneAt ≤ sprint end
+  value     = 100 · delivered / committed
+events: [iteration.committed, iteration.closed, item.status]
+target:
+  op: ">="
+  value: 80
+  warn: 70
+  note: Team goal 80–90 %. Consistently near 100 % can mean sandbagging.
+benchmark:
+  summary: >-
+    No research-based benchmark. The Scrum Guide defines commitment to the Sprint Goal,
+    not to a ratio; 80–90 % is a practitioner convention.
+  flag: "⚠ Practitioner convention only — no primary benchmark found."
+  sources: [scrum-guide-2020]
+xmr: false

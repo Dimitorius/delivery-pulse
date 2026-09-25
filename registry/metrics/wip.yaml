@@ -1,0 +1,27 @@
+id: wip
+order: 110
+name: Work in Progress
+short: WIP
+domain: Flow
+column: current
+levels: [current, leading]
+source: tracker
+unit: items
+format: number
+decimals: 0
+direction: neutral
+window: at this moment
+question: How many items have we started and not finished?
+definition: >-
+  Items past the commitment point (first In Progress) that are not Done at this moment.
+  By Little's law, average cycle time = average WIP / average throughput, so rising WIP
+  predicts longer cycle times.
+formula: |-
+  value = count(flow items with firstInProgress ≤ asOf and not Done at asOf)
+events: [item.status]
+target:
+  note: No fixed target — set WIP limits per team. Read together with Throughput and Cycle Time.
+benchmark:
+  summary: No industry benchmark by design; the relation to cycle time is Little's law.
+  sources: [kanban-guide-2025, littles-law]
+xmr: true

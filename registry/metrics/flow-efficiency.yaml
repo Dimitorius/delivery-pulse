@@ -1,0 +1,37 @@
+id: flow-efficiency
+order: 120
+name: Flow Efficiency
+short: Flow efficiency
+domain: Flow
+column: current
+levels: [current]
+source: tracker
+unit: "%"
+format: number
+decimals: 0
+direction: higher-better
+window: rolling 28 days
+question: Of the time an item is in flight, how much is someone actually working on it?
+definition: >-
+  Time in active statuses (In Progress, In Review, In QA) divided by total cycle time,
+  summed over items finished in the window. Time flagged as blocked counts as waiting
+  even in an active status. Status-based: it cannot see context switching inside
+  "In Progress".
+formula: |-
+  done   = flow items with Done in the window
+  active = Σ time in active statuses − blocked time
+  total  = Σ (doneAt − first In Progress)
+  value  = 100 · active / total
+events: [item.status, item.blocked, item.unblocked]
+target:
+  op: ">="
+  value: 35
+  warn: 25
+  note: Team goal from the elite profile (35–45 %).
+benchmark:
+  summary: >-
+    Often quoted as 5–15 % for teams that do not manage flow (Kanban University). Real
+    team data from ASOS challenges these figures and the metric's reliability.
+  flag: "⚠ Disputed — the commonly quoted range lacks published data."
+  sources: [kanban-university-fe, asos-fe-survey, asos-fe-flaws]
+xmr: true

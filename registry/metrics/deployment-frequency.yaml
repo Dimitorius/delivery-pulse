@@ -1,0 +1,31 @@
+id: deployment-frequency
+order: 40
+name: Deployment Frequency
+short: Deploys / service / day
+domain: Delivery · DORA
+column: lagging
+levels: [lagging]
+source: ci / deploy tool
+unit: /day
+format: number
+decimals: 2
+direction: higher-better
+window: rolling 28 days
+question: How often do we ship to production?
+definition: >-
+  Regular production deployments per service per working day. Rollbacks are
+  remediation, not delivery, so they are excluded.
+formula: |-
+  deploys = deployments of kind "regular" in the window
+  value   = count(deploys) / working days in window / services in scope
+events: [deployment]
+target:
+  op: ">="
+  value: 1
+  warn: 0.5
+  note: Team goal — every service deploys at least daily; elite teams deploy on demand.
+benchmark:
+  summary: DORA elite cluster — on demand, multiple deploys per day.
+  flag: "⚠ Single primary research program (DORA survey); secondary sources re-report it."
+  sources: [dora-2024, dora-metrics-guide, redmonk-dora-2024]
+xmr: true

@@ -1,0 +1,33 @@
+id: pr-pickup-time
+order: 140
+name: PR Pickup Time
+short: PR pickup P50
+domain: Delivery · PR/CI
+column: current
+levels: [current, leading]
+source: vcs
+unit: h
+format: number
+decimals: 1
+direction: lower-better
+window: rolling 28 days
+question: How long does a merge request wait for its first review?
+definition: >-
+  Time from opening a merge request to the first review activity. Median over merge
+  requests first reviewed in the window. Calendar hours, so nights and weekends show up
+  in the P85.
+formula: |-
+  mrs   = merge requests with firstReviewAt in the window
+  wait  = firstReviewAt − openedAt   (calendar hours)
+  value = P50(wait); also P85
+events: [mr.opened, mr.review.started]
+target:
+  op: "<="
+  value: 4
+  warn: 8
+  note: Team goal from the elite profile (under 4 hours).
+benchmark:
+  summary: No independent research benchmark; published figures come from tool vendors.
+  flag: "⚠ Vendor data only — kept as a team goal, not a benchmark."
+  sources: []
+xmr: true

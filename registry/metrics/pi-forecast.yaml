@@ -1,0 +1,35 @@
+id: pi-forecast
+order: 5
+name: PI Forecast (Monte Carlo When)
+short: On track for the PI?
+domain: Forecast
+column: forecast
+levels: [leading]
+source: tracker
+unit: "%"
+format: number
+decimals: 0
+direction: higher-better
+window: last 20 working days of throughput
+question: Will the remaining PI scope be done by the PI end date?
+definition: >-
+  Monte Carlo simulation (2,000 trials): each trial draws daily story throughput at
+  random from the last 20 working days until the remaining PI stories are done. The value
+  is the share of trials that finish by the PI end; P50/P85 are completion dates.
+formula: |-
+  remaining = PI-planned stories not Done at asOf
+  samples   = stories done in each of the last 20 working days
+  trial     = draw samples with replacement until Σ ≥ remaining → days needed
+  value     = 100 · share(trials with days ≤ working days left in PI)
+events: [iteration.planned, item.created, item.status]
+target:
+  op: ">="
+  value: 85
+  warn: 60
+  note: Program goal — at least 85 % likely to finish the PI scope on time.
+benchmark:
+  summary: >-
+    Method, not a benchmark: throughput-based Monte Carlo forecasting assumes the near
+    future resembles the sampled past. It counts items, not their size.
+  sources: [vacanti-wwibd, vacanti-aamp]
+xmr: false

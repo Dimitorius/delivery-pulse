@@ -1,0 +1,32 @@
+id: lead-time-for-changes
+order: 30
+name: Lead Time for Changes
+short: Change lead time P50
+domain: Delivery · DORA
+column: lagging
+levels: [lagging]
+source: vcs + ci
+unit: h
+format: number
+decimals: 1
+direction: lower-better
+window: rolling 28 days
+question: How fast does a committed change reach production?
+definition: >-
+  Time from the first commit of a merge request until the deployment that put it in
+  production. Median over changes deployed in the window.
+formula: |-
+  changes = merge requests with deployedAt in the window
+  lead    = deployedAt − firstCommitAt   (calendar hours)
+  value   = P50(lead); also P85
+events: [mr.opened, deployment]
+target:
+  op: "<="
+  value: 24
+  warn: 48
+  note: Team goal from the elite profile (P50 under one day).
+benchmark:
+  summary: DORA elite cluster — change lead time under one day.
+  flag: "⚠ Single primary research program (DORA survey); secondary sources re-report it."
+  sources: [dora-2024, dora-metrics-guide, redmonk-dora-2024]
+xmr: true

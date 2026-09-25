@@ -1,0 +1,34 @@
+id: net-flow
+order: 210
+name: Net Flow
+short: Net flow
+domain: Flow
+column: leading
+levels: [leading]
+source: tracker
+unit: /wk
+format: signed
+decimals: 1
+direction: lower-better
+window: rolling 28 days
+question: Are we starting more than we finish?
+definition: >-
+  Items that crossed the commitment point minus items that reached Done, per week.
+  Positive means WIP is growing — cycle times will follow (Little's law). Sign
+  conventions differ between tools; here positive = growing.
+formula: |-
+  arrived  = flow items whose first In Progress is in the window
+  departed = flow items with Done in the window
+  value    = (count(arrived) − count(departed)) / 4 weeks
+events: [item.status]
+target:
+  op: "<="
+  value: 1
+  warn: 3
+  per: team
+  note: Team goal — WIP growth of at most one item per team per week.
+benchmark:
+  summary: No industry benchmark; the link to cycle time is Little's law.
+  flag: "⚠ Sign convention varies between sources."
+  sources: [littles-law, vacanti-aamp]
+xmr: true

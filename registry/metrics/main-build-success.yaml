@@ -1,0 +1,31 @@
+id: main-build-success
+order: 150
+name: Main Build Success
+short: Main green
+domain: Delivery · PR/CI
+column: current
+levels: [current]
+source: ci
+unit: "%"
+format: number
+decimals: 1
+direction: higher-better
+window: rolling 28 days
+question: How often is the main branch pipeline green?
+definition: >-
+  Share of pipeline runs on main that succeeded. Flaky failures (red, then green on a
+  re-run without changes) count as failures — they still stop the line.
+formula: |-
+  runs  = pipeline runs on main finished in the window
+  value = 100 · count(success) / count(runs)
+events: [pipeline.finished]
+target:
+  op: ">="
+  value: 95
+  warn: 90
+  note: Team goal from the elite profile (> 95 %).
+benchmark:
+  summary: No independent research benchmark; published figures come from CI vendors.
+  flag: "⚠ Vendor data only — kept as a team goal, not a benchmark."
+  sources: []
+xmr: false

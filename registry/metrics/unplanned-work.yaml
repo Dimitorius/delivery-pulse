@@ -1,0 +1,31 @@
+id: unplanned-work
+order: 240
+name: Unplanned Work
+short: Unplanned work
+domain: Program
+column: leading
+levels: [leading, lagging]
+source: tracker
+unit: "%"
+format: number
+decimals: 0
+direction: lower-better
+window: rolling 28 days
+question: How much of what we finish was never planned?
+definition: >-
+  Share of finished items that were unplanned — production bugs, urgent requests and
+  expedited Kanban items. A rising share predicts missed sprint and PI commitments.
+formula: |-
+  done  = flow items with Done in the window
+  value = 100 · count(done where planned = false) / count(done)
+events: [item.created, item.status]
+target:
+  op: "<="
+  value: 20
+  warn: 30
+  note: Team goal from the elite profile (15–20 %).
+benchmark:
+  summary: No research-based benchmark found for this exact ratio.
+  flag: "⚠ No primary benchmark — kept as a team goal."
+  sources: []
+xmr: true

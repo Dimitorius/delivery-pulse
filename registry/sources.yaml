@@ -1,0 +1,73 @@
+# Shared source list, referenced by key from metric files.
+dora-2024:
+  title: Accelerate State of DevOps Report 2024
+  publisher: DORA (Google Cloud)
+  year: 2024
+  url: https://dora.dev/research/2024/dora-report/
+dora-2023:
+  title: Accelerate State of DevOps Report 2023
+  publisher: DORA (Google Cloud)
+  year: 2023
+  url: https://dora.dev/research/2023/dora-report/
+dora-metrics-guide:
+  title: "DORA's software delivery performance metrics"
+  publisher: DORA
+  year: 2024
+  url: https://dora.dev/guides/dora-metrics-four-keys/
+redmonk-dora-2024:
+  title: "DORA Report 2024 – A Look at Throughput and Stability"
+  publisher: RedMonk (R. Stephens)
+  year: 2024
+  url: https://redmonk.com/rstephens/2024/11/26/dora2024/
+kanban-guide-2025:
+  title: The Kanban Guide (May 2025)
+  publisher: D. Vacanti & J. Coleman, Kanban Guides
+  year: 2025
+  url: https://kanbanguides.org/the-kanban-guide/
+kanban-guide-scrum-teams:
+  title: The Kanban Guide for Scrum Teams
+  publisher: Scrum.org
+  year: 2021
+  url: https://www.scrum.org/resources/kanban-guide-scrum-teams
+vacanti-aamp:
+  title: Actionable Agile Metrics for Predictability
+  publisher: D. Vacanti (book)
+  year: 2015
+  url: https://leanpub.com/actionableagilemetrics
+vacanti-wwibd:
+  title: When Will It Be Done?
+  publisher: D. Vacanti (book)
+  year: 2018
+  url: https://www.goodreads.com/book/show/40681093-when-will-it-be-done
+scrum-guide-2020:
+  title: The Scrum Guide (2020)
+  publisher: K. Schwaber & J. Sutherland
+  year: 2020
+  url: https://scrumguides.org/scrum-guide.html
+kanban-university-fe:
+  title: "Flow Efficiency: A great metric you probably aren't using"
+  publisher: J. Wester, Kanban University
+  year: 2016
+  url: https://resources.kanban.university/flow-efficiency-a-great-metric-you-probably-arent-using/
+asos-fe-survey:
+  title: "Our survey says… uncovering the real numbers behind flow efficiency"
+  publisher: N. Brown, ASOS Tech Blog
+  url: https://medium.com/asos-techblog/our-survey-says-uncovering-the-real-numbers-behind-flow-efficiency-e54f136b1fab
+wheeler-understanding-variation:
+  title: "Understanding Variation: The Key to Managing Chaos"
+  publisher: D. J. Wheeler (book)
+  year: 2000
+littles-law:
+  title: "Little's Law as Viewed on Its 50th Anniversary"
+  publisher: J. D. C. Little, Operations Research 59(3)
+  year: 2011
+  url: https://doi.org/10.1287/opre.1110.0940
+safe-pi-planning:
+  title: PI Planning
+  publisher: Scaled Agile Framework
+  year: 2023
+  url: https://framework.scaledagile.com/pi-planning
+asos-fe-flaws:
+  title: The many flaws of flow efficiency
+  publisher: N. Brown, ASOS Tech Blog
+  url: https://medium.com/asos-techblog/the-many-flaws-in-flow-efficiency-bc7845ba4c9

@@ -1,0 +1,31 @@
+id: overdue-dependencies
+order: 230
+name: Overdue Dependencies
+short: Overdue deps
+domain: Program
+column: leading
+levels: [leading]
+source: tracker (links)
+unit: items
+format: number
+decimals: 0
+direction: lower-better
+window: at this moment
+question: Which cross-team dependencies are late?
+definition: >-
+  Open dependency links (consumer item needs a provider item from another team) whose
+  need-by date has passed. Counted when either side is in scope.
+formula: |-
+  open  = dependency links created ≤ asOf and not resolved at asOf
+  value = count(open with needBy < asOf); also count(open)
+events: [dependency.created, dependency.resolved]
+target:
+  op: "<="
+  value: 0
+  warn: 1
+  note: Program goal — none overdue.
+benchmark:
+  summary: No industry benchmark; dependencies are made visible at PI Planning on the program board.
+  flag: "⚠ Single source (SAFe); the zero-overdue goal is ours."
+  sources: [safe-pi-planning]
+xmr: false

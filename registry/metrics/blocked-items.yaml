@@ -1,0 +1,32 @@
+id: blocked-items
+order: 130
+name: Blocked Items
+short: Blocked now
+domain: Flow
+column: current
+levels: [current, leading]
+source: tracker
+unit: items
+format: number
+decimals: 0
+direction: lower-better
+window: at this moment
+question: What is stuck right now, and on what?
+definition: >-
+  Work-in-progress items with an open blocker flag at this moment — external blockers
+  or unfinished dependencies on another team.
+formula: |-
+  value = count(WIP items with a block interval covering asOf)
+  also  = share of WIP
+events: [item.blocked, item.unblocked]
+target:
+  op: "<="
+  value: 1
+  warn: 2
+  per: team
+  note: Team goal — at most one blocked item per team at any time.
+benchmark:
+  summary: No industry benchmark; a team-set threshold. Making blockers visible is standard Kanban practice.
+  flag: "⚠ Single source for the practice; the threshold is ours."
+  sources: [kanban-guide-scrum-teams]
+xmr: false

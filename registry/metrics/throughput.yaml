@@ -1,0 +1,27 @@
+id: throughput
+order: 10
+name: Throughput
+short: Throughput
+domain: Flow
+column: lagging
+levels: [lagging]
+source: tracker
+unit: /wk
+format: number
+decimals: 1
+direction: neutral
+window: rolling 28 days
+question: How much work do we finish per week?
+definition: >-
+  Number of work items (stories, bugs, tasks) that reached Done in the window,
+  divided by the number of weeks. Epics and features are containers and are not counted.
+formula: |-
+  done  = flow items with Done in (asOf − 28 d, asOf]
+  value = count(done) / 4 weeks
+events: [item.status]
+target:
+  note: No target — throughput is a capacity signal, not a goal. Watch it with Cycle Time and WIP (Little's law).
+benchmark:
+  summary: No industry benchmark by design — compare with your own history.
+  sources: [kanban-guide-2025, vacanti-aamp]
+xmr: true
