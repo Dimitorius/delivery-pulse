@@ -15,7 +15,7 @@ Dmitry — Senior Delivery Manager / TPM, not a programmer. Explain git/GitHub s
 - Content: ≥2 independent English primary sources per claim, prefer 2023+; flag disputed/single-source claims with ⚠ for Dmitry's final call.
 
 ## Stack
-React + TypeScript + Vite, ECharts, Zustand, simulator in a Web Worker, Vitest. Deployed to GitHub Pages by `.github/workflows/deploy.yml` on push to `main`. Vite `base` is `/delivery-pulse/`.
+React + TypeScript + Vite, ECharts, Zustand, simulator in a Web Worker, Vitest. Deployed to https://dimitorius.github.io/delivery-pulse/ by `.github/workflows/deploy.yml` on push to `main`. Vite `base` is `/delivery-pulse/`.
 
 ## Commands
 - `npm ci` — install
@@ -24,4 +24,4 @@ React + TypeScript + Vite, ECharts, Zustand, simulator in a Web Worker, Vitest. 
 - `npm run build` — production build (must pass before pushing)
 
 ## Current stage
-Stage 0 done (deploy pipeline). Next: stage 1 — event model, seeded simulator, ~15 metrics, Pulse screen. See SPEC §11.
+Stage 0 done (deploy pipeline, live at https://dimitorius.github.io/delivery-pulse/). In progress: stage 1 — event model, seeded simulator, ~15 metrics, Pulse screen. See SPEC §11.
