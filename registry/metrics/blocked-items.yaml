@@ -26,7 +26,8 @@ target:
   per: team
   note: Team goal — at most one blocked item per team at any time.
 benchmark:
-  summary: No industry benchmark; a team-set threshold. Making blockers visible is standard Kanban practice.
-  flag: "⚠ Single source for the practice; the threshold is ours."
+  kind: team-goal
+  label: Our threshold (team-set)
+  summary: No industry benchmark; the threshold is ours. Making blockers visible is standard Kanban practice.
   sources: [kanban-guide-scrum-teams]
 xmr: false

@@ -28,6 +28,8 @@ target:
   per: team
   note: Team goal — at most one item per team beyond its SLE.
 benchmark:
+  kind: by-design
+  label: No benchmark by design
   summary: No industry benchmark by design; Work Item Age against an SLE is a core Kanban practice.
   sources: [kanban-guide-2025, vacanti-wwibd]
 xmr: false

@@ -31,8 +31,10 @@ target:
   warn: 60
   note: Program goal — at least 85 % likely to finish the PI scope on time.
 benchmark:
+  kind: method
+  label: Method, not a benchmark
   summary: >-
-    Method, not a benchmark: throughput-based Monte Carlo forecasting assumes the near
+    Throughput-based Monte Carlo forecasting assumes the near
     future resembles the sampled past. It counts items, not their size.
   sources: [vacanti-wwibd, vacanti-aamp]
 xmr: false

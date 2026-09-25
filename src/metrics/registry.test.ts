@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { COMPUTE } from './defs'
-import { evaluate } from './evaluate'
+import { evaluate, statusFor, targetLabel } from './evaluate'
 import { METRICS, RAW_METRICS } from './registry'
 
 const testSources = import.meta.glob<string>('./*.test.ts', { query: '?raw', import: 'default', eager: true })
@@ -22,8 +22,15 @@ describe('metric registry', () => {
     expect(['lagging', 'current', 'leading', 'forecast']).toContain(m.column)
     expect(m.events.length).toBeGreaterThan(0)
     expect(m.target.note).toBeTruthy()
-    // ≥ 2 independent sources, or an explicit ⚠ flag for Dmitry's call (CLAUDE.md content rule)
-    if (m.benchmark.sources.length < 2) expect(m.benchmark.flag).toMatch(/^⚠/)
+    // Content rule (CLAUDE.md): research benchmarks need ≥ 2 sources or a ⚠ flag;
+    // a disputed claim shows every position with its own sources.
+    expect(['research', 'disputed', 'team-goal', 'method', 'by-design']).toContain(m.benchmark.kind)
+    expect(m.benchmark.label).toBeTruthy()
+    if (m.benchmark.kind === 'research' && m.benchmark.sources.length < 2) expect(m.benchmark.flag).toMatch(/^⚠/)
+    if (m.benchmark.kind === 'disputed') {
+      expect(m.benchmark.positions!.length).toBeGreaterThanOrEqual(2)
+      for (const p of m.benchmark.positions!) expect(p.sources.length).toBeGreaterThan(0)
+    }
   })
 })
 
@@ -39,5 +46,23 @@ describe('evaluate', () => {
     // per-team thresholds scale with scope: ≤ 1 per team, 5 teams → ≤ 5
     expect(evaluate(5, { op: '<=', value: 1, warn: 2, per: 'team', note: '' }, 5)).toBe('ok')
     expect(evaluate(3, { note: 'no target' })).toBe('none')
+  })
+
+  it('handles a corridor target (Say/Do 80–90 %)', () => {
+    const t = { op: 'range' as const, min: 80, max: 90, warnMin: 70, note: '' }
+    expect(evaluate(85, t)).toBe('ok')
+    expect(evaluate(80, t)).toBe('ok')
+    expect(evaluate(92, t)).toBe('warn') // above the corridor
+    expect(evaluate(97, t)).toBe('warn') // sandbagging is a flag, not red
+    expect(evaluate(75, t)).toBe('warn')
+    expect(evaluate(65, t)).toBe('bad')
+    expect(targetLabel(t, '%')).toBe('80–90%')
+  })
+
+  it('does not colour a value computed from fewer than minSample records', () => {
+    const def = { minSample: 10, target: { op: '<=' as const, value: 60, note: '' } }
+    expect(statusFor(def, { value: 90, n: 6, records: [] })).toBe('low')
+    expect(statusFor(def, { value: 90, n: 10, records: [] })).toBe('bad')
+    expect(statusFor(def, { value: null, n: 0, records: [] })).toBe('none')
   })
 })

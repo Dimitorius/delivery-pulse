@@ -22,6 +22,8 @@ events: [item.status]
 target:
   note: No fixed target — set WIP limits per team. Read together with Throughput and Cycle Time.
 benchmark:
+  kind: by-design
+  label: No benchmark by design
   summary: No industry benchmark by design; the relation to cycle time is Little's law.
   sources: [kanban-guide-2025, littles-law]
 xmr: true

@@ -23,6 +23,7 @@ React + TypeScript + Vite, ECharts, Zustand, simulator in a Web Worker, Vitest. 
 - `npm test` — tests
 - `npm run build` — production build (must pass before pushing)
 - `npm run calibrate` — print every metric over the simulated history
+- `npm run baseline` — tile statuses at the end of the history and day by day through the live PI 4
 
 ## Current stage
 Stages 0–1 done (live at https://dimitorius.github.io/delivery-pulse/). Stage 1 summary and implementation decisions: `docs/stage-1.md`. Next: stage 2 — core 50 metrics, all tabs, metric page. See SPEC §11.
@@ -34,4 +35,6 @@ Stages 0–1 done (live at https://dimitorius.github.io/delivery-pulse/). Stage 
 - `registry/metrics/*.yaml` — metric metadata (source of truth), `registry/sources.yaml` — shared sources.
 - `src/app/` — Pulse data layer + Zustand state; `src/ui/` — React components (ECharts via `EChart.tsx`).
 - Adding a metric = YAML + compute in `defs/index.ts` + `describe('metric:<id>')` reference test (registry test enforces all three).
-- After changing `src/sim/profile.ts` run `npm run calibrate` and `npm test` (calibration bands).
+- After changing `src/sim/profile.ts` run `npm run calibrate`, `npm run baseline` and `npm test` (calibration bands + elite baseline test).
+- The simulator is chaotic: any change to the order or number of RNG draws reshuffles the whole history. New subsystems must draw from their own `Rng` stream (seeded from the main seed) so the curated history (seed 399, picked by `scripts/seed-search.ts`) stays put. If the main stream must change, re-run the seed search.
+- Status rules (review 25.09): `minSample` → low confidence (not coloured); range targets (Say/Do 80–90 %); hysteresis (3 updates) in `src/app/hysteresis.ts`; Signals = XmR + off-target tiles, Watch items = aging items + overdue deps.

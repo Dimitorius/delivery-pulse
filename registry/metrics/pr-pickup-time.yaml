@@ -27,7 +27,10 @@ target:
   warn: 8
   note: Team goal from the elite profile (under 4 hours).
 benchmark:
-  summary: No independent research benchmark; published figures come from tool vendors.
-  flag: "⚠ Vendor data only — kept as a team goal, not a benchmark."
+  kind: team-goal
+  label: Team goal, not a benchmark
+  summary: >-
+    No independent research benchmark. Vendor datasets exist; one is only ever shown labelled "vendor dataset".
   sources: []
+minSample: 10
 xmr: true

@@ -252,7 +252,24 @@ describe('metric:say-do-ratio', () => {
     // (8 + 12 + 5) / (10 + 12 + 8) = 25 / 30 = 83.33 %
     const r = run('say-do-ratio', f, ['a'])
     expect(r.value).toBeCloseTo((100 * 25) / 30, 9)
-    expect(r.n).toBe(3)
+    expect(r.n).toBe(7) // committed items with points in the 3 sprints: 3 + 2 + 2
+    expect(r.flags).toBeUndefined()
+  })
+
+  it('flags possible sandbagging when every one of the last 3 sprints is above 95 %', () => {
+    const f = new Fixture()
+    for (let n = 0; n < 3; n++) {
+      const start = day(-60 + 14 * n)
+      const end = start + 14 * 86_400_000
+      const id = `A-S${n}`
+      f.at(start, { type: 'iteration.planned', iteration: { id, kind: 'sprint', teamId: 'a', name: id, index: n, start, end } })
+      f.item(`${id}-x`, 'a', { points: 10, createdAt: start - 1 }).status(`${id}-x`, 'In Progress', start + 1).status(`${id}-x`, 'Done', start + 86_400_000)
+      f.at(start, { type: 'iteration.committed', iterationId: id, itemIds: [`${id}-x`], goalItemIds: [] })
+      f.at(end, { type: 'iteration.closed', iterationId: id, goalMet: true })
+    }
+    const r = run('say-do-ratio', f, ['a'])
+    expect(r.value).toBe(100)
+    expect(r.flags).toEqual(['possible sandbagging: A'])
   })
 })
 
@@ -278,7 +295,7 @@ describe('metric:pi-forecast', () => {
       for (let i = 0; i < 10; i++) f.item(`P-${i}`, 'a', { piId: 'PI-9', createdAt: day(-30) })
       // Exactly one story done at 12:00 on each of the last 20 weekdays (4 of them PI stories).
       let n = 0
-      for (let d = 27; n < 20; d--) {
+      for (let d = 27; n < 30; d--) {
         const dow = new Date(day(d)).getUTCDay()
         if (dow === 0 || dow === 6) continue
         const doneAt = day(d) + hours(12)
@@ -306,7 +323,7 @@ describe('metric:pi-forecast', () => {
     for (let i = 0; i < 6; i++) f.item(`A-${i}`, 'a', { piId: 'PI-9', createdAt: day(-30) }) // A: 6 remaining
     for (let i = 0; i < 2; i++) f.item(`B-${i}`, 'b', { piId: 'PI-9', createdAt: day(-30) }) // B: 2 remaining
     let n = 0
-    for (let d = 27; n < 20; d--) {
+    for (let d = 27; n < 30; d--) {
       const dow = new Date(day(d)).getUTCDay()
       if (dow === 0 || dow === 6) continue
       const doneAt = day(d) + hours(12)

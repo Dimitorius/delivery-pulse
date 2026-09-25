@@ -105,7 +105,7 @@ export const blockedItems: MetricCompute = (ctx) => {
   }
 }
 
-/** Arrivals (crossed the commitment point) minus departures (Done), per week. */
+/** Arrived (crossed the commitment point) minus finished (Done), per week. */
 export const netFlow: MetricCompute = (ctx) => {
   const items = scopedFlowItems(ctx)
   const arrivals = items.filter((i) => inWindow(ctx, i.firstActiveAt))
@@ -115,12 +115,12 @@ export const netFlow: MetricCompute = (ctx) => {
     value: (arrivals.length - departures.length) / weeks,
     secondary: [
       { label: 'arrived', value: arrivals.length },
-      { label: 'departed', value: departures.length },
+      { label: 'finished', value: departures.length },
     ],
     n: arrivals.length + departures.length,
     records: [
       ...arrivals.map((i) => ({ id: i.id, teamId: i.teamId, label: i.title, from: i.firstActiveAt, value: 1, detail: 'arrived' })),
-      ...departures.map((i) => ({ id: i.id, teamId: i.teamId, label: i.title, to: i.doneAt, value: -1, detail: 'departed' })),
+      ...departures.map((i) => ({ id: i.id, teamId: i.teamId, label: i.title, to: i.doneAt, value: -1, detail: 'finished' })),
     ],
   }
 }

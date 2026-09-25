@@ -25,7 +25,10 @@ target:
   warn: 90
   note: Team goal from the elite profile (> 95 %).
 benchmark:
-  summary: No independent research benchmark; published figures come from CI vendors.
-  flag: "⚠ Vendor data only — kept as a team goal, not a benchmark."
+  kind: team-goal
+  label: Team goal, not a benchmark
+  summary: >-
+    No independent research benchmark. Vendor datasets exist; one is only ever shown labelled "vendor dataset".
   sources: []
+minSample: 10
 xmr: false

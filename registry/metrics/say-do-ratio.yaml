@@ -23,14 +23,18 @@ formula: |-
   value     = 100 · delivered / committed
 events: [iteration.committed, iteration.closed, item.status]
 target:
-  op: ">="
-  value: 80
-  warn: 70
-  note: Team goal 80–90 %. Consistently near 100 % can mean sandbagging.
+  op: range
+  min: 80
+  max: 90
+  warnMin: 70
+  note: >-
+    Team goal: a corridor of 80–90 %. Below 70 % is off target; outside the corridor otherwise is "near limit".
+    When every one of a team's last 3 sprints is above 95 % the tile shows "possible sandbagging".
 benchmark:
+  kind: team-goal
+  label: Team goal, not a benchmark
   summary: >-
-    No research-based benchmark. The Scrum Guide defines commitment to the Sprint Goal,
-    not to a ratio; 80–90 % is a practitioner convention.
-  flag: "⚠ Practitioner convention only — no primary benchmark found."
-  sources: [scrum-guide-2020]
+    No research-based benchmark; the 80–90 % corridor is our team goal. The Scrum Guide defines commitment to the Sprint Goal, not to a ratio.
+  sources: []
+minSample: 10
 xmr: false

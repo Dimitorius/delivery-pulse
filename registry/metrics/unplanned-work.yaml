@@ -25,7 +25,10 @@ target:
   warn: 30
   note: Team goal from the elite profile (15–20 %).
 benchmark:
-  summary: No research-based benchmark found for this exact ratio.
-  flag: "⚠ No primary benchmark — kept as a team goal."
+  kind: team-goal
+  label: Team goal, not a benchmark
+  summary: >-
+    No research-based benchmark for this exact ratio; 15–20 % is our team goal.
   sources: []
+minSample: 10
 xmr: true

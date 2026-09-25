@@ -25,7 +25,8 @@ target:
   warn: 1
   note: Program goal — none overdue.
 benchmark:
-  summary: No industry benchmark; dependencies are made visible at PI Planning on the program board.
-  flag: "⚠ Single source (SAFe); the zero-overdue goal is ours."
+  kind: team-goal
+  label: Our threshold (program-set)
+  summary: No industry benchmark; the zero-overdue goal is ours. Dependencies are made visible at PI Planning on the program board.
   sources: [safe-pi-planning]
 xmr: false

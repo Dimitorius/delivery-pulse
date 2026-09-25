@@ -30,6 +30,8 @@ export interface MetricResult {
   /** Column label for TraceRecord.value when it differs from the metric unit. */
   recordValue?: string
   note?: string
+  /** Qualitative flags shown next to the value, e.g. "possible sandbagging: CHK". */
+  flags?: string[]
 }
 
 export type MetricCompute = (ctx: MetricContext) => MetricResult

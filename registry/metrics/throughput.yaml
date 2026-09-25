@@ -22,6 +22,8 @@ events: [item.status]
 target:
   note: No target — throughput is a capacity signal, not a goal. Watch it with Cycle Time and WIP (Little's law).
 benchmark:
+  kind: by-design
+  label: No benchmark by design
   summary: No industry benchmark by design — compare with your own history.
   sources: [kanban-guide-2025, vacanti-aamp]
 xmr: true

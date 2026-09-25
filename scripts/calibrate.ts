@@ -3,7 +3,7 @@
 import { buildStore } from '../src/domain/store'
 import { COMPUTE } from '../src/metrics/defs'
 import { recentSprints } from '../src/metrics/defs/scrum'
-import { DAY_MS, HISTORY_W, workToTime } from '../src/sim/calendar'
+import { DAY_MS, HISTORY_W, PI_W, workToTime } from '../src/sim/calendar'
 import { DEFAULT_SEED, simulateHistory } from '../src/sim/simulator'
 
 const seed = Number(process.argv[2] ?? DEFAULT_SEED)
@@ -14,7 +14,7 @@ console.log(`seed ${seed}: ${events.length} events, ${store.itemList.length} ite
 const asOf = workToTime(HISTORY_W)
 const teamIds = store.teams.map((t) => t.id)
 const fmt = (v: number | null | undefined) => (v == null ? '—' : Math.abs(v) > 1e11 ? new Date(v).toISOString().slice(0, 10) : v.toFixed(2))
-for (const [label, windowDays] of [['whole history (minus PI 1)', (asOf - workToTime(320)) / DAY_MS], ['last 28 days', 28]] as const) {
+for (const [label, windowDays] of [['whole history (minus PI 1)', (asOf - workToTime(PI_W)) / DAY_MS], ['last 28 days', 28]] as const) {
   console.log(`\n== ${label}`)
   for (const [id, fn] of Object.entries(COMPUTE)) {
     const r = fn({ store, asOf, teamIds, windowDays })
@@ -39,13 +39,13 @@ for (const t of store.teams) {
   console.log(t.key, 'CT P85', fmt(r.value), 'P50', fmt(r.secondary![0].value), 'TH/wk', fmt(th.value), 'backlog', backlog)
 }
 for (const pi of store.iterationList.filter((i) => i.kind === 'pi')) {
-  const scope = store.itemList.filter((i) => i.type === 'story' && i.piId === pi.id)
+  const scope = store.itemList.filter((i) => i.type === 'story' && i.piId === pi.id && !i.piStretch)
   const done = scope.filter((i) => i.doneAt !== undefined && i.doneAt <= pi.end)
   const byTeam = store.teams.map((t) => `${t.key}:${scope.filter((i) => i.teamId === t.id).length}/${done.filter((i) => i.teamId === t.id).length}`).join(' ')
-  console.log(pi.name, 'scope', scope.length, 'done by end', done.length, `(${((100 * done.length) / scope.length).toFixed(0)}%)`, byTeam)
+  console.log(pi.name, 'committed', scope.length, 'done by end', done.length, `(${((100 * done.length) / scope.length).toFixed(0)}%)`, byTeam)
 }
 const pf: string[] = []
-for (let w = 320; w <= HISTORY_W; w += 40) {
+for (let w = PI_W; w <= HISTORY_W; w += 40) {
   const r = COMPUTE['pi-forecast']({ store, asOf: workToTime(w), teamIds, windowDays: 28 })
   pf.push(`${new Date(workToTime(w)).toISOString().slice(5, 10)}:${r.value?.toFixed(0)}`)
 }

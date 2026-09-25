@@ -5,9 +5,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fmtDateTime, fmtNumber, fmtValue, unitLabel } from '../app/format'
 import { WINDOW_DAYS, weeklySeries } from '../app/pulse'
-import { eventStore, useApp } from '../app/state'
-import { evaluate, scaledTarget, targetLabel } from '../metrics/evaluate'
-import { METRIC_BY_ID, type MetricDef } from '../metrics/registry'
+import { eventStore, statusStabilizer, useApp } from '../app/state'
+import { scaledTarget, statusFor, targetLabel } from '../metrics/evaluate'
+import { METRIC_BY_ID, type MetricDef, type Source } from '../metrics/registry'
 import { percentile } from '../metrics/stats'
 import type { MetricResult } from '../metrics/types'
 import { xmrCheck } from '../metrics/xmr'
@@ -17,7 +17,7 @@ import { StatusBadge, TEAM_COLORS } from './Status'
 const TIME_UNITS = new Set(['d', 'h', 'min'])
 
 export function MetricDrawer({ teamIds }: { teamIds: string[] }) {
-  const { selected, select, version, now } = useApp()
+  const { selected, select, version, now, scope } = useApp()
   const def = selected ? METRIC_BY_ID.get(selected) : undefined
 
   useEffect(() => {
@@ -31,7 +31,8 @@ export function MetricDrawer({ teamIds }: { teamIds: string[] }) {
     [def, version, teamIds, now],
   )
   if (!def || !result) return null
-  const status = evaluate(result.value, def.target, teamIds.length)
+  // Same (hysteresis-stabilised) status as the tile.
+  const status = statusStabilizer.get(`${scope}|${def.id}`) ?? statusFor(def, result, teamIds.length)
 
   return (
     <div className="drawer-backdrop" onClick={() => select(null)}>
@@ -74,6 +75,16 @@ export function MetricDrawer({ teamIds }: { teamIds: string[] }) {
                   .join(' · ')}
               </span>
             ) : null}
+            {status === 'low' ? (
+              <span className="muted">
+                Low confidence: only {result.n} records (fewer than {def.minSample}), so the value is not coloured.
+              </span>
+            ) : null}
+            {result.flags?.map((f) => (
+              <span key={f} className="warn-text">
+                {f}
+              </span>
+            ))}
             {result.note ? <span className="muted">{result.note}</span> : null}
           </div>
         </section>
@@ -106,26 +117,20 @@ export function MetricDrawer({ teamIds }: { teamIds: string[] }) {
             <p className="small">{def.target.note}</p>
           </div>
           <div>
-            <h3>Industry benchmark</h3>
+            <h3>Benchmark</h3>
+            <p className="chips">
+              <span className={`chip bench-${def.benchmark.kind}`}>{def.benchmark.label}</span>
+            </p>
             <p className="small">{def.benchmark.summary}</p>
+            {def.benchmark.positions?.map((p) => (
+              <div key={p.label} className="position small">
+                <strong>{p.label}.</strong> {p.summary}
+                <SourceList sources={p.sources} />
+              </div>
+            ))}
+            {def.benchmark.note ? <p className="small muted">{def.benchmark.note}</p> : null}
             {def.benchmark.flag ? <p className="flag small">{def.benchmark.flag}</p> : null}
-            <ul className="sources small">
-              {def.benchmark.sources.map((s) => (
-                <li key={s.key}>
-                  {s.url ? (
-                    <a href={s.url} target="_blank" rel="noreferrer">
-                      {s.title}
-                    </a>
-                  ) : (
-                    s.title
-                  )}{' '}
-                  <span className="muted">
-                    — {s.publisher}
-                    {s.year ? `, ${s.year}` : ''}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <SourceList sources={def.benchmark.sources} />
           </div>
         </section>
 
@@ -135,6 +140,37 @@ export function MetricDrawer({ teamIds }: { teamIds: string[] }) {
         <Records def={def} result={result} />
       </aside>
     </div>
+  )
+}
+
+function SourceList({ sources }: { sources: Source[] }) {
+  if (!sources.length) return null
+  return (
+    <ul className="sources small">
+      {sources.map((s) => (
+        <li key={s.key}>
+          {s.url ? (
+            <a href={s.url} target="_blank" rel="noreferrer">
+              {s.title}
+            </a>
+          ) : (
+            s.title
+          )}{' '}
+          <span className="muted">
+            — {s.publisher}
+            {s.year ? `, ${s.year}` : ''}
+          </span>
+          {s.altUrl ? (
+            <>
+              {' '}
+              <a href={s.altUrl} target="_blank" rel="noreferrer" className="muted">
+                (alt)
+              </a>
+            </>
+          ) : null}
+        </li>
+      ))}
+    </ul>
   )
 }
 
@@ -227,7 +263,23 @@ function TrendCharts({ def, teamIds, now, version }: { def: MetricDef; teamIds: 
           <p className="small muted">
             Limits = median of the 12 weeks before the last 8 ± 3.145 × median moving range (Wheeler). Signals: a point outside the
             limits, or 8 weeks in a row on one side of the centre.{' '}
-            {xmr.findings.length ? <strong className="warn-text">Signal: {xmr.findings.map((f) => `${f.rule} (${f.side})`).join(', ')}</strong> : 'No signal.'}
+            {xmr.findings.length
+              ? xmr.findings.map((f) => {
+                  const worse =
+                    def.direction === 'neutral' ||
+                    (def.direction === 'lower-better' && f.side === 'above') ||
+                    (def.direction === 'higher-better' && f.side === 'below')
+                  return worse ? (
+                    <strong key={f.rule + f.side} className="warn-text">
+                      Signal: {f.rule} ({f.side}).{' '}
+                    </strong>
+                  ) : (
+                    <span key={f.rule + f.side}>
+                      Improvement: {f.rule} ({f.side}) — not counted as a signal.{' '}
+                    </span>
+                  )
+                })
+              : 'No signal.'}
           </p>
         </section>
       ) : null}
@@ -285,7 +337,7 @@ function TeamBreakdown({ def, teamIds, now, version }: { def: MetricDef; teamIds
     () =>
       teamIds.map((id) => {
         const r = def.compute({ store: eventStore, asOf: now, teamIds: [id], windowDays: WINDOW_DAYS })
-        return { id, r, status: evaluate(r.value, def.target, 1) }
+        return { id, r, status: statusFor(def, r, 1) }
       }),
     [def, teamIds, now, version],
   )

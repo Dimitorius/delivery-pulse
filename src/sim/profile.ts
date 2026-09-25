@@ -25,7 +25,7 @@ export const ELITE_PROFILE = {
   reworkShare: [0.1, 0.3] as [number, number],
 
   // QA
-  qaPickupMedian: 6,
+  qaPickupMedian: 5,
   qaPickupSigma: 0.9,
   qaEffortMedian: 1.3,
   qaFailProb: 0.08,
@@ -39,7 +39,7 @@ export const ELITE_PROFILE = {
 
   // Deployments & incidents (minutes where stated)
   deployProbPerHour: 0.5,
-  changeFailureProb: 0.04,
+  changeFailureProb: 0.035,
   detectMedianMin: 6,
   ackMedianMin: 4,
   recoveryMedianMin: 24,
@@ -51,8 +51,13 @@ export const ELITE_PROFILE = {
   initialVelocityPerDev: 7, // points per dev per sprint before history exists
   commitFactor: 1.0, // commitment = velocity × factor
   debtShare: 0.18, // share of sprint commitment reserved for tech debt / KTLO tasks
-  piLoad: 0.6, // share of PI capacity committed to feature stories at PI planning
+  // PI commitment (SAFe): ~80 % of the feature capacity of the 4 development
+  // iterations; feature capacity = velocity minus tech-debt share minus a reserve for unplanned work.
+  piCommitShare: 0.8,
+  unplannedReserve: 0.12,
   piStretchLoad: 0.15, // uncommitted (stretch) objectives on top of the commitment
+  ipCommitShare: 0.6, // IP iteration commits to a smaller share of velocity
+  ipInnovationShare: 0.5, // of which this share is innovation spikes
   depPerFeature: 0.35, // chance a stream feature needs something from Platform
   scopeGrowthProb: 0.3, // per team per sprint: a story is discovered mid-PI
   unplannedPerHour: 0.04, // scrum team interrupts (bugs, urgent requests)

@@ -44,12 +44,24 @@ describe('Simulator', () => {
         expect(item.doneAt).toBeGreaterThanOrEqual(item.firstActiveAt!)
       }
     }
+    // Workflow invariant: an item never re-enters In Progress from Ready for Review/QA
+    // without a review or QA verdict in between (no double-booked work).
+    for (const item of store.itemList) {
+      const t = item.transitions
+      for (let i = 1; i < t.length; i++) {
+        if (t[i].to === 'In Progress') expect(['Backlog', 'To Do', 'In Review', 'In QA', 'In Progress']).toContain(t[i].from)
+      }
+    }
     for (const mr of store.mrList) {
       if (mr.mergedAt) expect(mr.firstReviewAt).toBeLessThanOrEqual(mr.mergedAt)
       if (mr.deployedAt) expect(mr.deployedAt).toBeGreaterThanOrEqual(mr.mergedAt!)
     }
-    // 3 full PIs + first sprint of PI 4 = 13 closed sprints; sprint 14 starts at the history boundary
-    expect(store.iterationList.filter((i) => i.kind === 'sprint' && i.teamId === 'checkout')).toHaveLength(14)
+    // 3 PIs × (4 development + 1 IP iteration) = 15 closed; iteration 16 (PI 4) starts at the boundary
+    const sprints = store.iterationList.filter((i) => i.kind === 'sprint' && i.teamId === 'checkout')
+    expect(sprints).toHaveLength(16)
+    expect(sprints.filter((i) => i.ip).map((i) => i.index)).toEqual([4, 9, 14])
     expect(store.iterationList.filter((i) => i.kind === 'pi').map((i) => i.name)).toEqual(['PI 1', 'PI 2', 'PI 3', 'PI 4'])
+    const pi1 = store.iterationList.find((i) => i.id === 'PI-1')!
+    expect((pi1.end - pi1.start) / (7 * 86_400_000)).toBe(10) // 10 weeks
   })
 })

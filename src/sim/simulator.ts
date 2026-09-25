@@ -10,13 +10,14 @@
 
 import type { NewWorkItem, SimEvent } from '../domain/events'
 import type { FlowType, Investment, StatusName, Team, WorkItemType } from '../domain/model'
-import { PI_W, SPRINT_W, SPRINTS_PER_PI, addWorkingHours, workToTime } from './calendar'
+import { DEV_ITERATIONS_PER_PI, ITERATIONS_PER_PI, PI_W, SPRINT_W, addWorkingHours, isIpIteration, workToTime } from './calendar'
 import { BUG_SYMPTOMS, DEBT_TASKS, PROGRAM, STORY_VERBS, TEAMS, VOCAB } from './org'
 import { ELITE_PROFILE, type Profile } from './profile'
 import { Rng } from './rng'
 import { Scheduler } from './scheduler'
 
-export const DEFAULT_SEED = 20260925
+// Chosen with scripts/seed-search.ts against the elite baseline criteria (docs/stage-1.md).
+export const DEFAULT_SEED = 399
 
 type EventBody = SimEvent extends infer E ? (E extends SimEvent ? Omit<E, 't'> : never) : never
 
@@ -53,6 +54,7 @@ interface DevRt {
 
 interface SprintRt {
   id: string
+  ip: boolean
   committed: ItemRt[]
   goalItems: ItemRt[]
   assigned: Set<ItemRt>
@@ -189,7 +191,7 @@ export class Simulator {
 
   private sprintBoundary(k: number): void {
     for (const tr of this.scrumTeams) if (tr.sprint) this.closeSprint(tr)
-    if (k % SPRINTS_PER_PI === 0) this.startPi(k / SPRINTS_PER_PI)
+    if (k % ITERATIONS_PER_PI === 0) this.startPi(k / ITERATIONS_PER_PI)
     for (const tr of this.scrumTeams) this.planSprint(tr, k)
     this.atWork((k + 1) * SPRINT_W, () => this.sprintBoundary(k + 1))
   }
@@ -238,7 +240,9 @@ export class Simulator {
       // Unfinished PI scope from earlier PIs goes first, the roadmap last.
       const leftover = tr.backlog.filter((i) => i.piId && !i.piStretch)
       const roadmap = tr.backlog.filter((i) => !i.piId || i.piStretch)
-      const capacity = this.velocity(tr) * SPRINTS_PER_PI * this.p.piLoad
+      // Commit against the development iterations only; IP is the buffer.
+      const featureCapacity = this.velocity(tr) * DEV_ITERATIONS_PER_PI * (1 - this.p.debtShare) * (1 - this.p.unplannedReserve)
+      const capacity = featureCapacity * this.p.piCommitShare
       let points = leftover.reduce((s, i) => s + (i.points ?? 0), 0)
       const planned: ItemRt[] = []
       const stretch: ItemRt[] = []
@@ -249,7 +253,7 @@ export class Simulator {
         planned.push(...stories)
         // Cross-team dependency on Platform, only for work expected in sprint 2+.
         const sprintOffset = Math.floor(before / Math.max(perSprint, 1))
-        if (tr.team.kind === 'stream' && sprintOffset >= 1 && sprintOffset < SPRINTS_PER_PI && this.rng.chance(this.p.depPerFeature)) {
+        if (tr.team.kind === 'stream' && sprintOffset >= 1 && sprintOffset < DEV_ITERATIONS_PER_PI && this.rng.chance(this.p.depPerFeature)) {
           const obj = this.rng.pick(VOCAB.platform.objects)
           const provider = this.createItem(platform, {
             type: 'story',
@@ -285,58 +289,72 @@ export class Simulator {
         }
       }
       // SAFe uncommitted objectives: planned into the PI, not in the commitment.
-      const stretchCapacity = this.velocity(tr) * SPRINTS_PER_PI * this.p.piStretchLoad
+      const stretchCapacity = this.velocity(tr) * DEV_ITERATIONS_PER_PI * this.p.piStretchLoad
       let stretchPoints = 0
       while (stretchPoints < stretchCapacity) {
         const stories = this.createFeatureWithStories(tr, id, true)
         stretchPoints += stories.reduce((s, i) => s + (i.points ?? 0), 0)
         stretch.push(...stories)
       }
-      // Keep a refined roadmap (not PI-committed) so capacity is never idle.
-      let roadmapPoints = roadmap.reduce((s, i) => s + (i.points ?? 0), 0)
-      while (roadmapPoints < perSprint * 2) {
-        const stories = this.createFeatureWithStories(tr, undefined)
-        roadmapPoints += stories.reduce((s, i) => s + (i.points ?? 0), 0)
-        roadmap.push(...stories)
-      }
       tr.backlog = [...leftover, ...planned, ...stretch, ...roadmap]
+      this.refillRoadmap(tr)
     }
     providers.sort((a, b) => a.needBy - b.needBy)
     platform.backlog.unshift(...providers.map((p) => p.item))
     // Platform plans its own PI after knowing the enablers it owes.
   }
 
+  /** Keep a refined roadmap (not PI-committed) of 2+ sprints so capacity is never idle. */
+  private refillRoadmap(tr: TeamRt): void {
+    const target = this.velocity(tr) * 2
+    let points = tr.backlog.filter((i) => !i.piId || i.piStretch).reduce((s, i) => s + (i.points ?? 0), 0)
+    while (points < target) {
+      const stories = this.createFeatureWithStories(tr, undefined)
+      points += stories.reduce((s, i) => s + (i.points ?? 0), 0)
+      tr.backlog.push(...stories)
+    }
+  }
+
   private planSprint(tr: TeamRt, k: number): void {
+    const ip = isIpIteration(k)
     const id = `${tr.team.key}-S${k + 1}`
     this.emit({
       type: 'iteration.planned',
       iteration: {
         id,
         kind: 'sprint',
+        ip: ip || undefined,
         teamId: tr.team.id,
-        name: `${tr.team.key} Sprint ${k + 1}`,
+        name: `${tr.team.key} Sprint ${k + 1}${ip ? ' (IP)' : ''}`,
         index: k,
         start: this.now,
         end: workToTime((k + 1) * SPRINT_W),
       },
     })
-    const cap = this.velocity(tr) * this.p.commitFactor
+    // IP iteration: lighter commitment, time reserved for innovation and planning.
+    const cap = this.velocity(tr) * this.p.commitFactor * (ip ? this.p.ipCommitShare : 1)
     const committed: ItemRt[] = [...tr.carry]
     let pts = committed.reduce((s, i) => s + (i.points ?? 0), 0)
     let debt = 0
-    while (debt < cap * this.p.debtShare) {
-      const task = this.createTask(tr)
+    while (debt < cap * (ip ? this.p.ipInnovationShare : this.p.debtShare)) {
+      const task = ip ? this.createInnovation(tr) : this.createTask(tr)
       committed.push(task)
       debt += task.points ?? 0
       pts += task.points ?? 0
     }
-    if (this.rng.chance(this.p.scopeGrowthProb)) {
+    this.refillRoadmap(tr)
+    if (!ip && this.rng.chance(this.p.scopeGrowthProb)) {
       const open = tr.features.filter((f) => f.item.status !== 'Done' && f.item.piId === this.piId && !f.item.piStretch)
       if (open.length) {
         const f = this.rng.pick(open)
         const story = this.createStory(tr, this.piId, f.item.id)
         f.stories.push(story)
-        tr.backlog.push(story)
+        // Discovered scope belongs to the commitment: queue it before stretch and roadmap work.
+        let at = 0
+        tr.backlog.forEach((it, i) => {
+          if (it.piId && !it.piStretch) at = i + 1
+        })
+        tr.backlog.splice(at, 0, story)
       }
     }
     while (pts < cap && tr.backlog.length) {
@@ -359,7 +377,7 @@ export class Simulator {
       goal: goalFeature ? `Advance ${goalFeature.item.title}` : undefined,
     })
     for (const it of committed) this.assignToSprint(it, id)
-    tr.sprint = { id, committed, goalItems, assigned: new Set(committed), completedPoints: 0 }
+    tr.sprint = { id, ip, committed, goalItems, assigned: new Set(committed), completedPoints: 0 }
     // Work in commitment order: carry-over, then tasks, then stories.
     tr.ready = committed.filter((i) => i.status === 'To Do')
     this.tryAssign(tr)
@@ -369,7 +387,7 @@ export class Simulator {
     const sp = tr.sprint!
     const goalMet = sp.goalItems.length ? sp.goalItems.every((i) => i.done) : undefined
     this.emit({ type: 'iteration.closed', iterationId: sp.id, goalMet })
-    tr.velocityHistory.push(sp.completedPoints)
+    if (!sp.ip) tr.velocityHistory.push(sp.completedPoints) // IP iterations would understate velocity
     tr.carry = [...sp.assigned].filter((i) => !i.done)
     tr.ready = []
     tr.sprint = undefined
@@ -478,6 +496,21 @@ export class Simulator {
     })
   }
 
+  private createInnovation(tr: TeamRt): ItemRt {
+    return this.createItem(tr, {
+      type: 'task',
+      title: `Innovation: spike on ${this.rng.pick(VOCAB[tr.team.id].objects)}`,
+      points: this.rng.weighted([
+        [2, 4],
+        [3, 4],
+        [5, 2],
+      ]),
+      planned: true,
+      flowType: 'feature',
+      investment: 'feature',
+    })
+  }
+
   private createBug(tr: TeamRt, about?: string): ItemRt {
     const obj = about ?? this.rng.pick(VOCAB[tr.team.id].objects)
     return this.createItem(tr, {
@@ -556,10 +589,17 @@ export class Simulator {
   }
 
   private nextFor(tr: TeamRt): ItemRt | undefined {
-    for (const q of [tr.resume, tr.urgent, tr.ready]) {
+    // An item can sit in more than one queue (e.g. unplanned work carried over
+    // into the next sprint), so check it is still waiting for exactly this.
+    const waiting = (it: ItemRt, statuses: StatusName[]) => !it.done && !it.blocked && !it.dev && statuses.includes(it.status)
+    while (tr.resume.length) {
+      const it = tr.resume.shift()!
+      if (waiting(it, ['In Progress'])) return it
+    }
+    for (const q of [tr.urgent, tr.ready]) {
       while (q.length) {
         const it = q.shift()!
-        if (!it.done && !it.blocked && !it.dev) return it
+        if (waiting(it, ['Backlog', 'To Do'])) return it
       }
     }
     if (tr.team.method === 'kanban') return tr.backlog.shift()

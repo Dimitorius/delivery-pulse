@@ -8,7 +8,10 @@ import { StatusBadge } from './Status'
 export function Tile({ tile, teams }: { tile: TileData; teams: number }) {
   const select = useApp((s) => s.select)
   const { def, result, status } = tile
-  const sec = result.secondary?.[0]
+  const secs = (result.secondary ?? []).filter((x) => x.unit !== 'date').slice(0, def.tileSecondary ?? 1)
+  const secText = secs
+    .map((x) => `${x.label} ${fmtNumber(x.value, x.unit === '%' || Number.isInteger(x.value) ? 0 : def.decimals)}${x.unit ? ` ${x.unit}` : ''}`)
+    .join(' · ')
   return (
     <button className={`tile tile-${status}`} onClick={() => select(def.id)} aria-label={`${def.name}: details`}>
       <div className="tile-head">
@@ -20,12 +23,17 @@ export function Tile({ tile, teams }: { tile: TileData; teams: number }) {
         <span className="unit">{unitLabel(def.unit)}</span>
       </div>
       <div className="tile-sub">
-        {result.value === null && result.note
-          ? result.note
-          : sec
-            ? `${sec.label} ${sec.unit === 'date' ? '' : fmtNumber(sec.value, sec.unit === '%' || Number.isInteger(sec.value) ? 0 : def.decimals)}${sec.unit && sec.unit !== 'date' ? ` ${sec.unit}` : ''} · n=${result.n}`
-            : `n=${result.n}`}
+        {status === 'low'
+          ? `low confidence · n=${result.n} < ${def.minSample}`
+          : result.value === null && result.note
+            ? result.note
+            : `${secText ? `${secText} · ` : ''}n=${result.n}`}
       </div>
+      {result.flags?.map((f) => (
+        <div key={f} className="tile-flag">
+          {f}
+        </div>
+      ))}
       <div className="tile-foot">
         <Sparkline values={tile.trend} />
         <span className="tile-target">{targetLabel(def.target, def.unit, teams)}</span>

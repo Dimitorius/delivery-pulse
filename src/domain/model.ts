@@ -112,6 +112,8 @@ export interface WorkItem {
 export interface Iteration {
   id: string
   kind: 'sprint' | 'pi'
+  /** SAFe Innovation & Planning iteration (last iteration of a PI). */
+  ip?: boolean
   teamId?: TeamId // sprints only
   name: string
   index: number

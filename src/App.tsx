@@ -1,11 +1,11 @@
 import { useMemo } from 'react'
-import { computePulse } from './app/pulse'
-import { eventStore, useApp } from './app/state'
+import { computePulse, stabilizePulse } from './app/pulse'
+import { eventStore, statusStabilizer, useApp } from './app/state'
 import { DependencyGraph } from './ui/DependencyGraph'
 import { ForecastBar } from './ui/ForecastBar'
 import { Header } from './ui/Header'
 import { MetricDrawer } from './ui/MetricDrawer'
-import { EventFeed, SignalsPanel } from './ui/SideRail'
+import { EventFeed, SignalsPanel, WatchPanel } from './ui/SideRail'
 import { Tile } from './ui/Tile'
 
 const COLUMNS = [
@@ -16,7 +16,8 @@ const COLUMNS = [
 
 export default function App() {
   const { ready, version, now, scope } = useApp()
-  const pulse = useMemo(() => (ready ? computePulse(eventStore, now, scope) : undefined), [ready, version, now, scope])
+  const raw = useMemo(() => (ready ? computePulse(eventStore, now, scope) : undefined), [ready, version, now, scope])
+  const pulse = useMemo(() => raw && stabilizePulse(raw, scope, version, statusStabilizer), [raw, scope, version])
 
   if (!pulse) {
     return (
@@ -53,6 +54,7 @@ export default function App() {
         </main>
         <aside className="rail">
           <SignalsPanel signals={pulse.signals} />
+          <WatchPanel items={pulse.watch} />
           <EventFeed teamIds={pulse.teamIds} />
         </aside>
       </div>

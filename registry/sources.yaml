@@ -35,10 +35,11 @@ vacanti-aamp:
   year: 2015
   url: https://leanpub.com/actionableagilemetrics
 vacanti-wwibd:
-  title: When Will It Be Done?
+  title: "When Will It Be Done? (print edition, ISBN 9780986436376)"
   publisher: D. Vacanti (book)
-  year: 2018
-  url: https://www.goodreads.com/book/show/40681093-when-will-it-be-done
+  year: 2020
+  url: https://leanpub.com/whenwillitbedone
+  altUrl: https://www.amazon.com/When-Will-Done-Lean-Agile-Forecasting/dp/0986436372
 scrum-guide-2020:
   title: The Scrum Guide (2020)
   publisher: K. Schwaber & J. Sutherland
@@ -51,7 +52,8 @@ kanban-university-fe:
   url: https://resources.kanban.university/flow-efficiency-a-great-metric-you-probably-arent-using/
 asos-fe-survey:
   title: "Our survey says… uncovering the real numbers behind flow efficiency"
-  publisher: N. Brown, ASOS Tech Blog
+  publisher: N. Brown, ASOS Tech Blog (60+ ASOS teams)
+  year: 2023
   url: https://medium.com/asos-techblog/our-survey-says-uncovering-the-real-numbers-behind-flow-efficiency-e54f136b1fab
 wheeler-understanding-variation:
   title: "Understanding Variation: The Key to Managing Chaos"
@@ -71,3 +73,18 @@ asos-fe-flaws:
   title: The many flaws of flow efficiency
   publisher: N. Brown, ASOS Tech Blog
   url: https://medium.com/asos-techblog/the-many-flaws-in-flow-efficiency-bc7845ba4c9
+dora-2025:
+  title: 2025 DORA State of AI-assisted Software Development
+  publisher: DORA (Google Cloud)
+  year: 2025
+  url: https://cloud.google.com/resources/content/2025-dora-ai-assisted-software-development-report
+redmonk-dora-2025:
+  title: DORA 2025 (analysis)
+  publisher: RedMonk (R. Stephens)
+  year: 2025
+  url: https://redmonk.com/rstephens/2025/12/18/dora2025/
+agility-at-scale-dora-2025:
+  title: "DORA 2025 for AI Teams: Seven Archetypes Every SAFe RTE Should Know"
+  publisher: Agility at Scale
+  year: 2025
+  url: https://agility-at-scale.com/safe/ai-enabled-safe/dora-2025-for-ai-teams-seven-archetypes-every-safe-rte-should-know/

@@ -28,8 +28,11 @@ target:
   warn: 9
   note: Team goal from the elite profile (P85 of stories 5–7 days).
 benchmark:
+  kind: by-design
+  label: No benchmark by design
   summary: >-
     No universal benchmark: cycle time depends on item size and workflow. Use the
     team's own percentiles as a service level expectation (SLE).
   sources: [kanban-guide-2025, vacanti-aamp]
+minSample: 10
 xmr: true

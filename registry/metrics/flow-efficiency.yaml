@@ -29,9 +29,19 @@ target:
   warn: 25
   note: Team goal from the elite profile (35–45 %).
 benchmark:
-  summary: >-
-    Often quoted as 5–15 % for teams that do not manage flow (Kanban University). Real
-    team data from ASOS challenges these figures and the metric's reliability.
-  flag: "⚠ Disputed — the commonly quoted range lacks published data."
-  sources: [kanban-university-fe, asos-fe-survey, asos-fe-flaws]
+  kind: disputed
+  label: Disputed — two positions, no single "right" number
+  summary: Two positions are shown side by side; neither is treated as the benchmark.
+  positions:
+    - label: Kanban University
+      summary: Teams that do not actively manage flow typically sit at about 5–15 % flow efficiency.
+      sources: [kanban-university-fe]
+    - label: ASOS data (N. Brown)
+      summary: >-
+        Real data from 60+ ASOS teams was collected because the quoted ranges had no published data behind
+        them; Brown also argues the metric itself is unreliable (what counts as "active" is hard to define).
+        See the source for the observed values.
+      sources: [asos-fe-survey, asos-fe-flaws]
+  sources: []
+minSample: 10
 xmr: true

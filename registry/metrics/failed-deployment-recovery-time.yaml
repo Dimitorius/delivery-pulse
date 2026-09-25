@@ -27,7 +27,11 @@ target:
   warn: 120
   note: Team goal from the elite profile (under one hour).
 benchmark:
-  summary: DORA elite cluster — under one hour.
-  flag: "⚠ Single primary research program (DORA survey); small samples per window — read with the P85."
-  sources: [dora-2024, dora-metrics-guide, redmonk-dora-2024]
+  kind: research
+  label: DORA 2024 performance clusters
+  summary: "DORA 2024 performance clusters — elite: under one hour."
+  note: >-
+    In DORA 2025 the elite/high/medium/low clusters were replaced by seven team archetypes; the 2024 clusters are shown as the last published tiers. One primary research program (DORA survey) — accepted by Dmitry (review 25.09.2026).
+  sources: [dora-2024, dora-metrics-guide, redmonk-dora-2024, dora-2025, redmonk-dora-2025, agility-at-scale-dora-2025]
+minSample: 10
 xmr: false

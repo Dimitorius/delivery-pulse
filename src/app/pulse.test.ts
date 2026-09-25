@@ -21,6 +21,22 @@ describe('Pulse screen data', () => {
     expect(kanban.tiles.find((t) => t.def.id === 'say-do-ratio')!.result.value).toBeNull()
   })
 
+  it('keeps watch items out of the signal count; signals = XmR + off-target tiles', () => {
+    const p = computePulse(store, now, PROGRAM_SCOPE)
+    expect(p.signals.every((s) => s.kind === 'xmr' || s.kind === 'target')).toBe(true)
+    expect(p.watch.every((w) => w.kind === 'aging' || w.kind === 'dependency')).toBe(true)
+    const offTarget = [p.forecast!, ...p.tiles].filter((t) => t.status === 'bad').map((t) => t.def.id)
+    expect(p.signals.filter((s) => s.kind === 'target').map((s) => s.metricId)).toEqual(offTarget)
+  })
+
+  it('elite baseline at the end of the history: forecast 85–95 %, tiles green (≤ 1 near limit, none off target)', () => {
+    const p = computePulse(store, now, PROGRAM_SCOPE)
+    expect(p.forecast!.result.value).toBeGreaterThanOrEqual(85)
+    expect(p.forecast!.result.value).toBeLessThanOrEqual(95)
+    expect(p.tiles.filter((t) => t.status === 'bad')).toHaveLength(0)
+    expect(p.tiles.filter((t) => t.status === 'warn').length).toBeLessThanOrEqual(1)
+  })
+
   it('anchors trend points on Monday 00:00 UTC', () => {
     expect(new Date(weekAnchor(now + 3.3 * 86_400_000)).getUTCDay()).toBe(1)
     expect(weekAnchor(now) % 86_400_000).toBe(0)

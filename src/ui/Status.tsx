@@ -1,7 +1,14 @@
 import type { Status } from '../metrics/evaluate'
 
-const LABEL: Record<Status, string> = { ok: 'On target', warn: 'Watch', bad: 'Off target', none: 'No target' }
-const ICON: Record<Status, string> = { ok: '●', warn: '▲', bad: '■', none: '○' }
+export const STATUS_LABEL: Record<Status, string> = {
+  ok: 'On target',
+  warn: 'Near limit',
+  bad: 'Off target',
+  none: 'No target',
+  low: 'Low confidence',
+}
+const LABEL = STATUS_LABEL
+const ICON: Record<Status, string> = { ok: '●', warn: '▲', bad: '■', none: '○', low: '◌' }
 
 export function StatusBadge({ status, compact = false }: { status: Status; compact?: boolean }) {
   return (

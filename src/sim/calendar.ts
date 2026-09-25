@@ -14,11 +14,17 @@ export const SIM_EPOCH = Date.UTC(2026, 2, 30)
 
 export const SPRINT_DAYS = 10
 export const SPRINT_W = SPRINT_DAYS * HOURS_PER_DAY
-export const SPRINTS_PER_PI = 4
-export const PI_W = SPRINT_W * SPRINTS_PER_PI
+/** SAFe PI: 4 development iterations + 1 Innovation & Planning (IP) iteration = 10 weeks. */
+export const DEV_ITERATIONS_PER_PI = 4
+export const ITERATIONS_PER_PI = DEV_ITERATIONS_PER_PI + 1
+export const PI_W = SPRINT_W * ITERATIONS_PER_PI
 
-/** Pre-filled history: 3 full PIs + the first sprint of PI 4 (~6 months). */
-export const HISTORY_W = PI_W * 3 + SPRINT_W
+/** Pre-filled history: 3 full PIs (~7 months); the live tail starts with PI 4 planning. */
+export const HISTORY_W = PI_W * 3
+
+export function isIpIteration(k: number): boolean {
+  return k % ITERATIONS_PER_PI === ITERATIONS_PER_PI - 1
+}
 
 export function workToTime(w: number): number {
   const day = Math.floor(w / HOURS_PER_DAY)
