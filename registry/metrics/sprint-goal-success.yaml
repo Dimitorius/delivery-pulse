@@ -41,7 +41,7 @@ aka:
     name: Iteration Goals achieved
     eq: ≈
     note: SAFe teams set iteration goals; vocabulary differs, the measure is the same idea.
-    flag: ⚠ SAFe does not define this exact ratio.
+    verified: '2026-09-30'
     sources:
     - safe-pi-objectives
 format: number

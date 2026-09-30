@@ -7,7 +7,7 @@ import { statusFor, targetLabel, type Status } from '../metrics/evaluate'
 import { METRICS, windowOf, type MetricDef } from '../metrics/registry'
 import type { MetricResult } from '../metrics/types'
 import { xmrCheck } from '../metrics/xmr'
-import { SIM_EPOCH, WEEK_MS } from '../sim/calendar'
+import { DAY_MS, SIM_EPOCH, WEEK_MS } from '../sim/calendar'
 import { fmtValue } from './format'
 import type { Stabilizer } from './hysteresis'
 
@@ -83,7 +83,9 @@ export function weeklySeries(def: MetricDef, store: Store, asOf: number, teamIds
   for (let k = weeks - 1; k >= 0; k--) {
     const t = anchor - k * WEEK_MS
     if (t <= SIM_EPOCH) continue
-    out.push({ t, v: pointAt(def, store, t, teamIds, windowDays) })
+    // Until the window is full (history too short) the value is not comparable: leave a gap.
+    const full = t - windowDays * DAY_MS >= SIM_EPOCH
+    out.push({ t, v: full ? pointAt(def, store, t, teamIds, windowDays) : null })
   }
   return out
 }

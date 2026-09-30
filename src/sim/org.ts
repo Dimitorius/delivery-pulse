@@ -51,16 +51,59 @@ export const POSTMORTEM_ACTIONS = [
   'tune autoscaling limits',
 ]
 
-export const RISK_TITLES = [
-  'PSP contract renewal may slip',
-  'Key engineer leaving',
-  'Peak season traffic above capacity',
-  'Regulatory change to payment authentication',
-  'Vendor API deprecation',
-  'Data migration may exceed maintenance window',
-  'Security audit findings',
-  'Cross-team dependency on Platform at risk',
-]
+/** Risk register: plausible, distinct risks per team (each used once, in order). */
+export const RISKS_BY_TEAM: Record<string, string[]> = {
+  checkout: [
+    'Black Friday traffic may exceed checkout capacity',
+    'New EU address rules may require a redesign of the address form',
+    'Apple Pay certificate renewal may lapse',
+    'A/B test tooling contract ends mid-PI',
+    'Promo engine rewrite depends on a pricing API still in beta',
+    'Only one engineer knows the tax calculation module',
+    'Browser change to third-party cookies may break the cart',
+    'Translation vendor may miss the localisation deadline',
+  ],
+  payments: [
+    'PSP contract renewal may slip past the PI',
+    'PSD2 strong customer authentication update due this quarter',
+    'Card scheme fee change may alter routing rules',
+    'Fraud model retraining may lower approval rates',
+    'Settlement bank changes its file format',
+    'PCI DSS audit may find gaps in the card vault migration',
+    'Refund backlog if the automation launch slips',
+    'FX rate provider deprecates its v1 API',
+  ],
+  catalog: [
+    'Search vendor price increase may force a migration',
+    'Largest merchant plans a 10× catalog import',
+    'Image CDN contract ends next quarter',
+    'Relevance tuning needs data science time that is not secured',
+    'Stock sync depends on warehouse API rate limits',
+    'SEO ranking may drop during the URL change',
+    'Only one engineer can operate the search cluster',
+    'GDPR request volume may slow catalog exports',
+  ],
+  onboarding: [
+    'KYC provider may change pricing',
+    'New AML rules may add onboarding steps',
+    'E-signature vendor outage history',
+    'Bank account verification API sunset announced',
+    'Merchant sign-up spike after the marketing campaign',
+    'Legal review of the new contract template may be late',
+    'Risk questionnaire changes need compliance sign-off',
+    'Support team capacity for manual reviews',
+  ],
+  platform: [
+    'Kubernetes version end-of-life before the upgrade',
+    'Cloud reserved-instance renewal decision due',
+    'Observability vendor licence cap may be reached',
+    'Database failover untested at peak load',
+    'Secrets rotation may break legacy services',
+    'CI runner capacity during release weeks',
+    'Event bus v2 migration touches every team',
+    'On-call rotation thin during the holiday period',
+  ],
+}
 
 /** Requests per hour at peak for each team's service (SLI simulation). */
 export const SERVICE_TRAFFIC: Record<string, number> = {
@@ -73,3 +116,48 @@ export const SERVICE_TRAFFIC: Record<string, number> = {
 
 /** Suffixes for follow-up features after the base feature names are used up. */
 export const FEATURE_SUFFIXES = ['mobile', 'EU rollout', 'B2B', 'v2', 'accessibility', 'performance', 'analytics', 'partners', 'APAC', 'wallets', 'self-service', 'hardening']
+
+/** Business outcomes used as PI objective titles (cycled per team). */
+export const PI_OUTCOMES: Record<string, string[]> = {
+  checkout: [
+    'Lift mobile checkout conversion',
+    'Cut cart abandonment on the shipping step',
+    'Launch express checkout for returning customers',
+    'Make checkout available in two new EU markets',
+    'Reduce failed promo-code redemptions',
+    'Speed up the order review page',
+    'Enable guest checkout for marketplace sellers',
+    'Improve accessibility of the payment step',
+  ],
+  payments: [
+    'Reduce card authorisation declines',
+    'Automate refunds end to end',
+    'Pass the 3-D Secure 2.2 compliance review',
+    'Add local payment methods for the Nordics',
+    'Shorten merchant payout time',
+    'Lower chargeback handling cost',
+    'Retire the legacy card vault',
+    'Make payment retries self-healing',
+  ],
+  catalog: [
+    'Improve search relevance for top queries',
+    'Launch product bundles for merchants',
+    'Keep stock badges accurate in real time',
+    'Speed up catalog imports for large merchants',
+    'Grow product page SEO traffic',
+    'Support variant-level pricing',
+    'Reduce zero-result searches',
+    'Make catalog images load faster on mobile',
+  ],
+  platform: [
+    'Give every team self-service feature flags',
+    'Complete the observability stack rollout',
+    'Make database failover automatic',
+    'Cut CI runner queue time',
+    'Rotate all secrets automatically',
+    'Move services to the event bus v2',
+    'Introduce rate limiting at the edge',
+    'Upgrade the Kubernetes clusters without downtime',
+  ],
+  onboarding: ['Shorten merchant onboarding time'],
+}

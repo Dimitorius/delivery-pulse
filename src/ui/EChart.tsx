@@ -52,3 +52,14 @@ export const CHART = {
   bad: '#d03b3b',
   font: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
 }
+
+/** Time x-axis with date labels ("8 Oct"), never bare day numbers. */
+export function timeAxis() {
+  return {
+    type: 'time',
+    axisLine: { lineStyle: { color: CHART.grid } },
+    axisTick: { show: false },
+    axisLabel: { color: CHART.text, fontFamily: CHART.font, fontSize: 10, formatter: '{d} {MMM}', hideOverlap: true },
+    splitLine: { show: false },
+  }
+}

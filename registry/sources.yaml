@@ -89,17 +89,17 @@ agility-at-scale-dora-2025:
   year: 2025
   url: https://agility-at-scale.com/safe/ai-enabled-safe/dora-2025-for-ai-teams-seven-archetypes-every-safe-rte-should-know/
 safe-measure-and-grow:
-  title: Measure and Grow (flow metrics incl. Flow Predictability)
+  title: Measure and Grow (flow metrics incl. Flow Predictability; updated 8 Sep 2025, full text behind login)
   publisher: Scaled Agile Framework
-  year: 2023
+  year: 2025
   url: https://framework.scaledagile.com/measure-and-grow
 safe-accelerating-flow:
-  title: Accelerating Flow with SAFe
+  title: Accelerating Flow with SAFe (updated 12 Mar 2025, full text behind login)
   publisher: Scaled Agile Framework
-  year: 2023
+  year: 2025
   url: https://framework.scaledagile.com/accelerating-flow-with-safe
 safe-pi-objectives:
-  title: PI Objectives
+  title: PI Objectives (full text behind login)
   publisher: Scaled Agile Framework
   year: 2023
   url: https://framework.scaledagile.com/pi-objectives
@@ -138,7 +138,11 @@ ebm-guide:
   year: 2024
   url: https://www.scrum.org/resources/evidence-based-management-guide
 gao-cost-guide:
-  title: "Cost Estimating and Assessment Guide (earned value management)"
-  publisher: U.S. GAO (GAO-20-195G)
+  title: "Cost Estimating and Assessment Guide (GAO-20-195G, 12 March 2020)"
+  publisher: U.S. Government Accountability Office
   year: 2020
   url: https://www.gao.gov/products/gao-20-195g
+planview-flow-time:
+  title: Flow Time vs. Lead Time
+  publisher: Planview blog (Flow Framework)
+  url: https://blog.planview.com/flow-time-vs-lead-time/

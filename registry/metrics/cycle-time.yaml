@@ -39,3 +39,13 @@ benchmark:
 minSample: 10
 xmr: true
 related: [throughput, wip, aging-wip, sle-attainment]
+aka:
+  flow:
+    name: Flow Time
+    eq: "≈"
+    note: "Flow Framework: flow time starts when work on a flow item starts (first active status) and ends when it is done; here first In Progress → Done."
+    verified: '2026-09-30'
+    sources: [planview-flow-time, flow-framework]
+changelog:
+  - date: "2026-09-30"
+    change: "Framework lens: ≈ Flow Time (Flow Framework) — flow time starts at the first active status."

@@ -14,7 +14,7 @@ import { METRIC_BY_ID, windowOf, type MetricDef, type Source } from '../metrics/
 import { percentile } from '../metrics/stats'
 import type { MetricResult } from '../metrics/types'
 import { xmrCheck } from '../metrics/xmr'
-import { CHART, EChart, type EChartsOption } from './EChart'
+import { CHART, EChart, timeAxis, type EChartsOption } from './EChart'
 import { Sparkline } from './Sparkline'
 import { StatusBadge, TEAM_COLORS } from './Status'
 
@@ -199,11 +199,12 @@ function SideCard({ def, teams, lens }: { def: MetricDef; teams: number; lens: L
               </span>
               <p className="muted">{a!.note}</p>
               {a!.flag ? <p className="flag">{a!.flag}</p> : null}
+              {a!.verified ? <p className="muted">Checked against the source · accepted {a!.verified}</p> : null}
               <SourceList sources={a!.sources} />
             </div>
           ))
         ) : (
-          <p className="small muted">No named equivalent in SAFe or the Flow Framework — dimmed in those lenses.</p>
+          <p className="small muted">No named equivalent in SAFe or the Flow Framework — shown under its own name in every lens.</p>
         )}
       </section>
       <section>
@@ -265,7 +266,7 @@ function TrendSection({ def, teamIds, now, version }: { def: MetricDef; teamIds:
       animation: false,
       grid: { left: 48, right: 56, top: 24, bottom: 24 },
       tooltip,
-      xAxis: { type: 'time', ...axis(), splitLine: { show: false } },
+      xAxis: timeAxis(),
       yAxis: { type: 'value', scale: true, ...axis() },
       series: [
         {
@@ -296,11 +297,17 @@ function TrendSection({ def, teamIds, now, version }: { def: MetricDef; teamIds:
     if (!def.xmr) return { trend, xmr: null }
     const weekly = weeklySeries(def, eventStore, now, teamIds, 24, 7).filter((p) => p.v !== null) as { t: number; v: number }[]
     const { limits, findings } = xmrCheck(weekly.map((p) => p.v))
+    // Only points beyond the corridor in the *worse* direction are signals (red);
+    // improvements outside the corridor stay neutral.
+    const worseSide = (v: number) =>
+      limits !== null &&
+      ((def.direction !== 'higher-better' && v > limits.upper) || (def.direction !== 'lower-better' && v < limits.lower))
+    const betterSide = (v: number) => limits !== null && !worseSide(v) && (v > limits.upper || v < limits.lower)
     const xmr: EChartsOption = {
       animation: false,
       grid: { left: 48, right: 56, top: 16, bottom: 24 },
       tooltip,
-      xAxis: { type: 'time', ...axis(), splitLine: { show: false } },
+      xAxis: timeAxis(),
       yAxis: { type: 'value', scale: true, ...axis() },
       series: [
         {
@@ -308,8 +315,9 @@ function TrendSection({ def, teamIds, now, version }: { def: MetricDef; teamIds:
           name: 'week',
           data: weekly.map((p) => ({
             value: [p.t, p.v],
-            itemStyle: { color: limits && (p.v > limits.upper || p.v < limits.lower) ? CHART.bad : CHART.line },
+            itemStyle: { color: worseSide(p.v) ? CHART.bad : betterSide(p.v) ? CHART.muted : CHART.line },
           })),
+          symbol: 'circle',
           symbolSize: 8,
           lineStyle: { width: 2, color: CHART.line },
           markArea: limits
@@ -345,7 +353,8 @@ function TrendSection({ def, teamIds, now, version }: { def: MetricDef; teamIds:
           <EChart option={xmr.option} height={190} />
           <p className="small muted">
             Corridor = median of the 12 weeks before the last 8 ± 3.145 × median moving range (Wheeler). Signals: a point outside
-            the corridor, or 8 weeks in a row on one side of the centre.{' '}
+            the corridor in the worse direction (red), or 8 weeks in a row on one side of the centre. Grey = outside the corridor but
+            an improvement.{' '}
             {xmr.findings.length
               ? xmr.findings.map((f) => {
                   const worse =
@@ -409,7 +418,7 @@ function Distribution({ def, result }: { def: MetricDef; result: MetricResult })
       animation: false,
       grid: { left: 44, right: 56, top: 16, bottom: 24 },
       tooltip: { ...tooltip, trigger: 'item', formatter: (p: { data: [number, number, string] }) => `${p.data[2]} · ${fmtNumber(p.data[1], 1)} ${def.unit}` },
-      xAxis: { type: 'time', ...axis(), splitLine: { show: false } },
+      xAxis: timeAxis(),
       yAxis: { type: 'value', ...axis() },
       series: [
         {

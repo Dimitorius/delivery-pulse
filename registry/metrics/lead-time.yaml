@@ -40,18 +40,12 @@ aka:
   safe:
     name: Flow Time
     eq: ≈
-    note: 'SAFe: from when a backlog item enters the workflow to its release; here created → Done.'
-    flag: ⚠ Start and end points differ from SAFe’s wording.
+    note: 'SAFe: "from when a backlog item enters the workflow to its release"; here created → Done (Done, not release).'
+    verified: '2026-09-30'
     sources:
+    - safe-accelerating-flow
     - safe-measure-and-grow
-    - agility-at-scale-flow
-  flow:
-    name: Flow Time
-    eq: ≈
-    note: 'Flow Framework: wall-clock time from when a flow item is accepted into the value stream to completion;
-      here created → Done.'
-    flag: ⚠ Start point (created vs accepted) differs.
-    sources:
-    - flow-framework
-    - kersten-p2p
 format: number
+changelog:
+  - date: "2026-09-30"
+    change: "Framework lens: ≈ Flow Time in SAFe only (the Flow Framework equivalent is Cycle Time)."

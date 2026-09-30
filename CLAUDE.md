@@ -26,7 +26,9 @@ React + TypeScript + Vite, ECharts, Zustand, simulator in a Web Worker, Vitest. 
 - `npm run baseline` — tile statuses at the end of the history and day by day through the live PI 4
 
 ## Current stage
-Stages 0–2 done (live at https://dimitorius.github.io/delivery-pulse/). Summaries and decisions: `docs/stage-1.md`, `docs/stage-2.md`. Next: stage 3 — catalog ~180, synthetic, Library, symptoms (Diagnose), scenarios (Inject), Learn; Tour. See SPEC §11.
+Stages 0–2 done, including the stage-2 review of 30.09.2026 (live at https://dimitorius.github.io/delivery-pulse/). Summaries and decisions: `docs/stage-1.md`, `docs/stage-2.md` (section «Решения Дмитрия»). Next: stage 3 — catalog ~180, synthetic, Library, symptoms (Diagnose), scenarios (Inject), Learn; Tour. See SPEC §11. Do not start stage 3 until the owner says so.
+
+**Stage 3 content comes from `content/`**, prepared by Cowork: `content/catalog.yaml`, `content/articles/`, `content/sources.yaml`, `content/README.md`. All catalog and Learn content is taken from these files — never invent content; build the screens from them. If something is missing or contradictory, ask Dmitry instead of filling the gap.
 
 ## Code map
 - `src/domain/` — canonical entities, event log types, projection store (metrics read only this).
@@ -34,8 +36,9 @@ Stages 0–2 done (live at https://dimitorius.github.io/delivery-pulse/). Summar
 - `src/metrics/` — compute functions (`defs/`), stats (nearest-rank percentiles), XmR, targets; reference tests in `reference.test.ts`.
 - `registry/metrics/*.yaml` — metric metadata (source of truth), `registry/sources.yaml` — shared sources.
 - `src/app/` — Pulse data layer, Zustand state, hash routes (`route.ts`), framework lens (`lens.ts`), hysteresis; `src/ui/` — React components (ECharts via `EChart.tsx`): `TabPage`/`TabCharts` per tab, `MetricPage` (full metric page).
-- Registry fields: `tab`, `pulse` (on the Pulse screen), `windowDays`, `minSample`, `synthetic`, `related`, `aka` (lens: ≡/≈, ≈ needs a ⚠ flag), `changelog`.
+- Registry fields: `tab`, `pulse` (on the Pulse screen), `windowDays`, `minSample`, `synthetic`, `related`, `aka` (lens vocabulary: ≡/≈, ≈ needs a note plus `verified: <date>` or a ⚠ flag), `lensConflict` (the only thing that dims a tile in a lens — lens is a vocabulary, not a filter), `changelog`.
 - Adding a metric = YAML + compute in `defs/index.ts` + `describe('metric:<id>')` reference test (registry test enforces all three).
-- After changing `src/sim/profile.ts` run `npm run calibrate`, `npm run baseline` and `npm test` (calibration bands + elite baseline test).
-- The simulator is chaotic: any change to the order or number of RNG draws reshuffles the whole history. New subsystems must draw from their own `Rng` stream (seeded from the main seed) so the curated history (seed 167, picked by `scripts/seed-search.ts` against all 50 metrics) stays put. If the main stream must change, re-run the seed search.
+- After changing `src/sim/profile.ts` run `npm run calibrate`, `npm run baseline` and `npm test` (calibration bands + elite baseline test + `src/app/liveBaseline.test.ts`, which walks the whole live PI 4: forecast ≥ 86 %, no red Pulse tile).
+- The simulator is chaotic: any change to the order or number of RNG draws reshuffles the whole history. New subsystems must draw from their own `Rng` stream (seeded from the main seed) so the curated history (seed 29, picked by `scripts/seed-search.ts` against all metrics and the whole live PI 4) stays put. If the main stream must change, re-run the seed search.
 - Status rules (review 25.09): `minSample` → low confidence (not coloured); range targets (Say/Do 80–90 %); hysteresis (3 updates) in `src/app/hysteresis.ts`; Signals = XmR + off-target tiles, Watch items = aging items + overdue deps.
+- PI rhythm: 4 dev iterations + 1 IP; PI Planning for the next PI runs inside the IP iteration (`piPlanningLeadHours` before the PI start), creating stories, objectives (4–6 per team) and dependencies in advance.

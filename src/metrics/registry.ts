@@ -14,6 +14,8 @@ export interface Aka<S> {
   eq: '≡' | '≈'
   note: string
   flag?: string
+  /** Date the ≈ pair was checked against the primary source and accepted by Dmitry. */
+  verified?: string
   sources: S[]
 }
 export type Direction = 'lower-better' | 'higher-better' | 'neutral'
@@ -52,6 +54,8 @@ export interface MetricMeta {
   windowDays?: number
   related?: string[]
   aka?: Partial<Record<LensId, Aka<Source>>>
+  /** The metric contradicts the framework (e.g. a practice it rejects): dimmed in that lens, with the reason. */
+  lensConflict?: Partial<Record<LensId, string>>
   /** Definition change log (SPEC §7 metric page). */
   changelog?: { date: string; change: string }[]
   name: string

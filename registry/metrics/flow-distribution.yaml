@@ -39,7 +39,7 @@ aka:
     name: Flow Distribution
     eq: ≈
     note: SAFe splits by backlog item type (e.g. features, enablers, defects); here the four Flow Framework types.
-    flag: ⚠ Category sets differ.
+    verified: '2026-09-30'
     sources:
     - safe-measure-and-grow
     - agility-at-scale-flow

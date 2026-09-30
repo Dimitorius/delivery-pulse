@@ -9,7 +9,7 @@ import { SLO_TARGET } from '../metrics/defs/quality'
 import { cycleTimeDays, isFlowItem } from '../metrics/flow'
 import { percentile } from '../metrics/stats'
 import { DAY_MS, WEEK_MS } from '../sim/calendar'
-import { CHART, EChart, type EChartsOption } from './EChart'
+import { CHART, EChart, timeAxis, type EChartsOption } from './EChart'
 import { DependencyGraph } from './DependencyGraph'
 import { TEAM_COLORS } from './Status'
 
@@ -92,7 +92,7 @@ function FlowCharts({ teamIds }: { teamIds: string[] }) {
       grid: { left: 44, right: 16, top: 32, bottom: 24 },
       tooltip,
       legend,
-      xAxis: { type: 'time', ...axis(), splitLine: { show: false } },
+      xAxis: timeAxis(),
       yAxis: { type: 'value', ...axis() },
       series: [band('Done', 'done', SLOTS[2]), band('QA stage', 'qa', SLOTS[3]), band('Review stage', 'review', SLOTS[1]), band('In progress', 'progress', SLOTS[0])],
     }
@@ -102,7 +102,7 @@ function FlowCharts({ teamIds }: { teamIds: string[] }) {
       animation: false,
       grid: { left: 40, right: 48, top: 16, bottom: 24 },
       tooltip: { ...tooltip, trigger: 'item', formatter: (p: { data: [number, number, string] }) => `${p.data[2]} · ${fmtNumber(p.data[1], 1)} d` },
-      xAxis: { type: 'time', ...axis(), splitLine: { show: false } },
+      xAxis: timeAxis(),
       yAxis: { type: 'value', name: 'days', nameTextStyle: { color: CHART.muted }, ...axis() },
       series: [
         {
@@ -161,7 +161,7 @@ function DeliveryChart({ teamIds }: { teamIds: string[] }) {
       grid: { left: 40, right: 16, top: 32, bottom: 24 },
       tooltip,
       legend,
-      xAxis: { type: 'time', ...axis(), splitLine: { show: false } },
+      xAxis: timeAxis(),
       yAxis: { type: 'value', ...axis() },
       series,
     } as EChartsOption
@@ -192,7 +192,7 @@ function QualityChart({ teamIds }: { teamIds: string[] }) {
       animation: false,
       grid: { left: 56, right: 90, top: 16, bottom: 24 },
       tooltip,
-      xAxis: { type: 'time', ...axis(), splitLine: { show: false } },
+      xAxis: timeAxis(),
       yAxis: { type: 'value', min: (v: { min: number }) => Math.min(v.min, 99.5), max: 100, ...axis() },
       series: [
         {
@@ -267,6 +267,7 @@ function ProgramPanels({ teamIds }: { teamIds: string[] }) {
             {risks.map(({ r, h }) => (
               <tr key={r.id}>
                 <td className="ellipsis">{r.title}</td>
+                <td>{r.ownerTeamId ? eventStore.teamById.get(r.ownerTeamId)?.key : ''}</td>
                 <td className="num right">P {h.probability.toFixed(2)}</td>
                 <td className="num right">{h.impact} pd</td>
                 <td className="num right">EMV {(h.probability * h.impact).toFixed(1)}</td>
@@ -387,7 +388,7 @@ function ScalePanels({ teamIds }: { teamIds: string[] }) {
       <section className="panel">
         <h3>PI predictability by PI</h3>
         <EChart option={option} height={200} />
-        <p className="small muted">Green band: 80–100 %, the range SAFe describes as predictable.</p>
+        <p className="small muted">Green band: 80–100 % — SAFe framework guidance for a predictable ART, not a benchmark.</p>
       </section>
       <section className="panel">
         <h3>Current PI objectives ({current.length})</h3>
@@ -395,14 +396,16 @@ function ScalePanels({ teamIds }: { teamIds: string[] }) {
           <table className="records">
             <tbody>
               {current.map((o) => {
-                const f = eventStore.items.get(o.featureId)
+                const done = o.featureIds.filter((id) => (eventStore.items.get(id)?.doneAt ?? Infinity) <= now).length
                 return (
                   <tr key={o.id}>
                     <td className="ellipsis">{o.title}</td>
                     <td>{eventStore.teamById.get(o.teamId)?.key}</td>
                     <td className="muted">{o.committed ? 'committed' : 'uncommitted'}</td>
                     <td className="num right">BV {o.plannedBv}</td>
-                    <td className="muted">{f?.status}</td>
+                    <td className="muted num">
+                      {done}/{o.featureIds.length} features
+                    </td>
                   </tr>
                 )
               })}
@@ -459,7 +462,7 @@ function SurveyChart({ teamIds }: { teamIds: string[] }) {
         grid: { left: 40, right: 16, top: 32, bottom: 24 },
         tooltip,
         legend,
-        xAxis: { type: 'time', ...axis(), splitLine: { show: false } },
+        xAxis: timeAxis(),
         yAxis: { type: 'value', scale: true, ...axis() },
         series: teamIds.map((teamId) => ({
           type: 'line',

@@ -8,7 +8,8 @@ export function DependencyGraph({ now }: { now: number }) {
   const select = useApp((s) => s.select)
   const option = useMemo(() => {
     const pi = eventStore.iterationList.find((i) => i.kind === 'pi' && i.start <= now && now < i.end)
-    const deps = eventStore.dependencyList.filter((d) => pi && d.createdAt >= pi.start && d.createdAt <= now)
+    // Links of the current PI: need-by date inside the PI (they are created at PI Planning, before it starts).
+    const deps = eventStore.dependencyList.filter((d) => pi && d.needBy >= pi.start && d.needBy < pi.end && d.createdAt <= now)
     const teams = eventStore.teams
     const platform = teams.find((t) => t.kind === 'platform')
     const others = teams.filter((t) => t !== platform)

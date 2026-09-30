@@ -64,7 +64,7 @@ export const criticalPathDrift: MetricCompute = (ctx) => {
   const pi = ctx.store.iterationList.find((it) => it.kind === 'pi' && it.start <= ctx.asOf && ctx.asOf < it.end)
   const deps = pi
     ? ctx.store.dependencyList.filter(
-        (d) => (inScope(ctx, d.fromTeamId) || inScope(ctx, d.toTeamId)) && d.createdAt >= pi.start && d.createdAt <= ctx.asOf,
+        (d) => (inScope(ctx, d.fromTeamId) || inScope(ctx, d.toTeamId)) && d.needBy >= pi.start && d.needBy < pi.end && d.createdAt <= ctx.asOf,
       )
     : []
   const slip = (d: (typeof deps)[number]) => {

@@ -7,7 +7,7 @@ export const ELITE_PROFILE = {
   // Development
   focus: 0.8, // share of a dev's working hour on an item that is real progress
   devGapMedian: 5, // after a stint: reviews, meetings, support before pulling again
-  hoursPerPoint: 1.1, // median effort per story point
+  hoursPerPoint: 1.0, // median effort per story point
   effortSigma: 0.7, // log-space spread → fat right tail
   bugEffortMedian: 2.5,
   taskEffortMedian: 3,
@@ -25,7 +25,7 @@ export const ELITE_PROFILE = {
   reworkShare: [0.1, 0.3] as [number, number],
 
   // QA
-  qaPickupMedian: 5,
+  qaPickupMedian: 4,
   qaPickupSigma: 0.9,
   qaEffortMedian: 1.3,
   qaFailProb: 0.08,
@@ -33,13 +33,13 @@ export const ELITE_PROFILE = {
   // CI on main (minutes)
   pipelineMedianMin: 7,
   pipelineSigma: 0.25,
-  mainFailProb: 0.022,
+  mainFailProb: 0.018,
   flakyProb: 0.014,
   fixMedian: 0.8,
 
   // Deployments & incidents (minutes where stated)
   deployProbPerHour: 0.5,
-  changeFailureProb: 0.035,
+  changeFailureProb: 0.03,
   detectMedianMin: 6,
   ackMedianMin: 4,
   recoveryMedianMin: 24,
@@ -59,8 +59,9 @@ export const ELITE_PROFILE = {
   debtShare: 0.18, // share of sprint commitment reserved for tech debt / KTLO tasks
   // PI commitment (SAFe): ~80 % of the feature capacity of the 4 development
   // iterations; feature capacity = velocity minus tech-debt share minus a reserve for unplanned work.
-  piCommitShare: 0.8,
+  piCommitShare: 0.88,
   unplannedReserve: 0.12,
+  piPlanningLeadHours: 24, // PI Planning for the next PI: 3 working days before it starts (inside the IP)
   piStretchLoad: 0.15, // uncommitted (stretch) objectives on top of the commitment
   ipCommitShare: 0.6, // IP iteration commits to a smaller share of velocity
   ipInnovationShare: 0.5, // of which this share is innovation spikes

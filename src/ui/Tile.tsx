@@ -1,5 +1,5 @@
 import type { TileData } from '../app/pulse'
-import { dimmed, displayName, LENS_NAME } from '../app/lens'
+import { conflictNote, dimmed, displayName } from '../app/lens'
 import { useApp } from '../app/state'
 import { fmtNumber, fmtValue, unitLabel } from '../app/format'
 import { targetLabel } from '../metrics/evaluate'
@@ -20,7 +20,7 @@ export function Tile({ tile, teams }: { tile: TileData; teams: number }) {
       className={`tile tile-${status}${dim ? ' dim' : ''}${def.synthetic ? ' synthetic' : ''}`}
       onClick={() => select(def.id)}
       aria-label={`${def.name}: details`}
-      title={dim ? `No named equivalent in ${LENS_NAME[lens]}` : undefined}
+      title={dim ? conflictNote(def, lens) : undefined}
     >
       <div className="tile-head">
         <span className="tile-name">

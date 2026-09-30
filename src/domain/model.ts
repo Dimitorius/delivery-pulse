@@ -238,7 +238,8 @@ export interface PiObjective {
   id: string
   piId: string
   teamId: TeamId
-  featureId: string
+  /** Features that deliver this business outcome. */
+  featureIds: string[]
   title: string
   committed: boolean
   plannedBv: number

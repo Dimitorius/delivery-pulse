@@ -37,7 +37,11 @@ describe('metric registry', () => {
     // Framework lens: ≈ pairs are checked against the source and flagged ⚠ (SPEC §6).
     for (const a of Object.values(m.aka ?? {})) {
       expect(a!.sources.length).toBeGreaterThan(0)
-      if (a!.eq === '≈') expect(a!.flag).toMatch(/^⚠/)
+      // ≈ pairs: the difference is spelled out, and either still flagged ⚠ or verified by Dmitry.
+      if (a!.eq === '≈') {
+        expect(a!.note).toBeTruthy()
+        if (!a!.verified) expect(a!.flag).toMatch(/^⚠/)
+      }
     }
     for (const r of m.related ?? []) expect(METRICS.map((x) => x.id)).toContain(r)
     if (m.benchmark.kind === 'disputed') {

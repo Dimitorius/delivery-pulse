@@ -20,13 +20,13 @@ import {
   isIpIteration,
   workToTime,
 } from './calendar'
-import { BUG_SYMPTOMS, DEBT_TASKS, FEATURE_SUFFIXES, POSTMORTEM_ACTIONS, PROGRAM, RISK_TITLES, SERVICE_TRAFFIC, STORY_VERBS, TEAMS, VOCAB } from './org'
+import { BUG_SYMPTOMS, DEBT_TASKS, FEATURE_SUFFIXES, PI_OUTCOMES, POSTMORTEM_ACTIONS, PROGRAM, RISKS_BY_TEAM, SERVICE_TRAFFIC, STORY_VERBS, TEAMS, VOCAB } from './org'
 import { ELITE_PROFILE, type Profile } from './profile'
 import { Rng } from './rng'
 import { Scheduler } from './scheduler'
 
 // Chosen with scripts/seed-search.ts against the elite baseline criteria (docs/stage-1.md).
-export const DEFAULT_SEED = 167
+export const DEFAULT_SEED = 29
 
 type EventBody = SimEvent extends infer E ? (E extends SimEvent ? Omit<E, 't'> : never) : never
 
@@ -135,7 +135,9 @@ export class Simulator {
   private readonly mrAi = new Map<string, boolean>()
   private readonly outages: { service: string; sev: 1 | 2 | 3 | 4; startedAt: number; resolvedAt?: number }[] = []
   private milestonesRt: { id: string; features: FeatureRt[]; achieved: boolean }[] = []
-  private objectivesRt: { id: string; feature: FeatureRt; plannedBv: number }[] = []
+  private readonly objectivesByPi = new Map<string, { id: string; features: FeatureRt[]; plannedBv: number }[]>()
+  private objectiveSeqByTeam = new Map<string, number>()
+  private readonly riskTitleSeq = new Map<string, number>()
   private readonly risksRt = new Map<string, { p: number; impact: number }>()
 
   constructor(seed = DEFAULT_SEED, profile: Profile = ELITE_PROFILE) {
@@ -219,9 +221,20 @@ export class Simulator {
   private sprintBoundary(k: number): void {
     for (const tr of this.scrumTeams) if (tr.sprint) this.closeSprint(tr)
     if (k % ITERATIONS_PER_PI === 0) {
-      this.scoreObjectives()
-      this.startPi(k / ITERATIONS_PER_PI)
-      this.planPiExtras(k / ITERATIONS_PER_PI)
+      const n = k / ITERATIONS_PER_PI
+      if (n > 0) {
+        // PI n ends: Inspect & Adapt scores its objectives.
+        this.emit({ type: 'iteration.closed', iterationId: `PI-${n}` })
+        this.scoreObjectives(`PI-${n}`)
+      } else {
+        this.piPlanning(0)
+      }
+    }
+    // SAFe: PI Planning for the next PI happens inside the IP iteration, so the
+    // committed work is ready (and can start) when the PI begins.
+    if (isIpIteration(k)) {
+      const next = (k + 1) / ITERATIONS_PER_PI
+      this.atWork((k + 1) * SPRINT_W - this.p.piPlanningLeadHours, () => this.piPlanning(next))
     }
     this.observeBoundary(k)
     for (const tr of this.scrumTeams) this.planSprint(tr, k)
@@ -255,8 +268,12 @@ export class Simulator {
     return sorted[Math.floor((sorted.length - 1) / 2)]
   }
 
+  private piPlanning(n: number): void {
+    this.startPi(n)
+    this.planPiExtras(n)
+  }
+
   private startPi(n: number): void {
-    if (this.piId) this.emit({ type: 'iteration.closed', iterationId: this.piId })
     const id = `PI-${n + 1}`
     this.piId = id
     const startW = n * PI_W
@@ -410,8 +427,10 @@ export class Simulator {
     })
     for (const it of committed) this.assignToSprint(it, id)
     tr.sprint = { id, ip, committed, goalItems, assigned: new Set(committed), completedPoints: 0 }
-    // Work in commitment order: carry-over, then tasks, then stories.
-    tr.ready = committed.filter((i) => i.status === 'To Do')
+    // Work order: committed PI stories first, then tasks (tech debt, spikes),
+    // then the remaining stories (stretch and roadmap).
+    const rank = (i: ItemRt) => (i.type === 'story' && i.piId && !i.piStretch ? 0 : i.type === 'story' ? 2 : 1)
+    tr.ready = committed.filter((i) => i.status === 'To Do').sort((a, b) => rank(a) - rank(b))
     this.tryAssign(tr)
   }
 
@@ -990,25 +1009,44 @@ export class Simulator {
     }
     plan('Beta', startW + 3 * SPRINT_W, streams.flatMap((t) => committed(t).slice(0, 1)))
     plan('Release', startW + DEV_ITERATIONS_PER_PI * SPRINT_W, this.scrumTeams.flatMap((t) => committed(t).slice(0, 2)))
-    // PI objectives with business value (committed and uncommitted).
-    this.objectivesRt = []
+    // PI objectives: 4–6 business outcomes per team (3–5 committed + 1 uncommitted);
+    // the PI's features are grouped under them.
+    const objectives: { id: string; features: FeatureRt[]; plannedBv: number }[] = []
     for (const tr of this.scrumTeams) {
-      for (const f of tr.features.filter((f) => f.item.piId === piId)) {
+      const own = tr.features.filter((f) => f.item.piId === piId && !f.item.piStretch)
+      const stretch = tr.features.filter((f) => f.item.piId === piId && f.item.piStretch)
+      const groups = Math.min(5, Math.max(3, Math.round(own.length / 3)))
+      const buckets: FeatureRt[][] = Array.from({ length: Math.min(groups, own.length) }, () => [])
+      own.forEach((f, i) => buckets[i % buckets.length].push(f))
+      const list: [FeatureRt[], boolean][] = [...buckets.map((b) => [b, true] as [FeatureRt[], boolean]), ...(stretch.length ? [[stretch, false] as [FeatureRt[], boolean]] : [])]
+      for (const [features, committedObj] of list) {
         const id = `OBJ-${++this.seq.obj}`
         const plannedBv = this.obs.weighted([
-          [3, 1],
-          [5, 2],
-          [7, 3],
+          [5, 1],
+          [7, 2],
           [8, 3],
+          [9, 2],
           [10, 2],
         ] as const)
-        this.objectivesRt.push({ id, feature: f, plannedBv })
+        const k = this.objectiveSeqByTeam.get(tr.team.id) ?? 0
+        this.objectiveSeqByTeam.set(tr.team.id, k + 1)
+        const outcomes = PI_OUTCOMES[tr.team.id]
+        objectives.push({ id, features, plannedBv })
         this.emit({
           type: 'objective.planned',
-          objective: { id, piId, teamId: tr.team.id, featureId: f.item.id, title: f.item.title, committed: !f.item.piStretch, plannedBv },
+          objective: {
+            id,
+            piId,
+            teamId: tr.team.id,
+            featureIds: features.map((f) => f.item.id),
+            title: outcomes[k % outcomes.length],
+            committed: committedObj,
+            plannedBv,
+          },
         })
       }
     }
+    this.objectivesByPi.set(piId, objectives)
     // Program risks raised at PI planning.
     const count = 3 + this.obs.int(0, 2)
     for (let i = 0; i < count; i++) this.raiseRisk(piId)
@@ -1025,15 +1063,14 @@ export class Simulator {
   }
 
   /** Business Owners score the PI objectives at the end of the PI (Inspect & Adapt). */
-  private scoreObjectives(): void {
-    for (const o of this.objectivesRt) {
-      const done = o.feature.item.status === 'Done'
-      const share = o.feature.stories.length ? o.feature.stories.filter((s) => s.done).length / o.feature.stories.length : 0
-      // Business Owners rarely award full value; partial features earn little.
-      const actual = done ? o.plannedBv * this.obs.uniform(0.65, 0.9) : o.plannedBv * share * this.obs.uniform(0.3, 0.6)
+  private scoreObjectives(piId: string): void {
+    for (const o of this.objectivesByPi.get(piId) ?? []) {
+      const share = o.features.length ? o.features.filter((f) => f.item.status === 'Done').length / o.features.length : 0
+      // Business Owners rarely award full value; a partly delivered outcome earns less than its share.
+      const actual = share >= 1 ? o.plannedBv * this.obs.uniform(0.75, 0.95) : o.plannedBv * share * this.obs.uniform(0.5, 0.8)
       this.emit({ type: 'objective.scored', objectiveId: o.id, actualBv: Math.round(actual * 10) / 10 })
     }
-    this.objectivesRt = []
+    this.objectivesByPi.delete(piId)
   }
 
   private raiseRisk(piId: string | undefined): void {
@@ -1041,10 +1078,15 @@ export class Simulator {
     const probability = Math.round(this.obs.uniform(0.1, 0.6) * 100) / 100
     const impact = Math.round(this.obs.lognormal(15, 0.6))
     const owner = this.obs.pick(this.teams)
+    const titles = RISKS_BY_TEAM[owner.team.id]
+    const used = this.riskTitleSeq.get(owner.team.id) ?? 0
+    this.riskTitleSeq.set(owner.team.id, used + 1)
+    const round = Math.floor(used / titles.length)
+    const title = titles[used % titles.length] + (round ? ` (again, PI ${n2(piId)})` : '')
     this.risksRt.set(id, { p: probability, impact })
     this.emit({
       type: 'risk.raised',
-      risk: { id, title: `${this.obs.pick(RISK_TITLES)} (${owner.team.key})`, probability, impact, ownerTeamId: owner.team.id, piId },
+      risk: { id, title, probability, impact, ownerTeamId: owner.team.id, piId },
     })
   }
 
@@ -1124,4 +1166,8 @@ export function simulateHistory(seed = DEFAULT_SEED, untilW: number): { sim: Sim
   const sim = new Simulator(seed)
   const events = sim.advanceToWork(untilW)
   return { sim, events }
+}
+
+function n2(piId: string | undefined): string {
+  return piId ? piId.replace('PI-', '') : '?'
 }

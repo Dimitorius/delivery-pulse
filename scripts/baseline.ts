@@ -1,37 +1,24 @@
-// Dev helper: status of every Pulse tile at the end of the history, plus the PI
-// forecast week by week through the live PI 4. Run: npx vite-node scripts/baseline.ts [seed]
-import { computePulse, PROGRAM_SCOPE } from '../src/app/pulse'
-import { apply as applyFn, buildStore } from '../src/domain/store'
-import { COMPUTE } from '../src/metrics/defs'
-import { HISTORY_W, PI_W, workToTime } from '../src/sim/calendar'
+// Dev helper: status of every Pulse tile at the end of the history, then the
+// PI forecast and tile health through the whole live PI 4 (every 4 working
+// hours, as the worker produces it at any speed). Run: npm run baseline [seed]
+import { checkLivePi } from '../src/app/liveBaseline'
+import { computePulse, computeTile, PROGRAM_SCOPE } from '../src/app/pulse'
+import { buildStore } from '../src/domain/store'
+import { METRICS } from '../src/metrics/registry'
+import { HISTORY_W, workToTime } from '../src/sim/calendar'
 import { DEFAULT_SEED, Simulator } from '../src/sim/simulator'
 
 const seed = Number(process.argv[2] ?? DEFAULT_SEED)
-const sim = new Simulator(seed)
-const events = sim.advanceToWork(HISTORY_W)
-const store = buildStore(events)
+const store = buildStore(new Simulator(seed).advanceToWork(HISTORY_W))
 const asOf = workToTime(HISTORY_W)
 const p = computePulse(store, asOf, PROGRAM_SCOPE)
-const line = [p.forecast!, ...p.tiles].map((t) => `${t.def.id}=${t.result.value?.toFixed(1)}(${t.status})`)
-console.log(`seed ${seed} @ history end:`, line.join(' '))
+console.log(`seed ${seed} @ history end:`, [p.forecast!, ...p.tiles].map((t) => `${t.def.id}=${t.result.value?.toFixed(1)}(${t.status})`).join(' '))
+const all = METRICS.map((d) => computeTile(d, store, asOf, store.teams.map((t) => t.id)))
 const counts: Record<string, number> = {}
-for (const t of p.tiles) counts[t.status] = (counts[t.status] ?? 0) + 1
-console.log('tile statuses', counts, 'signals', p.signals.length)
-const teamIds = store.teams.map((t) => t.id)
-const live: string[] = []
-const offTarget: Record<string, number> = {}
-let checks = 0
-for (let w = HISTORY_W + 8; w <= HISTORY_W + PI_W; w += 8) {
-  for (const e of sim.advanceToWork(w)) applyFn(store, e)
-  const at = workToTime(w - 1)
-  if ((w - HISTORY_W) % 40 === 0) {
-    const r = COMPUTE['pi-forecast']({ store, asOf: at, teamIds, windowDays: 28 })
-    live.push(r.value === null ? '—' : r.value.toFixed(0))
-  }
-  checks++
-  for (const t of computePulse(store, at, PROGRAM_SCOPE).tiles) {
-    if (t.status === 'warn' || t.status === 'bad') offTarget[`${t.def.id}:${t.status}`] = (offTarget[`${t.def.id}:${t.status}`] ?? 0) + 1
-  }
-}
-console.log('PI 4 forecast by week (live):', live.join(' '))
-console.log(`live PI 4, daily checks=${checks}: days not green per tile`, offTarget)
+for (const t of all) counts[t.status] = (counts[t.status] ?? 0) + 1
+console.log('all 54 tiles:', counts, '· not green:', all.filter((t) => t.status === 'warn' || t.status === 'bad').map((t) => `${t.def.id}:${t.status}`).join(' ') || '-')
+const live = checkLivePi(seed)
+const values = live.forecasts.map((f) => f.value ?? 0)
+console.log(`live PI 4 forecast: start ${values[0].toFixed(1)} · min ${Math.min(...values).toFixed(1)} · every 5 days: ${values.filter((_, i) => i % 10 === 0).map((v) => v.toFixed(0)).join(' ')}`)
+const tally = (xs: { id: string }[]) => xs.reduce<Record<string, number>>((a, x) => ((a[x.id] = (a[x.id] ?? 0) + 1), a), {})
+console.log('live PI 4 tile checks (every working day): off target', tally(live.offTarget), '· near limit', tally(live.nearLimit))

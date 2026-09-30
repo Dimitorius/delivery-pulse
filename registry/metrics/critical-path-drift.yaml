@@ -17,7 +17,7 @@ definition: 'The largest slip, in working days, of a current-PI dependency link 
   late, or still open after the need-by date. The chain of cross-team dependencies is the program’s critical path.'
 formula: |-
   slip(link) = max(0, working days from needBy to (resolvedAt or asOf))
-  value      = max over current-PI links of slip
+  value      = max over current-PI links (need-by date inside the PI) of slip
 events:
 - dependency.created
 - dependency.resolved

@@ -1,5 +1,6 @@
 // Framework lens (SPEC §6): rename the UI into SAFe or Flow Framework
-// vocabulary; metrics with no named equivalent in the lens are dimmed.
+// vocabulary. Metrics without a framework name keep their own; only metrics
+// that contradict the framework are dimmed.
 
 import type { MetricDef } from '../metrics/registry'
 import type { Lens } from './state'
@@ -12,8 +13,16 @@ export function displayName(def: MetricDef, lens: Lens, short = false): string {
   return lensAka(def, lens)?.name ?? (short ? def.short : def.name)
 }
 
+/**
+ * The lens is a vocabulary, not a filter: a metric without a framework name
+ * keeps its own name. Only a metric that contradicts the framework is dimmed.
+ */
 export function dimmed(def: MetricDef, lens: Lens): boolean {
-  return lens !== 'default' && !lensAka(def, lens)
+  return lens !== 'default' && !!def.lensConflict?.[lens]
+}
+
+export function conflictNote(def: MetricDef, lens: Lens): string | undefined {
+  return lens === 'default' ? undefined : def.lensConflict?.[lens]
 }
 
 const VOCAB: Record<Lens, Record<string, string>> = {

@@ -14,7 +14,9 @@ export function TabPage({ tab, tiles, teamIds }: { tab: Tab; tiles: TileData[]; 
       <header className="tab-head">
         <h1>{meta.title}</h1>
         <p className="muted">{meta.hint}</p>
-        {lens !== 'default' ? <p className="small muted">Dimmed tiles have no named equivalent in the selected framework lens.</p> : null}
+        {lens !== 'default' ? (
+          <p className="small muted">Framework names are shown where one exists; other metrics keep their own name.</p>
+        ) : null}
       </header>
       <TabCharts tab={tab} teamIds={teamIds} />
       {groups.map((g) => (

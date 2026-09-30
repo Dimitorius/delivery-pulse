@@ -468,7 +468,7 @@ describe('metric:pi-predictability', () => {
   it('actual BV (all objectives) / planned BV (committed), last scored PI', () => {
     const f = new Fixture()
     const obj = (id: string, piId: string, committed: boolean, plannedBv: number, actualBv: number, scored: number) => {
-      f.at(scored - 60 * 86_400_000, { type: 'objective.planned', objective: { id, piId, teamId: 'a', featureId: `F-${id}`, title: id, committed, plannedBv } })
+      f.at(scored - 60 * 86_400_000, { type: 'objective.planned', objective: { id, piId, teamId: 'a', featureIds: [`F-${id}`], title: id, committed, plannedBv } })
       f.at(scored, { type: 'objective.scored', objectiveId: id, actualBv })
     }
     obj('A', 'PI-2', true, 10, 8, day(5))
