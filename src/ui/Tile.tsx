@@ -27,7 +27,7 @@ export function Tile({ tile, teams }: { tile: TileData; teams: number }) {
           {displayName(def, lens, true)}
           {def.synthetic ? <span className="badge-synthetic">SYNTHETIC</span> : null}
         </span>
-        <StatusBadge status={status} compact />
+        <StatusBadge status={status} pending={tile.pending} compact />
       </div>
       <div className="tile-value">
         <span className="num">{fmtValue(def, result.value)}</span>

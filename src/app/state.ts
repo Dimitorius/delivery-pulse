@@ -5,8 +5,7 @@ import { create } from 'zustand'
 import { apply, createStore, type Store } from '../domain/store'
 import type { FromWorker, ToWorker } from '../sim/worker'
 import { DEFAULT_SEED } from '../sim/simulator'
-import type { Status } from '../metrics/evaluate'
-import { Stabilizer } from './hysteresis'
+import { StatusBook } from './hysteresis'
 import { PROGRAM_SCOPE } from './pulse'
 import { parseHash, routeHash, type Route } from './route'
 
@@ -45,8 +44,8 @@ interface AppState {
 }
 
 export const eventStore: Store = createStore()
-/** Status hysteresis shared by tiles, the header counter and the metric drawer. */
-export const statusStabilizer = new Stabilizer<Status>()
+/** Status hysteresis (on simulated time) shared by tiles, signals, the header counter and metric pages. */
+export const statusBook = new StatusBook(eventStore)
 let worker: Worker | undefined
 
 export const useApp = create<AppState>((set) => ({

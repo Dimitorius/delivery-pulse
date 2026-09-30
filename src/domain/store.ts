@@ -178,7 +178,9 @@ export function apply(s: Store, e: SimEvent): void {
       item.status = e.to
       const cat = STATUS_CATEGORY[e.to]
       if (item.firstActiveAt === undefined && (cat === 'active' || cat === 'queue')) item.firstActiveAt = e.t
-      if (cat === 'done') item.doneAt = e.t
+      // Finished at its first completion: a later reopen must not rewrite the
+      // past (metrics as of an earlier time stay the same); rework is Reopen Rate.
+      if (cat === 'done' && item.doneAt === undefined) item.doneAt = e.t
       break
     }
     case 'item.sprint': {

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { term } from './app/lens'
-import { computePulse, computeTile, stabilizePulse, type TileData } from './app/pulse'
-import { eventStore, statusStabilizer, useApp } from './app/state'
+import { computePulse, computeTile, stabilizePulse, stabilizeTile, type TileData } from './app/pulse'
+import { eventStore, statusBook, useApp } from './app/state'
 import { METRICS } from './metrics/registry'
 import { ForecastBar } from './ui/ForecastBar'
 import { Header } from './ui/Header'
@@ -21,14 +21,11 @@ const COLUMNS = [
 export default function App() {
   const { ready, version, now, scope, route, lens, navigate } = useApp()
   const raw = useMemo(() => (ready ? computePulse(eventStore, now, scope) : undefined), [ready, version, now, scope])
-  const pulse = useMemo(() => raw && stabilizePulse(raw, scope, version, statusStabilizer), [raw, scope, version])
+  const pulse = useMemo(() => raw && stabilizePulse(raw, statusBook), [raw])
   const tabTiles = useMemo((): TileData[] => {
     if (!ready || !pulse || route.page !== 'tab') return []
-    return METRICS.filter((m) => m.tab === route.tab).map((def) => {
-      const t = computeTile(def, eventStore, now, pulse.teamIds)
-      return { ...t, status: statusStabilizer.apply(`${scope}|${def.id}`, t.status, version) }
-    })
-  }, [ready, pulse, route, now, scope, version])
+    return METRICS.filter((m) => m.tab === route.tab).map((def) => stabilizeTile(computeTile(def, eventStore, now, pulse.teamIds), pulse.teamIds, now, statusBook))
+  }, [ready, pulse, route, now])
 
   if (!pulse) {
     return (

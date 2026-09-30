@@ -9,7 +9,7 @@ import type { MetricResult } from '../metrics/types'
 import { xmrCheck } from '../metrics/xmr'
 import { DAY_MS, SIM_EPOCH, WEEK_MS } from '../sim/calendar'
 import { fmtValue } from './format'
-import type { Stabilizer } from './hysteresis'
+import { HYSTERESIS_TICKS, type StatusBook } from './hysteresis'
 
 export { DEFAULT_WINDOW_DAYS as WINDOW_DAYS } from '../metrics/registry'
 export const TREND_WEEKS = 12
@@ -19,6 +19,8 @@ export interface TileData {
   def: MetricDef
   result: MetricResult
   status: Status
+  /** Status of the current value when it differs from the shown (not yet confirmed) status. */
+  pending?: { status: Status; count: number }
   /** Rolling-window value at each of the last week boundaries, then now. */
   trend: (number | null)[]
 }
@@ -156,18 +158,32 @@ export function computeWatchItems(tiles: TileData[]): WatchItem[] {
   return out.sort((a, b) => (a.severity === b.severity ? 0 : a.severity === 'bad' ? -1 : 1))
 }
 
-/** Target signals: tiles whose (stabilised) status is off target. */
+const STATUS_TEXT: Record<Status, string> = { ok: 'on target', warn: 'near the limit', bad: 'off target', none: 'no target', low: 'low confidence' }
+
+/**
+ * Target signals: tiles whose (stabilised) status is off target. The text
+ * always matches the value on screen: when the value is already back within
+ * the target but that is not confirmed yet, the signal says "recovering".
+ */
 export function targetSignals(tiles: TileData[], teams: number): Signal[] {
   return tiles
     .filter((t) => t.status === 'bad')
-    .map((t) => ({
-      id: `target:${t.def.id}`,
-      metricId: t.def.id,
-      kind: 'target' as const,
-      severity: 'bad' as const,
-      title: `${t.def.name} off target`,
-      detail: `${fmtValue(t.def, t.result.value)} ${t.def.unit === 'items' ? '' : t.def.unit} vs target ${targetLabel(t.def.target, t.def.unit, teams)}`,
-    }))
+    .map((t) => {
+      const value = `${fmtValue(t.def, t.result.value)}${t.def.unit === 'items' ? '' : t.def.unit === '%' ? '%' : ` ${t.def.unit}`}`
+      const target = targetLabel(t.def.target, t.def.unit, teams)
+      const back = t.pending && t.pending.status !== 'bad'
+      const left = t.pending ? HYSTERESIS_TICKS - t.pending.count : 0
+      return {
+        id: `target:${t.def.id}`,
+        metricId: t.def.id,
+        kind: 'target' as const,
+        severity: 'bad' as const,
+        title: back ? `${t.def.name} recovering` : `${t.def.name} off target`,
+        detail: back
+          ? `${value} — back ${STATUS_TEXT[t.pending!.status]} (target ${target}); clears after ${left} more hourly update${left === 1 ? '' : 's'}`
+          : `${value} vs target ${target}`,
+      }
+    })
 }
 
 export function computePulse(store: Store, asOf: number, scope: string): PulseData {
@@ -181,13 +197,18 @@ export function computePulse(store: Store, asOf: number, scope: string): PulseDa
 }
 
 /**
- * Apply status hysteresis (per scope and metric) and rebuild the signal list
- * from the stabilised statuses, so tiles and the header counter always agree.
+ * Apply status hysteresis (per scope and metric, on simulated time) and
+ * rebuild the signal list from the stabilised statuses, so tiles, signals and
+ * the header counter always agree.
  */
-export function stabilizePulse(p: PulseData, scope: string, tick: number, st: Stabilizer<Status>): PulseData {
-  const fix = (t: TileData): TileData => ({ ...t, status: st.apply(`${scope}|${t.def.id}`, t.status, tick) })
-  const tiles = p.tiles.map(fix)
-  const forecast = p.forecast ? fix(p.forecast) : undefined
+export function stabilizePulse(p: PulseData, book: StatusBook): PulseData {
+  const tiles = p.tiles.map((t) => stabilizeTile(t, p.teamIds, p.asOf, book))
+  const forecast = p.forecast ? stabilizeTile(p.forecast, p.teamIds, p.asOf, book) : undefined
   const signals = [...targetSignals(forecast ? [forecast, ...tiles] : tiles, p.teamIds.length), ...p.xmr]
   return { ...p, tiles, forecast, signals }
+}
+
+export function stabilizeTile(t: TileData, teamIds: string[], now: number, book: StatusBook): TileData {
+  const s = book.stable(t.def, teamIds, now, t.status)
+  return { ...t, status: s.shown, pending: s.pending }
 }

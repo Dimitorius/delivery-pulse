@@ -76,6 +76,17 @@ describe('evaluate', () => {
     expect(targetLabel(t, '%')).toBe('80–90%')
   })
 
+  it('judges the value as displayed: inside the corridor is green, near limit only just outside it', () => {
+    const def = { decimals: 0, target: { op: 'range' as const, min: 80, max: 90, warnMin: 70, note: '' } }
+    const at = (value: number) => statusFor(def, { value, n: 20, records: [] })
+    expect(at(81)).toBe('ok')
+    expect(at(79.6)).toBe('ok') // shown as "80 %" → inside the corridor
+    expect(at(90.4)).toBe('ok') // shown as "90 %"
+    expect(at(79.4)).toBe('warn') // shown as "79 %" → just outside
+    expect(at(90.6)).toBe('warn')
+    expect(at(69.4)).toBe('bad')
+  })
+
   it('does not colour a value computed from fewer than minSample records', () => {
     const def = { minSample: 10, target: { op: '<=' as const, value: 60, note: '' } }
     expect(statusFor(def, { value: 90, n: 6, records: [] })).toBe('low')

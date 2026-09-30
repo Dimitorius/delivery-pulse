@@ -8,7 +8,7 @@ import { fmtDate, fmtDateTime, fmtNumber, fmtValue, unitLabel } from '../app/for
 import { displayName, lensAka, LENS_NAME } from '../app/lens'
 import { computeTile, weeklySeries } from '../app/pulse'
 import { TABS } from '../app/route'
-import { eventStore, statusStabilizer, useApp, type Lens } from '../app/state'
+import { eventStore, statusBook, useApp, type Lens } from '../app/state'
 import { scaledTarget, statusFor, targetLabel } from '../metrics/evaluate'
 import { METRIC_BY_ID, windowOf, type MetricDef, type Source } from '../metrics/registry'
 import { percentile } from '../metrics/stats'
@@ -42,7 +42,7 @@ function annotations(from: number, to: number) {
 }
 
 export function MetricPage({ id, teamIds }: { id: string; teamIds: string[] }) {
-  const { version, now, scope, lens, navigate } = useApp()
+  const { version, now, lens, navigate } = useApp()
   const def = METRIC_BY_ID.get(id)
   const result = useMemo(
     () => (def ? def.compute({ store: eventStore, asOf: now, teamIds, windowDays: windowOf(def) }) : undefined),
@@ -58,7 +58,8 @@ export function MetricPage({ id, teamIds }: { id: string; teamIds: string[] }) {
       </main>
     )
   }
-  const status = statusStabilizer.get(`${scope}|${def.id}`) ?? statusFor(def, result, teamIds.length)
+  const stable = statusBook.stable(def, teamIds, now, statusFor(def, result, teamIds.length))
+  const status = stable.shown
   const tab = TABS.find((t) => t.id === def.tab)
   const aka = lensAka(def, lens)
 
@@ -99,7 +100,7 @@ export function MetricPage({ id, teamIds }: { id: string; teamIds: string[] }) {
               <span className="unit">{unitLabel(def.unit)}</span>
             </div>
             <div className="value-meta">
-              <StatusBadge status={status} />
+              <StatusBadge status={status} pending={stable.pending} />
               <span>target {targetLabel(def.target, def.unit, teamIds.length)}</span>
               <span className="muted">
                 {def.window} · as of {fmtDateTime(now)} UTC · n = {result.n.toLocaleString('en-US')}

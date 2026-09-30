@@ -14,6 +14,7 @@ export const ELITE_PROFILE = {
   blockProb: 0.12, // chance an item hits an external blocker
   blockMedian: 5,
   blockSigma: 1.1,
+  blockEscalationHours: 64, // an external blocker older than 8 working days is escalated and cleared
 
   // Code review
   firstCommitLeadMedian: 1, // first commit of the MR branch before MR opens
@@ -57,9 +58,13 @@ export const ELITE_PROFILE = {
   initialVelocityPerDev: 7, // points per dev per sprint before history exists
   commitFactor: 1.0, // commitment = velocity × factor
   debtShare: 0.18, // share of sprint commitment reserved for tech debt / KTLO tasks
+  focusTrigger: 0.9, // daily: behind if open committed stories > usual pace × days left × this
+  focusGapFactor: 0.6, // focus mode: shorter gaps between stints (fewer meetings and context switches)
+  debtShareBehind: 0.05, // debt share while a team is behind its PI commitment (the commitment is protected)
   // PI commitment (SAFe): ~80 % of the feature capacity of the 4 development
   // iterations; feature capacity = velocity minus tech-debt share minus a reserve for unplanned work.
-  piCommitShare: 0.88,
+  piCommitShare: 0.95,
+  piStoryLoad: 0.8, // PI Planning load check: committed stories ≤ this share of recent story throughput × 4 iterations
   unplannedReserve: 0.12,
   piPlanningLeadHours: 24, // PI Planning for the next PI: 3 working days before it starts (inside the IP)
   piStretchLoad: 0.15, // uncommitted (stretch) objectives on top of the commitment

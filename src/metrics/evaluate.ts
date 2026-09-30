@@ -32,10 +32,20 @@ export function evaluate(value: number | null, target: Target, teamsInScope = 1)
   return t.warn !== undefined && value >= t.warn ? 'warn' : 'bad'
 }
 
-/** Status of a computed result: low confidence first, then the target. */
-export function statusFor(def: Pick<MetricDef, 'minSample' | 'target'>, result: MetricResult, teamsInScope = 1): Status {
+/**
+ * Status of a computed result: low confidence first, then the target. The
+ * value is judged as displayed (rounded to the metric's decimals), so a tile
+ * never shows "80 %" in a warning colour for an 80–90 % corridor.
+ */
+export function statusFor(def: Pick<MetricDef, 'minSample' | 'target'> & { decimals?: number }, result: MetricResult, teamsInScope = 1): Status {
   if (result.value !== null && def.minSample !== undefined && result.n < def.minSample) return 'low'
-  return evaluate(result.value, def.target, teamsInScope)
+  return evaluate(asDisplayed(result.value, def.decimals), def.target, teamsInScope)
+}
+
+export function asDisplayed(value: number | null, decimals: number | undefined): number | null {
+  if (value === null || decimals === undefined) return value
+  const k = 10 ** decimals
+  return Math.round(value * k) / k
 }
 
 export function targetLabel(target: Target, unit: string, teamsInScope = 1): string {

@@ -108,6 +108,7 @@ export interface WorkItem {
   blocks: BlockInterval[]
   // Derived by the projection for fast metric queries:
   firstActiveAt?: number
+  /** First completion (a later reopen does not move it: metrics as of a past time never change). */
   doneAt?: number
 }
 

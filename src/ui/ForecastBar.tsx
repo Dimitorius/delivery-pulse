@@ -33,7 +33,7 @@ export function ForecastBar({ tile, now }: { tile?: TileData; now: number }) {
           <span className="num">{fmtNumber(result.value, 0)}%</span>
           <span className="muted">likely by PI end</span>
         </div>
-        <StatusBadge status={status} />
+        <StatusBadge status={status} pending={tile.pending} />
         <span className="tile-target">target {targetLabel(def.target, def.unit)}</span>
       </div>
       <div className="forecast-facts">

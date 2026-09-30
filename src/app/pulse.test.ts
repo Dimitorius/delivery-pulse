@@ -30,10 +30,11 @@ describe('Pulse screen data', () => {
     expect(p.signals.filter((s) => s.kind === 'target').map((s) => s.metricId)).toEqual(offTarget)
   })
 
-  it('elite baseline at the end of the history: forecast 85–95 %, tiles green (≤ 1 near limit, none off target)', () => {
+  it('elite baseline at the end of the history: forecast on target, tiles green (≤ 1 near limit, none off target)', () => {
     const p = computePulse(store, now, PROGRAM_SCOPE)
-    expect(p.forecast!.result.value).toBeGreaterThanOrEqual(85)
-    expect(p.forecast!.result.value).toBeLessThanOrEqual(95)
+    // Review 30.09: staying ≥ 86 % through every live PI needs headroom at the
+    // start, so the start is no longer capped at 95 % (see docs/stage-2.md).
+    expect(p.forecast!.result.value).toBeGreaterThanOrEqual(88)
     expect(p.tiles.filter((t) => t.status === 'bad')).toHaveLength(0)
     expect(p.tiles.filter((t) => t.status === 'warn').length).toBeLessThanOrEqual(1)
   })

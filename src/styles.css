@@ -84,6 +84,11 @@ h2, h3 { margin: 0; font-weight: 600; }
 .status-bad .status-icon { color: var(--bad); }
 .status-none .status-icon, .status-low .status-icon { color: var(--muted); }
 .status-low .status-label { font-style: italic; }
+.status-next { font-size: 10px; color: var(--muted); }
+.status-next.status-ok { color: var(--ok); }
+.status-next.status-warn { color: var(--warn); }
+.status-next.status-bad { color: var(--bad); }
+.status-confirm { font-size: 11px; color: var(--muted); }
 
 /* ---- tiles ---- */
 .tile {

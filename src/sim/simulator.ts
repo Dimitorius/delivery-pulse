@@ -13,11 +13,13 @@ import type { FlowType, Investment, StatusName, Team, WorkItemType } from '../do
 import {
   DEV_ITERATIONS_PER_PI,
   HOUR_MS,
+  HOURS_PER_DAY,
   ITERATIONS_PER_PI,
   PI_W,
   SPRINT_W,
   addWorkingHours,
   isIpIteration,
+  timeToWork,
   workToTime,
 } from './calendar'
 import { BUG_SYMPTOMS, DEBT_TASKS, FEATURE_SUFFIXES, PI_OUTCOMES, POSTMORTEM_ACTIONS, PROGRAM, RISKS_BY_TEAM, SERVICE_TRAFFIC, STORY_VERBS, TEAMS, VOCAB } from './org'
@@ -26,7 +28,7 @@ import { Rng } from './rng'
 import { Scheduler } from './scheduler'
 
 // Chosen with scripts/seed-search.ts against the elite baseline criteria (docs/stage-1.md).
-export const DEFAULT_SEED = 29
+export const DEFAULT_SEED = 83
 
 type EventBody = SimEvent extends infer E ? (E extends SimEvent ? Omit<E, 't'> : never) : never
 
@@ -97,12 +99,24 @@ interface TeamRt {
   openIncidents: number
   sprint?: SprintRt
   carry: ItemRt[]
+  /** Unstarted tech-debt tasks returned from a sprint (taken before new debt is created). */
+  debtBacklog: ItemRt[]
   velocityHistory: number[]
+  /** Stories finished per development iteration (PI Planning load check). */
+  storyHistory: number[]
+  /** Committed stories of the current PI (forecast scope). */
+  piCommitted: ItemRt[]
+  /** Behind the PI commitment: fewer interruptions, debt deferred (checked daily). */
+  focus: boolean
+  /** Working hour of each finished story (recent pace for the focus check). */
+  storyDoneW: number[]
   itemSeq: number
   featureSeq: number
   features: FeatureRt[]
   assigning: boolean
 }
+
+const FOCUS_PACE_DAYS = 15
 
 const STORY_POINTS: [number, number][] = [
   [1, 10],
@@ -160,7 +174,12 @@ export class Simulator {
       mainRed: false,
       openIncidents: 0,
       carry: [],
+      debtBacklog: [],
       velocityHistory: [],
+      storyHistory: [],
+      piCommitted: [],
+      focus: false,
+      storyDoneW: [],
       itemSeq: 100,
       featureSeq: 0,
       features: [],
@@ -245,6 +264,7 @@ export class Simulator {
     const p = this.p
     for (const tr of this.teams) {
       if (tr.team.method === 'scrum') {
+        if (w % HOURS_PER_DAY === 0) tr.focus = this.behindPlan(tr, w)
         const n = this.rng.poisson(p.unplannedPerHour)
         for (let i = 0; i < n; i++) this.afterMinutes(this.rng.uniform(0, 60), () => this.unplannedArrival(tr))
       } else {
@@ -285,6 +305,12 @@ export class Simulator {
     const providers: { item: ItemRt; needBy: number }[] = []
     for (const tr of this.scrumTeams) {
       tr.features = []
+      if (tr === platform) {
+        // Platform plans last: the enablers it owes the stream teams are part
+        // of its commitment and use up its capacity first.
+        providers.sort((a, b) => a.needBy - b.needBy)
+        platform.backlog.unshift(...providers.map((p) => p.item))
+      }
       const perSprint = this.velocity(tr) * this.p.commitFactor * (1 - this.p.debtShare)
       // Unfinished PI scope from earlier PIs goes first, the roadmap last.
       const leftover = tr.backlog.filter((i) => i.piId && !i.piStretch)
@@ -292,13 +318,19 @@ export class Simulator {
       // Commit against the development iterations only; IP is the buffer.
       const featureCapacity = this.velocity(tr) * DEV_ITERATIONS_PER_PI * (1 - this.p.debtShare) * (1 - this.p.unplannedReserve)
       const capacity = featureCapacity * this.p.piCommitShare
+      // Load check in items ("yesterday's weather"): no more stories than a
+      // share of what the team finished in its recent development iterations.
+      const recent = [...tr.storyHistory.slice(-2 * DEV_ITERATIONS_PER_PI)].sort((a, b) => a - b)
+      const storyCap = recent.length ? recent[Math.floor((recent.length - 1) / 2)] * DEV_ITERATIONS_PER_PI * this.p.piStoryLoad : Infinity
       let points = leftover.reduce((s, i) => s + (i.points ?? 0), 0)
+      let count = leftover.filter((i) => i.type === 'story').length
       const planned: ItemRt[] = []
       const stretch: ItemRt[] = []
-      while (points < capacity) {
+      while (points < capacity && count < storyCap) {
         const before = points
         const stories = this.createFeatureWithStories(tr, id)
         points += stories.reduce((s, i) => s + (i.points ?? 0), 0)
+        count += stories.length
         planned.push(...stories)
         // Cross-team dependency on Platform, only for work expected in sprint 2+.
         const sprintOffset = Math.floor(before / Math.max(perSprint, 1))
@@ -346,11 +378,9 @@ export class Simulator {
         stretch.push(...stories)
       }
       tr.backlog = [...leftover, ...planned, ...stretch, ...roadmap]
+      tr.piCommitted = [...leftover.filter((i) => i.piId === id && i.type === 'story'), ...planned]
       this.refillRoadmap(tr)
     }
-    providers.sort((a, b) => a.needBy - b.needBy)
-    platform.backlog.unshift(...providers.map((p) => p.item))
-    // Platform plans its own PI after knowing the enablers it owes.
   }
 
   /** Keep a refined roadmap (not PI-committed) of 2+ sprints so capacity is never idle. */
@@ -382,11 +412,27 @@ export class Simulator {
     })
     // IP iteration: lighter commitment, time reserved for innovation and planning.
     const cap = this.velocity(tr) * this.p.commitFactor * (ip ? this.p.ipCommitShare : 1)
-    const committed: ItemRt[] = [...tr.carry]
-    let pts = committed.reduce((s, i) => s + (i.points ?? 0), 0)
+    // Tech debt is a budget per sprint, not a queue that grows: carried debt
+    // tasks count against it, and unstarted ones beyond it go back to the
+    // debt backlog (otherwise one slow sprint snowballs into sprints of debt).
+    const budget = cap * (ip ? this.p.ipInnovationShare : tr.focus || this.behindPi(tr, k, cap) ? this.p.debtShareBehind : this.p.debtShare)
+    const committed: ItemRt[] = []
+    let pts = 0
     let debt = 0
-    while (debt < cap * (ip ? this.p.ipInnovationShare : this.p.debtShare)) {
-      const task = ip ? this.createInnovation(tr) : this.createTask(tr)
+    for (const it of tr.carry) {
+      const isDebt = it.type === 'task' && it.points !== undefined // planned debt, KTLO, innovation, postmortem actions
+      if (isDebt && it.status === 'To Do' && debt >= budget) {
+        this.setStatus(it, 'Backlog')
+        it.sprintId = undefined
+        tr.debtBacklog.push(it)
+        continue
+      }
+      committed.push(it)
+      pts += it.points ?? 0
+      if (isDebt) debt += it.points ?? 0
+    }
+    while (debt < budget) {
+      const task = (!ip && tr.debtBacklog.shift()) || (ip ? this.createInnovation(tr) : this.createTask(tr))
       committed.push(task)
       debt += task.points ?? 0
       pts += task.points ?? 0
@@ -398,6 +444,7 @@ export class Simulator {
         const f = this.rng.pick(open)
         const story = this.createStory(tr, this.piId, f.item.id)
         f.stories.push(story)
+        tr.piCommitted.push(story)
         // Discovered scope belongs to the commitment: queue it before stretch and roadmap work.
         let at = 0
         tr.backlog.forEach((it, i) => {
@@ -417,7 +464,7 @@ export class Simulator {
     let goalId: string | undefined
     for (const [fid, n] of perFeature) if (goalId === undefined || n > perFeature.get(goalId)!) goalId = fid
     const goalFeature = goalId ? this.features.get(goalId) : undefined
-    const goalItems = goalFeature ? committed.filter((i) => i.parentId === goalFeature.item.id).slice(0, 3) : []
+    const goalItems = goalFeature ? committed.filter((i) => i.parentId === goalFeature.item.id).slice(0, 4) : []
     this.emit({
       type: 'iteration.committed',
       iterationId: id,
@@ -427,18 +474,54 @@ export class Simulator {
     })
     for (const it of committed) this.assignToSprint(it, id)
     tr.sprint = { id, ip, committed, goalItems, assigned: new Set(committed), completedPoints: 0 }
-    // Work order: committed PI stories first, then tasks (tech debt, spikes),
-    // then the remaining stories (stretch and roadmap).
-    const rank = (i: ItemRt) => (i.type === 'story' && i.piId && !i.piStretch ? 0 : i.type === 'story' ? 2 : 1)
-    tr.ready = committed.filter((i) => i.status === 'To Do').sort((a, b) => rank(a) - rank(b))
+    // Work order: committed PI stories with the tech-debt tasks spread evenly
+    // between them (debt is done through the sprint, not in a block at its
+    // end), then the remaining stories (stretch and roadmap).
+    const todo = committed.filter((i) => i.status === 'To Do')
+    const pi = todo.filter((i) => i.type === 'story' && i.piId && !i.piStretch)
+    const tasks = todo.filter((i) => i.type !== 'story')
+    const rest = todo.filter((i) => i.type === 'story' && !(i.piId && !i.piStretch))
+    const pos = new Map<ItemRt, number>()
+    pi.forEach((it, j) => pos.set(it, j / pi.length))
+    tasks.forEach((it, j) => pos.set(it, (j + 0.5) / tasks.length))
+    tr.ready = [...[...pi, ...tasks].sort((a, b) => pos.get(a)! - pos.get(b)!), ...rest]
     this.tryAssign(tr)
+  }
+
+  /**
+   * Is the team behind its PI commitment? Remaining committed story points per
+   * development iteration left exceed what this sprint can take besides debt.
+   */
+  private behindPi(tr: TeamRt, k: number, cap: number): boolean {
+    const left = DEV_ITERATIONS_PER_PI - (k % ITERATIONS_PER_PI)
+    if (!this.piId || left <= 0) return false
+    const open = [...tr.carry, ...tr.backlog].filter((i) => i.type === 'story' && i.piId === this.piId && !i.piStretch && !i.done)
+    const points = open.reduce((s, i) => s + (i.points ?? 0), 0)
+    return points / left > cap * (1 - this.p.debtShare)
+  }
+
+  /**
+   * Daily check: at the pace of the last 3 weeks, will the team miss its PI
+   * commitment? Then it goes into focus mode (the team sees its own forecast).
+   */
+  private behindPlan(tr: TeamRt, w: number): boolean {
+    if (!this.piId) return false
+    const from = w - FOCUS_PACE_DAYS * HOURS_PER_DAY
+    while (tr.storyDoneW.length && tr.storyDoneW[0] < from) tr.storyDoneW.shift()
+    const perDay = tr.storyDoneW.length / FOCUS_PACE_DAYS
+    const piEnd = Number(this.piId.slice(3)) * PI_W // the planned PI (set at PI Planning, inside the IP before it)
+    const open = tr.piCommitted.filter((i) => !i.done).length
+    return open > perDay * ((piEnd - w) / HOURS_PER_DAY) * this.p.focusTrigger
   }
 
   private closeSprint(tr: TeamRt): void {
     const sp = tr.sprint!
     const goalMet = sp.goalItems.length ? sp.goalItems.every((i) => i.done) : undefined
     this.emit({ type: 'iteration.closed', iterationId: sp.id, goalMet })
-    if (!sp.ip) tr.velocityHistory.push(sp.completedPoints) // IP iterations would understate velocity
+    if (!sp.ip) {
+      tr.velocityHistory.push(sp.completedPoints) // IP iterations would understate velocity
+      tr.storyHistory.push([...sp.assigned].filter((i) => i.done && i.type === 'story').length)
+    }
     tr.carry = [...sp.assigned].filter((i) => !i.done)
     tr.ready = []
     tr.sprint = undefined
@@ -693,7 +776,7 @@ export class Simulator {
       it.remaining -= chunk
       if (blockAfter) {
         this.block(tr, it, 'external')
-        this.afterWork(this.rng.lognormal(this.p.blockMedian, this.p.blockSigma), () => this.unblock(tr, it))
+        this.afterWork(Math.min(this.rng.lognormal(this.p.blockMedian, this.p.blockSigma), this.p.blockEscalationHours), () => this.unblock(tr, it))
       } else {
         this.devDone(tr, it)
       }
@@ -728,7 +811,7 @@ export class Simulator {
     this.release(it)
     if (dev) {
       dev.away = true
-      this.afterWork(this.rng.lognormal(p.devGapMedian, 0.8), () => {
+      this.afterWork(this.rng.lognormal(p.devGapMedian * (tr.focus ? p.focusGapFactor : 1), 0.8), () => {
         dev.away = false
         this.tryAssign(tr)
       })
@@ -813,6 +896,7 @@ export class Simulator {
   private complete(tr: TeamRt, it: ItemRt): void {
     this.setStatus(it, 'Done')
     it.done = true
+    if (it.type === 'story') tr.storyDoneW.push(timeToWork(this.now))
     if (tr.sprint && it.sprintId === tr.sprint.id) tr.sprint.completedPoints += it.points ?? 0
     for (const dep of this.providerDeps.get(it.id) ?? []) {
       this.emit({ type: 'dependency.resolved', dependencyId: dep.id })

@@ -50,6 +50,17 @@ export function monteCarloWhen(
   return { days }
 }
 
+/**
+ * Moving-block bootstrap: every run of MC_BLOCK_DAYS consecutive days is a
+ * sample (30 days → 26 overlapping weeks). Keeps the week-level spread without
+ * the day-to-day jumps of re-cutting the history into 6 fixed weeks.
+ */
+export function movingBlocks(daily: readonly number[], blockDays = MC_BLOCK_DAYS): number[] {
+  const out: number[] = []
+  for (let i = 0; i + blockDays <= daily.length; i++) out.push(daily.slice(i, i + blockDays).reduce((a, b) => a + b, 0))
+  return out
+}
+
 export function currentPi(ctx: MetricContext) {
   return ctx.store.iterationList.find((it) => it.kind === 'pi' && it.start <= ctx.asOf && ctx.asOf < it.end)
 }
@@ -106,8 +117,7 @@ function piForecastInternal(ctx: MetricContext): MetricResult & { detail?: { day
   teams.forEach((teamId, k) => {
     const left = remaining.filter((i) => i.teamId === teamId).length
     const daily = teamSamples.get(teamId)!
-    const weekly: number[] = []
-    for (let i = 0; i + MC_BLOCK_DAYS <= daily.length; i += MC_BLOCK_DAYS) weekly.push(daily.slice(i, i + MC_BLOCK_DAYS).reduce((a, b) => a + b, 0))
+    const weekly = movingBlocks(daily)
     const team = monteCarloWhen(left, weekly, MC_TRIALS, MC_SEED + k, MC_BLOCK_DAYS).days
     days = days.map((d, t) => Math.max(d, team[t]))
   })

@@ -1,24 +1,31 @@
 import { describe, expect, it } from 'vitest'
-import { checkLivePi } from './liveBaseline'
+import { LIVE_PIS, checkLivePi, forecastByPi } from './liveBaseline'
 
-// Dmitry's review of stage 2: the elite baseline must hold through the whole
-// live PI 4 (as seen at 100×), not only at the end of the history.
-describe('elite baseline through the live PI 4 (no scenario injected)', () => {
+// Dmitry's reviews of stage 2: the elite baseline must hold through the live
+// tail as seen at 100× — every future PI, not only PI 4 — checked every 4
+// working hours, with no scenario injected.
+describe(`elite baseline through ${LIVE_PIS} live PIs (PI 4–${3 + LIVE_PIS}, no scenario injected)`, () => {
   const live = checkLivePi()
+  const pis = forecastByPi(live)
 
-  it('PI forecast starts around 90 % and never drops below the 85 % target', () => {
-    const values = live.forecasts.map((f) => f.value!)
-    expect(values[0]).toBeGreaterThanOrEqual(88)
-    expect(values[0]).toBeLessThanOrEqual(95)
-    expect(Math.min(...values)).toBeGreaterThanOrEqual(86) // clear of the threshold: no blinking around 85 %
+  it('covers every live PI at a 4-working-hour step', () => {
+    expect(pis.map((p) => p.pi)).toEqual(Array.from({ length: LIVE_PIS }, (_, i) => 4 + i))
+    expect(live.forecasts[1].w - live.forecasts[0].w).toBe(4)
+  })
+
+  it('PI forecast starts each PI on target and never drops below 86 % (clear of the 85 % threshold)', () => {
+    expect(pis[0].start).toBeGreaterThanOrEqual(88)
+    for (const p of pis) {
+      expect(p.start, `PI ${p.pi} start`).toBeGreaterThanOrEqual(86)
+      expect(p.min, `PI ${p.pi} minimum`).toBeGreaterThanOrEqual(86)
+    }
   })
 
   it('no Pulse tile goes off target', () => {
     expect(live.offTarget).toEqual([])
   })
 
-  it('near-limit tiles stay rare (≤ 5 % of tile-days)', () => {
-    const checks = Math.ceil(live.forecasts.length / 2) * 16
-    expect(live.nearLimit.length / checks).toBeLessThanOrEqual(0.05)
+  it('near-limit tiles stay rare (≤ 5 % of tile checks)', () => {
+    expect(live.nearLimit.length / live.tileChecks).toBeLessThanOrEqual(0.05)
   })
 })

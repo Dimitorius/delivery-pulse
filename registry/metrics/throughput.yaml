@@ -41,3 +41,6 @@ aka:
     eq: "≡"
     note: "Flow items completed per period."
     sources: [flow-framework, kersten-p2p]
+changelog:
+  - date: "2026-09-30"
+    change: "An item counts as finished at its first completion; a later reopen does not move it (rework is Reopen Rate), so a value as of a past date never changes."
