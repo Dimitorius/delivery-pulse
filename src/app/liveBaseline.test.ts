@@ -21,6 +21,14 @@ describe(`elite baseline through ${LIVE_PIS} live PIs (PI 4–${3 + LIVE_PIS}, n
     }
   })
 
+  it('committed + stretch (neutral second number) is alive: mostly 55–90 % at PI start, and it varies', () => {
+    const starts = pis.map((p) => p.stretchStart)
+    const inBand = starts.filter((v) => v >= 55 && v <= 90).length
+    expect(inBand / starts.length).toBeGreaterThanOrEqual(0.7)
+    expect(Math.max(...starts) - Math.min(...starts)).toBeGreaterThanOrEqual(15)
+    for (const f of live.forecasts) if (f.value !== null && f.withStretch !== null) expect(f.withStretch).toBeLessThanOrEqual(f.value)
+  })
+
   it('no Pulse tile goes off target', () => {
     expect(live.offTarget).toEqual([])
   })

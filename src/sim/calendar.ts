@@ -21,6 +21,10 @@ export const PI_W = SPRINT_W * ITERATIONS_PER_PI
 
 /** Pre-filled history: 3 full PIs (~7 months); the live tail starts with PI 4 planning. */
 export const HISTORY_W = PI_W * 3
+/** Live PIs after the history (PI 4–14, ~2 years at 100×): the curated seed is checked this far, then the clock stops. */
+export const LIVE_PIS = 11
+/** End of the simulated horizon: the last minute of PI 14 (one minute later PI 15 would begin). */
+export const HORIZON_W = HISTORY_W + LIVE_PIS * PI_W - 1 / 60
 
 export function isIpIteration(k: number): boolean {
   return k % ITERATIONS_PER_PI === ITERATIONS_PER_PI - 1

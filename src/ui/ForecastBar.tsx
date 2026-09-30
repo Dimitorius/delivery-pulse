@@ -1,4 +1,4 @@
-import { fmtDate, fmtNumber } from '../app/format'
+import { fmtDate, fmtNumber, fmtValue } from '../app/format'
 import type { TileData } from '../app/pulse'
 import { useApp } from '../app/state'
 import { targetLabel } from '../metrics/evaluate'
@@ -19,6 +19,7 @@ export function ForecastBar({ tile, now }: { tile?: TileData; now: number }) {
       </section>
     )
   }
+  const withStretch = sec('with stretch')
   const p50 = sec('P50 date')!
   const p85 = sec('P85 date')!
   const end = sec('PI end')!
@@ -30,11 +31,17 @@ export function ForecastBar({ tile, now }: { tile?: TileData; now: number }) {
       <div className="forecast-main">
         <h2>On track for the PI?</h2>
         <div className="forecast-prob">
-          <span className="num">{fmtNumber(result.value, 0)}%</span>
-          <span className="muted">likely by PI end</span>
+          <span className="num">{fmtValue(def, result.value)}%</span>
+          <span className="muted">committed objectives, likely by PI end</span>
         </div>
         <StatusBadge status={status} pending={tile.pending} />
         <span className="tile-target">target {targetLabel(def.target, def.unit)}</span>
+        {withStretch !== null ? (
+          <div className="forecast-stretch" title="Committed + uncommitted (stretch) objectives. SAFe: stretch objectives are planned but not committed, so this number has no target and no colour.">
+            <span className="num">{fmtValue(def, withStretch)}%</span>
+            <span className="muted">with stretch objectives · no target</span>
+          </div>
+        ) : null}
       </div>
       <div className="forecast-facts">
         <div>

@@ -4,17 +4,16 @@
 
 import { apply, buildStore, type Store } from '../domain/store'
 import { COMPUTE } from '../metrics/defs'
-import { HISTORY_W, PI_W, workToTime } from '../sim/calendar'
+import { HISTORY_W, LIVE_PIS, PI_W, workToTime } from '../sim/calendar'
 import { Simulator } from '../sim/simulator'
 import { PROGRAM_SCOPE, computePulse } from './pulse'
 
-/** Live PIs checked by default: PI 4 … PI 14, about two years at 100×. */
-export const LIVE_PIS = 11
+export { LIVE_PIS }
 
 export interface LiveCheck {
   store: Store
   /** PI forecast (%) every `forecastStepW` working hours; `pi` = 4 for the first live PI. */
-  forecasts: { w: number; pi: number; value: number | null }[]
+  forecasts: { w: number; pi: number; value: number | null; withStretch: number | null }[]
   /** Pulse tiles off target (raw status, before hysteresis), with the working hour they were seen. */
   offTarget: { w: number; id: string }[]
   nearLimit: { w: number; id: string }[]
@@ -30,7 +29,8 @@ export function checkLivePi(seed?: number, pis = LIVE_PIS, forecastStepW = 4, ti
     for (const e of sim.advanceToWork(w)) apply(store, e)
     const asOf = workToTime(w)
     const pi = 4 + Math.floor((w - HISTORY_W) / PI_W)
-    out.forecasts.push({ w, pi, value: COMPUTE['pi-forecast']({ store, asOf, teamIds, windowDays: 28 }).value })
+    const r = COMPUTE['pi-forecast']({ store, asOf, teamIds, windowDays: 28 })
+    out.forecasts.push({ w, pi, value: r.value, withStretch: r.secondary?.find((s) => s.label === 'with stretch')?.value ?? null })
     if ((w - HISTORY_W) % tileStepW === 0) {
       for (const t of computePulse(store, asOf, PROGRAM_SCOPE).tiles) {
         out.tileChecks++
@@ -42,13 +42,13 @@ export function checkLivePi(seed?: number, pis = LIVE_PIS, forecastStepW = 4, ti
   return out
 }
 
-/** Start and minimum of the forecast per live PI. */
-export function forecastByPi(live: LiveCheck): { pi: number; start: number; min: number }[] {
-  const rows = new Map<number, { pi: number; start: number; min: number }>()
+/** Start and minimum of the committed forecast per live PI, and the committed + stretch number at the start. */
+export function forecastByPi(live: LiveCheck): { pi: number; start: number; min: number; stretchStart: number }[] {
+  const rows = new Map<number, { pi: number; start: number; min: number; stretchStart: number }>()
   for (const f of live.forecasts) {
     const v = f.value ?? 0
     const r = rows.get(f.pi)
-    if (!r) rows.set(f.pi, { pi: f.pi, start: v, min: v })
+    if (!r) rows.set(f.pi, { pi: f.pi, start: v, min: v, stretchStart: f.withStretch ?? 0 })
     else r.min = Math.min(r.min, v)
   }
   return [...rows.values()]

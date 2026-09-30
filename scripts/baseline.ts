@@ -19,6 +19,6 @@ const counts: Record<string, number> = {}
 for (const t of all) counts[t.status] = (counts[t.status] ?? 0) + 1
 console.log('all 54 tiles:', counts, '· not green:', all.filter((t) => t.status === 'warn' || t.status === 'bad').map((t) => `${t.def.id}:${t.status}`).join(' ') || '-')
 const live = checkLivePi(seed)
-console.log('live forecast per PI (start / minimum):', forecastByPi(live).map((r) => `PI ${r.pi} ${r.start.toFixed(0)}/${r.min.toFixed(0)}`).join(' · '))
+console.log('live forecast per PI (committed start / minimum · with stretch at start):', forecastByPi(live).map((r) => `PI ${r.pi} ${r.start.toFixed(0)}/${r.min.toFixed(0)} · ${r.stretchStart.toFixed(0)}`).join(' | '))
 const tally = (xs: { id: string }[]) => xs.reduce<Record<string, number>>((a, x) => ((a[x.id] = (a[x.id] ?? 0) + 1), a), {})
 console.log(`live tile checks (${live.tileChecks}): off target`, tally(live.offTarget), '· near limit', tally(live.nearLimit))

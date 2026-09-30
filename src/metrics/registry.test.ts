@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { COMPUTE } from './defs'
 import { evaluate, statusFor, targetLabel } from './evaluate'
 import { METRICS, RAW_METRICS } from './registry'
+import { fmtValue } from '../app/format'
 
 const testSources = import.meta.glob<string>('./*.test.ts', { query: '?raw', import: 'default', eager: true })
 const allTests = Object.values(testSources).join('\n')
@@ -74,6 +75,14 @@ describe('evaluate', () => {
     expect(evaluate(75, t)).toBe('warn')
     expect(evaluate(65, t)).toBe('bad')
     expect(targetLabel(t, '%')).toBe('80–90%')
+  })
+
+  it('never shows a Monte Carlo share as 100 %: above displayMax it reads "> 99"', () => {
+    const fc = METRICS.find((m) => m.id === 'pi-forecast')!
+    expect(fmtValue(fc, 100)).toBe('> 99')
+    expect(fmtValue(fc, 99.2)).toBe('> 99')
+    expect(fmtValue(fc, 99)).toBe('99')
+    expect(fmtValue(fc, 96.4)).toBe('96')
   })
 
   it('judges the value as displayed: inside the corridor is green, near limit only just outside it', () => {

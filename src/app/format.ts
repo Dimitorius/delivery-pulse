@@ -15,7 +15,8 @@ export function fmtNumber(v: number | null | undefined, decimals = 1, signed = f
   return signed && v > 0 ? `+${s}` : s
 }
 
-export function fmtValue(def: MetricDef, v: number | null | undefined): string {
+export function fmtValue(def: Pick<MetricDef, 'decimals' | 'format' | 'displayMax'>, v: number | null | undefined): string {
+  if (v !== null && v !== undefined && def.displayMax !== undefined && v > def.displayMax) return `> ${fmtNumber(def.displayMax, 0)}`
   return fmtNumber(v, def.decimals, def.format === 'signed')
 }
 

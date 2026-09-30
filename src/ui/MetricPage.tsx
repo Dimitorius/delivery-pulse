@@ -111,7 +111,9 @@ export function MetricPage({ id, teamIds }: { id: string; teamIds: string[] }) {
                     .map((s) =>
                       s.unit === 'date'
                         ? `${s.label} ${s.value ? fmtDate(s.value) : '—'}`
-                        : `${s.label} ${fmtNumber(s.value, s.value !== null && Number.isInteger(s.value) ? 0 : 1)}${s.unit ? ` ${s.unit}` : ''}`,
+                        : s.unit === '%' && def.displayMax !== undefined
+                          ? `${s.label} ${fmtValue(def, s.value)} %`
+                          : `${s.label} ${fmtNumber(s.value, s.value !== null && Number.isInteger(s.value) ? 0 : 1)}${s.unit ? ` ${s.unit}` : ''}`,
                     )
                     .join(' · ')}
                 </span>

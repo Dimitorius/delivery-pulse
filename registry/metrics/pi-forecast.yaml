@@ -11,6 +11,7 @@ source: tracker
 unit: "%"
 format: number
 decimals: 0
+displayMax: 99
 direction: higher-better
 window: last 30 development working days of throughput
 question: Will the remaining PI scope be done by the PI end date?
@@ -21,7 +22,10 @@ definition: >-
   last team is done. The value is the share of trials that finish by the PI end; P50/P85
   are completion dates. Teams are not pooled — pooled throughput would assume any team
   can finish any other team's stories. A story counts as finished at its first
-  completion (a later reopen is rework, see Reopen Rate).
+  completion (a later reopen is rework, see Reopen Rate). A second, neutral number runs
+  the same trials on committed + uncommitted (stretch) stories: SAFe stretch objectives
+  are planned but not committed, so it has no target and no colour. With 2,000 trials a
+  share above 99 % is shown as "> 99 %" — the simulation cannot prove certainty.
 formula: |-
   remaining(team) = team's committed PI stories not Done at asOf (stretch excluded)
   daily(team)     = team's stories done in each of the last 30 development working days
@@ -29,6 +33,9 @@ formula: |-
   trial           = per team: draw weeks with replacement until Σ ≥ remaining → days
                     (last week prorated); program days = max over teams
   value           = 100 · share(trials with days ≤ working days left in PI)
+  with stretch    = the same with remaining(team) + the team's open stretch stories
+                    (same throughput samples and trial seeds; no target)
+  display         = "> 99" when value > 99
 events: [iteration.planned, item.created, item.status]
 target:
   op: ">="
@@ -51,3 +58,5 @@ changelog:
     change: "Throughput sampled in weekly blocks over the last 30 development days, IP iterations excluded; forecast covers committed scope only."
   - date: "2026-09-30"
     change: "Weeks are sampled as overlapping 5-day runs (moving-block bootstrap) instead of 6 fixed weeks: same week-level spread, no jumps when the fixed weeks are re-cut each day. A reopened story stays finished at its first completion."
+  - date: "2026-09-30"
+    change: "Two numbers: committed objectives (target ≥ 85 %, coloured) and committed + stretch (neutral, no target). Shares above 99 % are shown as \"> 99 %\"."

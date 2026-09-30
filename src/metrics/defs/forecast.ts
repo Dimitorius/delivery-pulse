@@ -79,13 +79,16 @@ export const piForecast: MetricCompute = (ctx) => {
 
 function piForecastInternal(ctx: MetricContext): MetricResult & { detail?: { days: number[]; daysLeft: number } } {
   const pi = currentPi(ctx)
-  const scope = pi
-    ? ctx.store.itemList.filter((i) => i.type === 'story' && i.piId === pi.id && !i.piStretch && inScope(ctx, i.teamId) && i.createdAt <= ctx.asOf)
+  const planned = pi
+    ? ctx.store.itemList.filter((i) => i.type === 'story' && i.piId === pi.id && inScope(ctx, i.teamId) && i.createdAt <= ctx.asOf)
     : []
+  const scope = planned.filter((i) => !i.piStretch)
   if (!pi || !scope.length) {
     return { value: null, n: 0, records: [], note: 'No PI scope for the selected teams (Kanban flow is not PI-planned).' }
   }
-  const remaining = scope.filter((i) => i.doneAt === undefined || i.doneAt > ctx.asOf)
+  const open = (i: { doneAt?: number }) => i.doneAt === undefined || i.doneAt > ctx.asOf
+  const remaining = scope.filter(open)
+  const remainingAll = planned.filter(open)
   // Daily throughput samples per team: stories finished in each of the last
   // 20 completed working days before today, development iterations only.
   // Teams are simulated separately and the PI is done when the last team is
@@ -97,7 +100,8 @@ function piForecastInternal(ctx: MetricContext): MetricResult & { detail?: { day
     (i) => i.type === 'story' && inScope(ctx, i.teamId) && i.doneAt !== undefined && i.doneAt <= ctx.asOf,
   )
   const teams = [...new Set(scope.map((i) => i.teamId))].sort()
-  for (const teamId of teams) {
+  const allTeams = [...new Set(planned.map((i) => i.teamId))].sort()
+  for (const teamId of allTeams) {
     const doneW = doneStories.filter((i) => i.teamId === teamId).map((i) => timeToWork(i.doneAt!))
     // IP iterations are skipped: the days ahead are development iterations.
     const ipRanges = ctx.store.iterationList
@@ -113,17 +117,24 @@ function piForecastInternal(ctx: MetricContext): MetricResult & { detail?: { day
     }
     teamSamples.set(teamId, samples)
   }
-  let days: number[] = Array(MC_TRIALS).fill(0)
-  teams.forEach((teamId, k) => {
-    const left = remaining.filter((i) => i.teamId === teamId).length
-    const daily = teamSamples.get(teamId)!
-    const weekly = movingBlocks(daily)
-    const team = monteCarloWhen(left, weekly, MC_TRIALS, MC_SEED + k, MC_BLOCK_DAYS).days
-    days = days.map((d, t) => Math.max(d, team[t]))
-  })
+  const trials = (left: typeof remaining, ts: string[]) => {
+    let days: number[] = Array(MC_TRIALS).fill(0)
+    ts.forEach((teamId) => {
+      const n = left.filter((i) => i.teamId === teamId).length
+      const weekly = movingBlocks(teamSamples.get(teamId)!)
+      // Same seed per team in both runs, so the two numbers differ only by the stretch stories.
+      const team = monteCarloWhen(n, weekly, MC_TRIALS, MC_SEED + allTeams.indexOf(teamId), MC_BLOCK_DAYS).days
+      days = days.map((d, t) => Math.max(d, team[t]))
+    })
+    return days
+  }
+  const days = trials(remaining, teams)
   const samples = teams.map((t) => `${t}: ${teamSamples.get(t)!.join(' ')}`).join(' | ')
   const daysLeft = (timeToWork(pi.end) - nowW) / HOURS_PER_DAY
   const onTime = days.filter((d) => d <= daysLeft).length
+  // Committed + uncommitted (stretch) objectives: a neutral second number, no target.
+  const stretchScope = planned.length - scope.length
+  const withStretch = stretchScope ? (100 * trials(remainingAll, allTeams).filter((d) => d <= daysLeft).length) / MC_TRIALS : null
   const p50 = percentile(days, 50)!
   const p85 = percentile(days, 85)!
   return {
@@ -135,6 +146,9 @@ function piForecastInternal(ctx: MetricContext): MetricResult & { detail?: { day
       { label: 'remaining', value: remaining.length },
       { label: 'scope', value: scope.length },
       { label: 'working days left', value: daysLeft },
+      { label: 'with stretch', value: withStretch, unit: '%' },
+      { label: 'stretch remaining', value: remainingAll.length - remaining.length },
+      { label: 'stretch scope', value: stretchScope },
     ],
     n: days.length,
     detail: { days, daysLeft },

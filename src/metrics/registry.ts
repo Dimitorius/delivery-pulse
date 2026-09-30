@@ -67,6 +67,8 @@ export interface MetricMeta {
   unit: string
   format: 'number' | 'signed'
   decimals: number
+  /** Values above this are shown as "> max" (e.g. a Monte Carlo share: 2,000 trials never prove 100 %). */
+  displayMax?: number
   direction: Direction
   window: string
   question: string

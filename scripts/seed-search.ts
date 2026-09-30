@@ -1,6 +1,7 @@
-// Dev helper: find seeds whose history matches the elite baseline criteria —
-// at the end of the history AND through every live PI (PI 4–14).
-// Run: npx vite-node scripts/seed-search.ts [from] [count]
+// Find seeds whose history matches the elite baseline criteria — at the end
+// of the history AND through every live PI (PI 4–14). Needed after every
+// simulator change that alters the RNG draws (see CLAUDE.md).
+// Run: npm run seed-search -- [from] [count]   (e.g. 4 terminals: 1 50, 51 50, …)
 // Stages, cheapest first: history end → forecast over the live PIs (8 h step)
 // → the full live check (forecast every 4 h, Pulse tiles every 8 h).
 import { LIVE_PIS, checkLivePi, forecastByPi } from '../src/app/liveBaseline'
@@ -50,8 +51,11 @@ for (let seed = from; seed < from + count; seed++) {
   const pis = forecastByPi(live)
   const min = Math.min(...pis.map((r) => r.min))
   const nearShare = live.nearLimit.length / live.tileChecks
-  const ok = min >= MIN_FORECAST && live.offTarget.length === 0 && nearShare <= 0.05
+  // The neutral committed + stretch number must be alive (same rule as liveBaseline.test.ts).
+  const stretch = pis.map((r) => r.stretchStart)
+  const stretchOk = stretch.filter((x) => x >= 55 && x <= 90).length / stretch.length >= 0.7 && Math.max(...stretch) - Math.min(...stretch) >= 15
+  const ok = min >= MIN_FORECAST && live.offTarget.length === 0 && nearShare <= 0.05 && stretchOk
   console.log(
-    `seed ${seed}${ok ? ' ✅' : ''}: start ${fc.toFixed(1)} liveMin ${min.toFixed(0)} off ${live.offTarget.length} near ${(100 * nearShare).toFixed(1)}% sayDo ${sayDo.toFixed(1)} tabWarn [${allWarn.join(',')}] · PI minima ${pis.map((r) => r.min.toFixed(0)).join(' ')}`,
+    `seed ${seed}${ok ? ' ✅' : ''}: start ${fc.toFixed(1)} liveMin ${min.toFixed(0)} off ${live.offTarget.length} near ${(100 * nearShare).toFixed(1)}% sayDo ${sayDo.toFixed(1)} tabWarn [${allWarn.join(',')}] · PI minima ${pis.map((r) => r.min.toFixed(0)).join(' ')} · stretch at PI start ${stretch.map((x) => x.toFixed(0)).join(' ')}`,
   )
 }

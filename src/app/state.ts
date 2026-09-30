@@ -29,6 +29,8 @@ export type Speed = (typeof SPEEDS)[number]
 
 interface AppState {
   ready: boolean
+  /** The clock reached the end of the simulated horizon (end of PI 14). */
+  ended: boolean
   now: number
   version: number
   speed: Speed
@@ -50,6 +52,7 @@ let worker: Worker | undefined
 
 export const useApp = create<AppState>((set) => ({
   ready: false,
+  ended: false,
   now: 0,
   version: 0,
   speed: 1,
@@ -96,7 +99,7 @@ export function startSimulation(seed = DEFAULT_SEED) {
   worker.onmessage = (e: MessageEvent<FromWorker>) => {
     for (const ev of e.data.events) apply(eventStore, ev)
     eventStore.now = Math.max(eventStore.now, e.data.now)
-    useApp.setState((s) => ({ ready: true, now: eventStore.now, version: s.version + 1 }))
+    useApp.setState((s) => ({ ready: true, ended: e.data.ended, now: eventStore.now, version: s.version + 1 }))
   }
   post({ type: 'start', seed, speed: useApp.getState().speed })
 }

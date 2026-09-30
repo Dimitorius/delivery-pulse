@@ -14,7 +14,7 @@ function iterationLabel(now: number, scope: string, lens: Lens): string {
 }
 
 export function Header({ signalCount, onSignals }: { signalCount: number; onSignals: () => void }) {
-  const { now, speed, setSpeed, scope, setScope, lens, setLens } = useApp()
+  const { now, speed, setSpeed, scope, setScope, lens, setLens, ended } = useApp()
   return (
     <header className="header">
       <div className="brand">
@@ -52,7 +52,7 @@ export function Header({ signalCount, onSignals }: { signalCount: number; onSign
       </div>
       <div className="speed" role="group" aria-label="Simulation speed">
         {SPEEDS.map((s) => (
-          <button key={s} className={s === speed ? 'on' : ''} onClick={() => setSpeed(s)} aria-pressed={s === speed}>
+          <button key={s} className={s === speed && !ended ? 'on' : ''} onClick={() => setSpeed(s)} aria-pressed={s === speed} disabled={ended}>
             {s === 0 ? '❚❚' : `${s}×`}
           </button>
         ))}
@@ -63,6 +63,12 @@ export function Header({ signalCount, onSignals }: { signalCount: number; onSign
       <button className={`signals-count ${signalCount ? 'has' : ''}`} onClick={onSignals} title="Signals fired">
         <span className="num">{signalCount}</span> signals
       </button>
+      {ended ? (
+        <div className="horizon" role="status">
+          <span>End of simulated horizon (end of PI 14) — restart to replay the live PIs from PI 4.</span>
+          <button onClick={() => location.reload()}>Restart</button>
+        </div>
+      ) : null}
     </header>
   )
 }

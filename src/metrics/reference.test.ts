@@ -317,6 +317,33 @@ describe('metric:pi-forecast', () => {
     expect(ASOF).toBe(Date.UTC(2026, 5, 29))
   })
 
+  it('second number: committed + uncommitted (stretch) stories, same throughput', () => {
+    const build = (stretch: number) => {
+      const f = new Fixture()
+      f.at(day(-30), { type: 'iteration.planned', iteration: { id: 'PI-9', kind: 'pi', name: 'PI 9', index: 8, start: day(-30), end: Date.UTC(2026, 6, 10) } })
+      for (let i = 0; i < 6; i++) f.item(`P-${i}`, 'a', { piId: 'PI-9', createdAt: day(-30) })
+      for (let i = 0; i < stretch; i++) f.item(`S-${i}`, 'a', { piId: 'PI-9', piStretch: true, createdAt: day(-30) })
+      let n = 0
+      for (let d = 27; n < 30; d--) {
+        const dow = new Date(day(d)).getUTCDay()
+        if (dow === 0 || dow === 6) continue
+        f.flow(`X-${n}`, 'a', day(d) + hours(9), day(d) + hours(12)) // 1 story per working day
+        n++
+      }
+      return f
+    }
+    // 9 working days left (Mon 29 Jun → Fri 10 Jul 00:00). Committed: 6 stories → 6 days → 100 %.
+    // + 3 stretch = 9 stories → 9 days ≤ 9 → 100 %; + 4 stretch = 10 days > 9 → 0 %.
+    const fits = run('pi-forecast', build(3), ['a'])
+    expect(fits.value).toBe(100)
+    expect(sec(fits, 'with stretch')).toBe(100)
+    expect(sec(fits, 'stretch remaining')).toBe(3)
+    const over = run('pi-forecast', build(4), ['a'])
+    expect(over.value).toBe(100) // the committed number ignores stretch
+    expect(sec(over, 'with stretch')).toBe(0)
+    expect(sec(run('pi-forecast', build(0), ['a']), 'with stretch')).toBeNull() // no stretch planned
+  })
+
   it('Monte Carlo: the program is done when the last team is done (no pooling)', () => {
     const f = new Fixture()
     f.at(day(-30), { type: 'iteration.planned', iteration: { id: 'PI-9', kind: 'pi', name: 'PI 9', index: 8, start: day(-30), end: Date.UTC(2026, 6, 31) } })

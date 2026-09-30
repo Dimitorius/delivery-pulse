@@ -123,7 +123,10 @@ h2, h3 { margin: 0; font-weight: 600; }
 .forecast h2 { font-size: 13px; color: var(--fg-2); font-weight: 500; margin-bottom: 4px; }
 .forecast-main { display: flex; flex-direction: column; gap: 4px; }
 .forecast-prob { display: flex; align-items: baseline; gap: 8px; }
-.forecast-prob .num { font-size: 40px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
+.forecast-prob .num { font-size: 40px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; white-space: nowrap; }
+.forecast-prob .muted, .forecast-stretch .muted { font-size: 12px; }
+.forecast-stretch { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; color: var(--fg-2); }
+.forecast-stretch .num { font-size: 18px; font-weight: 600; color: var(--fg-2); white-space: nowrap; }
 .forecast-facts { display: grid; gap: 6px; }
 .forecast-facts div { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
 .forecast-facts .k { color: var(--fg-2); font-size: 12px; }
@@ -272,3 +275,7 @@ code { font-family: var(--mono); font-size: 11px; background: var(--surface-2); 
   .drawer { padding: 16px; }
   .footer { padding: 0 16px 20px; }
 }
+
+/* ---- end of the simulated horizon ---- */
+.horizon { flex-basis: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2); color: var(--fg); font-size: 13px; }
+.horizon button { padding: 4px 12px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--fg); cursor: pointer; }
