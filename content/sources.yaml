@@ -1,0 +1,88 @@
+# Additional sources used by content/ (keys shared with registry/sources.yaml; merge into it in stage 3).
+# Every entry was opened and checked by Claude on the date in `checked`.
+
+vacanti-wwibd:            # corrects registry entry (year was 2018)
+  title: "When Will It Be Done? Lean-Agile Forecasting to Answer Your Customers' Most Important Question"
+  publisher: D. S. Vacanti (book, ISBN 9780986436376)
+  year: 2020
+  url: https://leanpub.com/whenwillitbedone
+  checked: 2026-09-25
+magennis-sampling:
+  title: "Sampling, applying to software forecasting"
+  publisher: T. Magennis, Forecasting Using Data (Medium)
+  year: 2017
+  url: https://medium.com/forecasting-using-data/sampling-applying-to-software-forecasting-a97cb10e2f23
+  checked: 2026-09-25
+expedia-monte-carlo:
+  title: "Monte Carlo Forecasting in Software Delivery"
+  publisher: B. Masters, Expedia Group Technology
+  year: 2020
+  url: https://medium.com/expedia-group-tech/monte-carlo-forecasting-in-software-delivery-474bb49cb3f9
+  checked: 2026-09-25
+planview-flow-time:
+  title: "Measuring your software delivery — Flow time vs. Lead time"
+  publisher: Planview / Tasktop (Flow Framework)
+  url: https://blog.planview.com/flow-time-vs-lead-time/
+  checked: 2026-09-25
+planview-safe6-flow:
+  title: "A Deep Dive into SAFe 6.0 Flow Metrics"
+  publisher: Planview
+  url: https://www.planview.com/resources/articles/deep-dive-into-safe-6-flow-metrics/
+  checked: 2026-09-25
+redmonk-dora-2025:
+  title: "DORA 2025: Measuring Software Delivery After AI"
+  publisher: RedMonk (R. Stephens)
+  year: 2025
+  url: https://redmonk.com/rstephens/2025/12/18/dora2025/
+  checked: 2026-09-25
+safe-accelerating-flow:
+  title: Accelerating Flow with SAFe (six flow metrics defined in the public summary)
+  publisher: Scaled Agile Framework
+  year: 2025
+  url: https://framework.scaledagile.com/accelerating-flow-with-safe
+  checked: 2026-09-30
+  note: "Public part defines Flow Distribution, Velocity, Time ('from when a backlog item enters the workflow to its release'), Load, Efficiency, Predictability ('overall planned versus actual business value'). Last update 12 Mar 2025."
+safe-measure-and-grow:
+  title: Measure and Grow
+  publisher: Scaled Agile Framework
+  year: 2025
+  url: https://framework.scaledagile.com/measure-and-grow
+  checked: 2026-09-30
+  note: "Outcomes / Flow / Competency domains in the public summary; details behind login. Last update 8 Sep 2025."
+safe-pi-objectives:
+  title: PI Objectives
+  publisher: Scaled Agile Framework
+  url: https://framework.scaledagile.com/pi-objectives
+  checked: 2026-09-30
+  note: "Public part: objectives are committed or uncommitted; performance assessed via the ART Predictability Measure. Recommended count per team is behind login."
+kersten-project-to-product:
+  title: "Project to Product: How to Survive and Thrive in the Age of Digital Disruption with the Flow Framework"
+  publisher: M. Kersten, IT Revolution (book)
+  year: 2018
+  url: https://itrevolution.com/product/project-to-product/
+  checked: 2026-09-30
+gao-cost-guide:
+  title: "Cost Estimating and Assessment Guide (GAO-20-195G)"
+  publisher: U.S. Government Accountability Office
+  year: 2020
+  url: https://www.gao.gov/products/gao-20-195g
+  checked: 2026-09-30
+safe-blog-pi-objectives:
+  title: "Your Guide to Writing Great Iteration and PI Objectives"
+  publisher: S. Olin, Scaled Agile (official blog)
+  year: 2023
+  url: https://scaledagile.com/blog/your-guide-to-writing-great-iteration-and-pi-objectives/
+  checked: 2026-09-30
+  note: "Public, official. Objectives are 'much more than a summary of the planned work'; business value 1 (lowest)–10 (highest); uncommitted objectives do not count towards predictability. No recommended count per team."
+getdx-dora-2023:
+  title: "2023 DORA Report"
+  publisher: A. Noda, Engineering Enablement newsletter (DX), quoting N. Harvey (DORA lead)
+  year: 2023
+  url: https://newsletter.getdx.com/p/2023-dora-report
+  checked: 2026-10-01
+google-code-review-2018:
+  title: "Modern Code Review: A Case Study at Google"
+  publisher: C. Sadowski et al., ICSE-SEIP 2018
+  year: 2018
+  url: https://dl.acm.org/doi/10.1145/3183519.3183525
+  checked: 2026-10-01

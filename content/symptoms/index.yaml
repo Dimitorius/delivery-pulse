@@ -1,0 +1,54 @@
+# Diagnose — symptom list (42). One file per symptom in content/symptoms/<id>.md (written in batches).
+# scenario: id of the simulator scenario that reproduces it ("Inject scenario"), or null if the simulator
+#           cannot honestly produce it from events (needs surveys/finance) — Diagnose still works for it.
+# group order = display order.
+
+- { id: missed-dates, group: Dates & predictability, name: We keep missing dates, scenario: missed-dates }
+- { id: forecasts-wrong, group: Dates & predictability, name: Forecasts and estimates don't come true, scenario: null }
+- { id: sprint-goals-missed, group: Dates & predictability, name: Sprint goals missed, lots of carry-over, scenario: null }
+- { id: low-pi-predictability, group: Dates & predictability, name: Low PI predictability, scenario: null }
+- { id: ninety-percent-done, group: Dates & predictability, name: '"90 % done" for weeks — long tail of finishing', scenario: null }
+
+- { id: review-bottleneck, group: Flow, name: Work gets stuck in review, QA or waiting, scenario: review-bottleneck }
+- { id: too-much-started, group: Flow, name: Lots started, little finished, scenario: too-much-started }
+- { id: fat-tail, group: Flow, name: A few items hang for weeks, scenario: fat-tail }
+- { id: arrivals-exceed-departures, group: Flow, name: Work arrives faster than we finish it, scenario: arrivals-exceed-departures }
+- { id: big-batches, group: Flow, name: Big batches, rare releases, scenario: null }
+- { id: frequent-blockers, group: Flow, name: Frequent blockers, scenario: frequent-blockers }
+
+- { id: prod-bugs, group: Quality & reliability, name: Many bugs reach production, scenario: prod-bugs }
+- { id: incidents, group: Quality & reliability, name: Frequent incidents or slow recovery, scenario: incidents }
+- { id: rollbacks-hotfixes, group: Quality & reliability, name: Releases need rollbacks and hotfixes, scenario: null }
+- { id: red-ci, group: Quality & reliability, name: CI is red or flaky, scenario: red-ci }
+- { id: slowing-down-debt, group: Quality & reliability, name: We get slower over time — tech debt piles up, scenario: null }
+- { id: security-backlog, group: Quality & reliability, name: Security backlog keeps growing, scenario: null }
+- { id: manual-regression-gate, group: Quality & reliability, name: Releases wait for manual regression, scenario: null }
+
+- { id: scope-creep, group: Scope & requirements, name: Scope creep, scenario: scope-creep }
+- { id: shifting-priorities, group: Scope & requirements, name: Priorities keep changing, lots of unplanned work, scenario: shifting-priorities }
+- { id: raw-requirements, group: Scope & requirements, name: Items arrive raw and fail the Definition of Ready, scenario: null }
+- { id: bloated-backlog, group: Scope & requirements, name: The backlog is bloated and stale, scenario: null }
+
+- { id: waiting-on-teams, group: Dependencies & scale, name: We keep waiting on other teams, scenario: waiting-on-teams }
+- { id: critical-path-slipping, group: Dependencies & scale, name: The critical path keeps slipping, scenario: null }
+- { id: late-integration, group: Dependencies & scale, name: Integration breaks at the end of the PI, scenario: null }
+- { id: platform-bottleneck, group: Dependencies & scale, name: The platform team has become the bottleneck, scenario: null }
+
+- { id: overload-burnout, group: People, name: Overload and burnout, scenario: null }
+- { id: bus-factor, group: People, name: Knowledge sits in one head, scenario: null }
+- { id: slow-onboarding, group: People, name: New joiners take long to become productive, scenario: null }
+- { id: interruptions, group: People, name: Constant interruptions, little focus time, scenario: null }
+- { id: attrition, group: People, name: People are leaving, scenario: null }
+- { id: low-safety, group: People, name: Problems are not raised (low psychological safety), scenario: null }
+
+- { id: no-visible-value, group: Value & business, name: The business doesn't see the value, scenario: null }
+- { id: features-unused, group: Value & business, name: Features ship but nobody uses them, scenario: null }
+- { id: unhappy-stakeholders, group: Value & business, name: Stakeholders unhappy, escalations, scenario: null }
+- { id: slow-decisions, group: Value & business, name: Decisions take too long, scenario: null }
+- { id: budget-overrun, group: Value & business, name: Budget overrun, scenario: null }
+- { id: rising-infra-cost, group: Value & business, name: Infrastructure costs keep rising, scenario: null }
+- { id: formal-sprint-review, group: Value & business, name: Sprint Review is a formality — no real feedback, scenario: null }
+
+- { id: ai-no-gain, group: AI & process, name: We adopted AI tools but delivery didn't speed up (or quality dropped), scenario: null }
+- { id: actions-not-closed, group: AI & process, name: Retro and postmortem actions are never closed, scenario: null }
+- { id: meeting-overload, group: AI & process, name: Meetings eat the week, scenario: null }

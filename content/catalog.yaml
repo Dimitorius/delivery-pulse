@@ -1,0 +1,424 @@
+# Delivery Pulse — full metric catalog (content layer)
+# Written in Cowork by Claude, reviewed by Dmitry. Code merges this with registry/metrics/*.yaml by `id`.
+#
+# status:
+#   live       — computed from simulator events (core 50); registry/metrics/<id>.yaml holds formula/target
+#   featured   — SYNTHETIC but a showcase tile on its tab (DXI, eNPS, EBM Current Value, CPI)
+#   synthetic  — SYNTHETIC series, off by default, enable in Library
+#   view       — a chart/view rather than a single number (CFD, burn-up …)
+#   anti       — anti-metric: catalog + Learn only, never a dashboard
+# tier: 1 Start here · 2 Core · 3 Situational · 4 Specialist
+# levels: lagging | current | leading
+# source: tracker | vcs | ci | monitoring | incident | survey | finance | manual | product-analytics
+# aliases: framework vocabulary for the "also known as" chips and the Framework lens.
+#   rel "≡" = same definition, "≈" = related but defined differently (note says how).
+
+# ───────────────────────────── FLOW ─────────────────────────────
+- id: throughput
+  name: Throughput
+  domain: Flow
+  levels: [lagging]
+  source: tracker
+  tier: 1
+  status: live
+  q: How many work items do we finish per week?
+  aliases:
+    - { fw: SAFe, name: Flow Velocity, rel: "≡" }
+    - { fw: Flow Framework, name: Flow Velocity, rel: "≡" }
+    - { fw: Scrum, name: Velocity, rel: "≈", note: "Velocity counts story points per sprint, not items per unit of time." }
+
+- id: cycle-time
+  name: Cycle Time
+  domain: Flow
+  levels: [lagging]
+  source: tracker
+  tier: 1
+  status: live
+  q: Once we start an item, how long until it is finished?
+  aliases:
+    - { fw: Flow Framework, name: Flow Time, rel: "≈", note: "Flow Time starts at the first active state (same) but stops when the item is available to the customer, not at Done." }
+
+- id: lead-time
+  name: Lead Time
+  domain: Flow
+  levels: [lagging]
+  source: tracker
+  tier: 1
+  status: live
+  q: From the moment someone asks, how long until they get it?
+  aliases:
+    - { fw: SAFe, name: Flow Time, rel: "≈", note: "SAFe Flow Time runs from entering the value stream to 'in the hands of the customer'; our Lead Time stops at Done." }
+
+- id: wip
+  name: Work in Progress (WIP)
+  domain: Flow
+  levels: [current]
+  source: tracker
+  tier: 1
+  status: live
+  q: How many items have we started but not finished?
+  aliases:
+    - { fw: SAFe, name: Flow Load, rel: "≡" }
+    - { fw: Flow Framework, name: Flow Load, rel: "≡" }
+
+- id: aging-wip
+  name: Work Item Age & Aging WIP
+  domain: Flow
+  levels: [current, leading]
+  source: tracker
+  tier: 1
+  status: live
+  q: Which items in flight are already older than we usually take?
+
+- id: flow-efficiency
+  name: Flow Efficiency
+  domain: Flow
+  levels: [current]
+  source: tracker
+  tier: 2
+  status: live
+  q: Of an item's elapsed time, how much is actually spent working on it?
+  aliases:
+    - { fw: SAFe, name: Flow Efficiency, rel: "≡" }
+    - { fw: Flow Framework, name: Flow Efficiency, rel: "≡" }
+
+- id: net-flow
+  name: Net Flow
+  domain: Flow
+  levels: [leading]
+  source: tracker
+  tier: 2
+  status: live
+  q: Is work arriving faster than we finish it (arrived − finished)?
+
+- id: blocked-items
+  name: Blocked Items & Blocked Time
+  domain: Flow
+  levels: [current, leading]
+  source: tracker
+  tier: 2
+  status: live
+  q: How much of our work is stuck waiting on something, and for how long?
+
+- id: queue-size-by-stage
+  name: Queue Size by Stage
+  domain: Flow
+  levels: [current, leading]
+  source: tracker
+  tier: 2
+  status: live
+  q: Where is work piling up — review, QA, waiting for deploy?
+
+- id: sle-attainment
+  name: SLE Attainment
+  domain: Flow
+  levels: [lagging]
+  source: tracker
+  tier: 2
+  status: live
+  q: What share of finished items met our service level expectation?
+
+- id: flow-distribution
+  name: Flow Distribution
+  domain: Flow
+  levels: [lagging]
+  source: tracker
+  tier: 2
+  status: live
+  q: What mix of work did we deliver — features, defects, debt, risk?
+  aliases:
+    - { fw: SAFe, name: Flow Distribution, rel: "≡" }
+    - { fw: Flow Framework, name: Flow Distribution, rel: "≡" }
+
+- { id: cumulative-flow, name: Cumulative Flow Diagram, domain: Flow, levels: [lagging, current], source: tracker, tier: 2, status: view, q: "How do arrivals, WIP and departures evolve by stage over time?" }
+- { id: cycle-time-scatterplot, name: Cycle Time Scatterplot, domain: Flow, levels: [lagging], source: tracker, tier: 2, status: view, q: "What does every finished item's cycle time look like, with percentile lines?" }
+- { id: arrival-rate, name: Arrival Rate, domain: Flow, levels: [leading], source: tracker, tier: 3, status: synthetic, q: "How many new items enter the system per week?" }
+- { id: time-in-status, name: Time in Status (per stage), domain: Flow, levels: [lagging], source: tracker, tier: 3, status: synthetic, q: "Which stage of the workflow eats the most time?" }
+- { id: handoffs-per-item, name: Handoffs per Item, domain: Flow, levels: [lagging], source: tracker, tier: 3, status: synthetic, q: "How many times does an item change hands before Done?" }
+- { id: batch-size, name: Batch Size, domain: Flow, levels: [lagging], source: tracker, tier: 3, status: synthetic, q: "How many items ship together in one release?" }
+- { id: wip-per-person, name: WIP per Person, domain: Flow, levels: [current], source: tracker, tier: 3, status: synthetic, q: "How many items is each person juggling on average (team-level, never per name)?" }
+- { id: wip-limit-breaches, name: WIP Limit Breaches, domain: Flow, levels: [current, leading], source: tracker, tier: 3, status: synthetic, q: "How often do we exceed our own WIP limits?" }
+- { id: throughput-variability, name: Throughput Variability, domain: Flow, levels: [lagging], source: tracker, tier: 3, status: synthetic, q: "How stable is our weekly throughput (coefficient of variation)?" }
+- { id: cycle-time-tail-ratio, name: Cycle Time Tail Ratio (P85/P50), domain: Flow, levels: [lagging, leading], source: tracker, tier: 3, status: synthetic, q: "How fat is the tail — how much worse is a slow item than a typical one?" }
+
+# ───────────────────────────── SCRUM ─────────────────────────────
+- id: sprint-goal-success
+  name: Sprint Goal Success Rate
+  domain: Scrum
+  levels: [lagging]
+  source: tracker
+  tier: 1
+  status: live
+  q: In what share of sprints did we achieve the Sprint Goal?
+
+- id: say-do-ratio
+  name: Say/Do Ratio (Commitment Reliability)
+  domain: Scrum
+  levels: [lagging]
+  source: tracker
+  tier: 1
+  status: live
+  q: How much of what we planned at sprint planning did we finish?
+
+- id: carry-over
+  name: Carry-over (Spillover) Rate
+  domain: Scrum
+  levels: [lagging, leading]
+  source: tracker
+  tier: 1
+  status: live
+  q: What share of sprint work rolls into the next sprint unfinished?
+
+- id: sprint-scope-change
+  name: Sprint Scope Change
+  domain: Scrum
+  levels: [current, leading]
+  source: tracker
+  tier: 2
+  status: live
+  q: How much work was added to or removed from the sprint after planning?
+
+- id: velocity
+  name: Velocity
+  domain: Scrum
+  levels: [lagging]
+  source: tracker
+  tier: 2
+  status: live
+  q: How many story points does this team usually finish per sprint (for its own planning only)?
+  aliases:
+    - { fw: SAFe, name: Flow Velocity, rel: "≈", note: "SAFe Flow Velocity counts completed items, not points." }
+
+- { id: velocity-variability, name: Velocity Variability, domain: Scrum, levels: [lagging], source: tracker, tier: 3, status: synthetic, q: "How much does velocity swing sprint to sprint?" }
+- { id: sprint-burndown, name: Sprint Burndown, domain: Scrum, levels: [current], source: tracker, tier: 3, status: view, q: "How is remaining sprint work trending day by day?" }
+- { id: sprint-burnup, name: Sprint / Release Burn-up, domain: Scrum, levels: [current, leading], source: tracker, tier: 3, status: view, q: "How does completed work track against a scope line that can move?" }
+- { id: focus-factor, name: Focus Factor, domain: Scrum, levels: [lagging], source: tracker, tier: 4, status: synthetic, q: "What share of available capacity turned into done points? (disputed)" }
+- { id: capacity-availability, name: Capacity Availability, domain: Scrum, levels: [leading], source: manual, tier: 3, status: synthetic, q: "How much of the team's nominal capacity is actually available this sprint?" }
+- { id: estimation-accuracy, name: Estimation Accuracy, domain: Scrum, levels: [lagging], source: tracker, tier: 3, status: synthetic, q: "How far are actual efforts from estimates, by item size?" }
+- { id: retro-action-completion, name: Retro Action Completion, domain: Scrum, levels: [lagging], source: tracker, tier: 3, status: synthetic, q: "Do we actually finish the improvements we agree on in retrospectives?" }
+- { id: dod-compliance, name: Definition of Done Compliance, domain: Scrum, levels: [lagging], source: tracker, tier: 3, status: synthetic, q: "What share of 'done' items truly met every DoD criterion?" }
+- { id: sprint-review-engagement, name: Sprint Review Engagement, domain: Scrum, levels: [lagging], source: manual, tier: 3, status: synthetic, q: "Do stakeholders attend the Sprint Review and give feedback that changes the backlog?" }
+
+# ───────────────────────── BACKLOG & REQUIREMENTS ─────────────────────────
+- { id: ready-backlog-depth, name: Ready Backlog Depth, domain: Backlog, levels: [leading], source: tracker, tier: 3, status: synthetic, q: "How many sprints ahead do we have refined, ready work?" }
+- { id: backlog-size-trend, name: Backlog Size Trend, domain: Backlog, levels: [leading], source: tracker, tier: 3, status: synthetic, q: "Is the backlog growing faster than we can ever deliver it?" }
+- { id: stale-backlog, name: Stale Backlog Items, domain: Backlog, levels: [current], source: tracker, tier: 3, status: synthetic, q: "How many backlog items have not been touched for N days?" }
+- { id: dor-pass-rate, name: Definition of Ready Pass Rate, domain: Backlog, levels: [leading], source: tracker, tier: 3, status: synthetic, q: "What share of items entering a sprint actually met the DoR?" }
+- { id: requirements-volatility, name: Requirements Volatility, domain: Backlog, levels: [leading], source: tracker, tier: 3, status: synthetic, q: "How often do acceptance criteria change after work has started?" }
+- { id: item-size-distribution, name: Item Size Distribution, domain: Backlog, levels: [leading], source: tracker, tier: 4, status: synthetic, q: "Are items right-sized, or is a long tail of huge items hiding in the backlog?" }
+
+# ─────────────────────── DELIVERY · DORA ───────────────────────
+- id: deployment-frequency
+  name: Deployment Frequency
+  domain: Delivery
+  levels: [lagging]
+  source: ci
+  tier: 2
+  status: live
+  q: How often do we deploy to production?
+  aliases:
+    - { fw: DORA, name: Deployment frequency, rel: "≡" }
+
+- id: lead-time-for-changes
+  name: Change Lead Time
+  domain: Delivery
+  levels: [lagging]
+  source: vcs
+  tier: 2
+  status: live
+  q: How long from a commit to that change running in production?
+  aliases:
+    - { fw: DORA, name: Change lead time (formerly Lead time for changes), rel: "≡" }
+
+- id: change-failure-rate
+  name: Change Fail Rate
+  domain: Delivery
+  levels: [lagging]
+  source: incident
+  tier: 1
+  status: live
+  q: What share of deployments cause a failure that needs immediate fixing?
+  aliases:
+    - { fw: DORA, name: Change fail rate, rel: "≡" }
+
+- id: failed-deployment-recovery-time
+  name: Failed Deployment Recovery Time
+  domain: Delivery
+  levels: [lagging]
+  source: incident
+  tier: 2
+  status: live
+  q: When a deployment fails, how fast do we recover?
+  aliases:
+    - { fw: DORA, name: Failed deployment recovery time (replaced MTTR in 2023), rel: "≡" }
+
+- id: deployment-rework-rate
+  name: Deployment Rework Rate
+  domain: Delivery
+  levels: [lagging, leading]
+  source: ci
+  tier: 2
+  status: live
+  q: What share of deployments are unplanned, done to fix a user-facing problem?
+  aliases:
+    - { fw: DORA, name: Deployment rework rate (5th metric, 2024), rel: "≡" }
+
+- { id: release-frequency, name: Release Frequency (to customers), domain: Delivery, levels: [lagging], source: manual, tier: 3, status: synthetic, q: "How often does a new version actually reach customers (app store, on-prem, desktop)?" }
+- { id: rollback-rate, name: Rollback Rate, domain: Delivery, levels: [lagging], source: ci, tier: 3, status: synthetic, q: "What share of deployments are rolled back?" }
+- { id: hotfix-rate, name: Hotfix Rate, domain: Delivery, levels: [lagging, leading], source: vcs, tier: 3, status: synthetic, q: "How many releases need an emergency fix outside the normal train?" }
+- { id: time-to-market, name: Time to Market, domain: Delivery, levels: [lagging], source: tracker, tier: 3, status: synthetic, q: "From idea approved to customers using it, how long does it take?", aliases: [ { fw: EBM, name: Time-to-Market (KVA), rel: "≈", note: "EBM treats T2M as a whole Key Value Area with several measures." } ] }
+- { id: change-approval-time, name: Change Approval Lead Time (CAB), domain: Delivery, levels: [lagging], source: manual, tier: 3, status: synthetic, q: "How long do changes wait for formal approval before they can ship?" }
+
+# ─────────────────────── DELIVERY · CODE REVIEW ───────────────────────
+- { id: pr-pickup-time, name: PR Pickup Time, domain: Delivery, levels: [current, leading], source: vcs, tier: 2, status: live, q: "How long does a pull request wait for its first review?" }
+- { id: time-to-merge, name: Time to Merge, domain: Delivery, levels: [lagging], source: vcs, tier: 2, status: live, q: "How long from opening a pull request to merging it?" }
+- { id: pr-size, name: PR Size, domain: Delivery, levels: [leading], source: vcs, tier: 2, status: live, q: "How big are our changes — lines and files per pull request?" }
+- { id: review-iterations, name: Review Iterations, domain: Delivery, levels: [lagging], source: vcs, tier: 3, status: synthetic, q: "How many review rounds does a pull request need before merge?" }
+- { id: unreviewed-merges, name: Unreviewed Merges, domain: Delivery, levels: [lagging], source: vcs, tier: 3, status: synthetic, q: "How many changes reach main without any review?" }
+- { id: pr-throughput, name: PR Throughput, domain: Delivery, levels: [lagging], source: vcs, tier: 3, status: synthetic, q: "How many pull requests does the team merge per week?" }
+- { id: stale-prs, name: Stale Pull Requests, domain: Delivery, levels: [current], source: vcs, tier: 3, status: synthetic, q: "How many open pull requests have had no activity for days?" }
+- { id: review-load-balance, name: Review Load Balance, domain: Delivery, levels: [current], source: vcs, tier: 4, status: synthetic, q: "Is reviewing spread across the team or concentrated in one or two people (team-level view, no ranking)?" }
+
+# ─────────────────────── DELIVERY · CI/CD ───────────────────────
+- { id: main-build-success, name: Main Build Success Rate, domain: Delivery, levels: [current], source: ci, tier: 2, status: live, q: "What share of pipeline runs on main are green?" }
+- { id: pipeline-duration-p95, name: Pipeline Duration (P95), domain: Delivery, levels: [current], source: ci, tier: 2, status: live, q: "How long does a slow pipeline run take?" }
+- { id: flaky-test-rate, name: Flaky Test Rate, domain: Delivery, levels: [current, leading], source: ci, tier: 2, status: live, q: "How often do tests fail and then pass with no code change?" }
+- { id: red-main-time, name: Red Main Time, domain: Delivery, levels: [current], source: ci, tier: 2, status: live, q: "How much of the day is main broken?" }
+- { id: time-to-fix-build, name: Time to Fix a Broken Build, domain: Delivery, levels: [lagging], source: ci, tier: 3, status: synthetic, q: "When main goes red, how long until it is green again?" }
+- { id: test-coverage-trend, name: Test Coverage Trend, domain: Delivery, levels: [leading], source: ci, tier: 4, status: synthetic, q: "Is automated test coverage rising or falling (trend, never a target)?" }
+
+# ─────────────────────── QUALITY ───────────────────────
+- { id: escaped-defects, name: Escaped Defects, domain: Quality, levels: [lagging], source: tracker, tier: 1, status: live, q: "How many defects are found in production instead of before release?" }
+- { id: defect-reopen-rate, name: Defect Reopen Rate, domain: Quality, levels: [lagging], source: tracker, tier: 2, status: live, q: "What share of fixed defects come back?" }
+- { id: open-bug-trend, name: Open Bug Trend & Bug Age, domain: Quality, levels: [current, leading], source: tracker, tier: 3, status: synthetic, q: "Is the pile of open bugs growing, and how old are they?" }
+- { id: defect-removal-efficiency, name: Defect Removal Efficiency, domain: Quality, levels: [lagging], source: tracker, tier: 3, status: synthetic, q: "Of all defects found, what share did we catch before release?" }
+- { id: time-to-fix-defects, name: Time to Fix Defects (by severity), domain: Quality, levels: [lagging], source: tracker, tier: 3, status: synthetic, q: "How long do we take to fix defects of each severity?" }
+- { id: defect-density, name: Defect Density, domain: Quality, levels: [lagging], source: tracker, tier: 4, status: synthetic, q: "How many defects per unit of size (KLOC, feature, release)?" }
+- { id: tech-debt-trend, name: Tech Debt Items Trend, domain: Quality, levels: [leading], source: tracker, tier: 3, status: synthetic, q: "Is registered technical debt growing or shrinking?" }
+- { id: tech-debt-ratio, name: Technical Debt Ratio (SQALE), domain: Quality, levels: [leading], source: ci, tier: 4, status: synthetic, q: "What is the estimated remediation cost relative to the cost of building the code?" }
+
+# ─────────────────────── RELIABILITY (SRE) ───────────────────────
+- { id: incidents-by-severity, name: Incidents by Severity, domain: Reliability, levels: [lagging], source: incident, tier: 2, status: live, q: "How many production incidents did we have, by severity?" }
+- { id: mtta, name: Mean Time to Acknowledge (MTTA), domain: Reliability, levels: [lagging], source: incident, tier: 2, status: live, q: "How fast does someone react to an alert?" }
+- { id: incident-mttr, name: Incident Time to Restore, domain: Reliability, levels: [lagging], source: incident, tier: 2, status: live, q: "How long do incidents last from detection to service restored?" }
+- { id: slo-attainment, name: SLO Attainment, domain: Reliability, levels: [lagging], source: monitoring, tier: 2, status: live, q: "Did we meet our service level objectives this period?" }
+- { id: error-budget-burn-rate, name: Error Budget Burn Rate, domain: Reliability, levels: [leading], source: monitoring, tier: 2, status: live, q: "How fast are we spending the error budget relative to plan?" }
+- { id: postmortem-action-closure, name: Postmortem Action Closure, domain: Reliability, levels: [lagging, leading], source: tracker, tier: 2, status: live, q: "Do we finish the follow-up actions from incident reviews?" }
+- { id: mttd, name: Time to Detect (MTTD), domain: Reliability, levels: [lagging], source: incident, tier: 3, status: synthetic, q: "How long between a failure starting and us noticing it?" }
+- { id: error-budget-remaining, name: Error Budget Remaining, domain: Reliability, levels: [current], source: monitoring, tier: 3, status: synthetic, q: "How much unreliability can we still afford this window?" }
+- { id: repeat-incident-rate, name: Repeat Incident Rate, domain: Reliability, levels: [lagging], source: incident, tier: 3, status: synthetic, q: "How many incidents share a root cause with an earlier one?" }
+- { id: availability, name: Availability, domain: Reliability, levels: [lagging], source: monitoring, tier: 3, status: synthetic, q: "What share of time (or requests) was the service usable?" }
+- { id: on-call-load, name: On-call Load, domain: Reliability, levels: [current, leading], source: incident, tier: 3, status: synthetic, q: "How many pages and after-hours interruptions does on-call absorb per shift?" }
+- { id: mtbf, name: Mean Time Between Failures (MTBF), domain: Reliability, levels: [lagging], source: incident, tier: 4, status: synthetic, q: "How long does the service typically run between failures?" }
+- { id: toil-share, name: Toil Share, domain: Reliability, levels: [leading], source: survey, tier: 4, status: synthetic, q: "What share of operations time is manual, repetitive, automatable work?" }
+
+# ─────────────────────── SECURITY ───────────────────────
+- { id: vulnerability-mttr, name: Vulnerability Remediation Time, domain: Security, levels: [lagging], source: ci, tier: 3, status: synthetic, q: "How long from a vulnerability being found to it being fixed?" }
+- { id: vuln-sla-compliance, name: Vulnerability SLA Compliance, domain: Security, levels: [lagging], source: ci, tier: 3, status: synthetic, q: "What share of critical and high vulnerabilities were fixed within their SLA?" }
+- { id: open-critical-vulns, name: Open Critical Vulnerabilities, domain: Security, levels: [current], source: ci, tier: 3, status: synthetic, q: "How many critical vulnerabilities are open right now, and how old are they?" }
+- { id: security-debt, name: Security Debt, domain: Security, levels: [leading], source: ci, tier: 4, status: synthetic, q: "How much known security work is overdue?" }
+- { id: dependency-freshness, name: Dependency Freshness (libyears), domain: Security, levels: [leading], source: ci, tier: 4, status: synthetic, q: "How far behind current versions are our third-party libraries?" }
+
+# ─────────────────────── PROGRAM ───────────────────────
+- { id: overdue-dependencies, name: Open & Overdue Dependencies, domain: Program, levels: [current, leading], source: tracker, tier: 2, status: live, q: "How many cross-team dependencies are open, and how many are past their need-by date?" }
+- { id: dependency-lead-time, name: Dependency Lead Time, domain: Program, levels: [lagging], source: tracker, tier: 2, status: live, q: "How long does it take another team to deliver what we asked of them?" }
+- { id: milestone-hit-rate, name: Milestone Hit Rate, domain: Program, levels: [lagging], source: manual, tier: 2, status: live, q: "What share of milestones did we reach on the date we committed?" }
+- { id: critical-path-drift, name: Critical Path Drift, domain: Program, levels: [leading], source: tracker, tier: 2, status: live, q: "How many days has the projected end of the critical path moved?" }
+- { id: program-scope-growth, name: Program Scope Growth, domain: Program, levels: [leading], source: tracker, tier: 2, status: live, q: "How much has committed scope grown since the plan was baselined?" }
+- { id: risk-exposure, name: Risk Exposure (EMV), domain: Program, levels: [leading], source: manual, tier: 2, status: live, q: "What is the total probability-weighted impact of open risks, and which way is it trending?" }
+- { id: unplanned-work, name: Unplanned Work Share, domain: Program, levels: [lagging, leading], source: tracker, tier: 1, status: live, q: "What share of delivered work was never in the plan?" }
+- { id: investment-allocation, name: Investment Allocation, domain: Program, levels: [lagging], source: tracker, tier: 2, status: live, q: "How is capacity split between features, debt, KTLO and risk?", aliases: [ { fw: SAFe, name: Capacity Allocation / Flow Distribution, rel: "≈", note: "SAFe sets allocation up front; Flow Distribution reports what actually happened." } ] }
+- { id: dependency-count-trend, name: Dependency Count Trend, domain: Program, levels: [leading], source: tracker, tier: 3, status: synthetic, q: "Are cross-team dependencies multiplying?" }
+- { id: external-dependency-ratio, name: External Dependency Ratio, domain: Program, levels: [leading], source: tracker, tier: 3, status: synthetic, q: "What share of items cannot finish without another team?" }
+- { id: open-risks, name: Open Risks by Severity, domain: Program, levels: [current, leading], source: manual, tier: 3, status: synthetic, q: "How many high risks are open without an owner or a mitigation?" }
+- { id: risk-burndown, name: Risk Burndown, domain: Program, levels: [leading], source: manual, tier: 3, status: view, q: "Is total risk exposure falling as the program approaches its date?" }
+- { id: decision-latency, name: Decision Latency, domain: Program, levels: [leading], source: manual, tier: 3, status: synthetic, q: "How long do decisions wait between being raised and being made?" }
+- { id: escalation-age, name: Escalation Age, domain: Program, levels: [current], source: manual, tier: 3, status: synthetic, q: "How long have open escalations been waiting for an answer?" }
+- { id: action-item-closure, name: Action Item Closure (program), domain: Program, levels: [lagging], source: manual, tier: 3, status: synthetic, q: "Do actions from steering and sync meetings get closed on time?" }
+- { id: milestone-slippage, name: Milestone Slippage, domain: Program, levels: [lagging, leading], source: manual, tier: 3, status: synthetic, q: "By how many days have milestones moved since baseline?" }
+- { id: interrupt-rate, name: Interrupt Rate, domain: Program, levels: [leading], source: tracker, tier: 3, status: synthetic, q: "How often is planned work interrupted by urgent requests?" }
+
+# ─────────────────────── FORECAST ───────────────────────
+- { id: pi-forecast, name: "Monte Carlo — When will it be done?", domain: Forecast, levels: [leading], source: tracker, tier: 1, status: live, q: "By which date will the remaining work be done, at 50 % and 85 % confidence?" }
+- { id: monte-carlo-how-many, name: "Monte Carlo — How many by a date?", domain: Forecast, levels: [leading], source: tracker, tier: 2, status: live, q: "How many items will we finish by a fixed date, at 85 % confidence?" }
+- { id: forecast-accuracy, name: Forecast Accuracy, domain: Forecast, levels: [lagging], source: tracker, tier: 2, status: live, q: "How often did our past forecasts come true at their stated confidence?" }
+- { id: burnup-forecast, name: Burn-up Forecast Range, domain: Forecast, levels: [leading], source: tracker, tier: 3, status: view, q: "Where do the optimistic and pessimistic throughput lines cross the scope line?" }
+
+# ─────────────────────── SCALE (SAFe) ───────────────────────
+# Dmitry 30.09: every SAFe metric is live/visible, not only PI Predictability.
+# The Scale tab shows the six SAFe flow metrics under their SAFe names. They are the same live
+# computations as the Flow entries (no duplicate code), listed here via `scale_tab`.
+# scale_tab: [flow-distribution (Flow Distribution), throughput (Flow Velocity), lead-time (Flow Time ≈),
+#             wip (Flow Load), flow-efficiency (Flow Efficiency), pi-predictability (Flow Predictability)]
+- { id: pi-predictability, name: PI Predictability (ART Predictability Measure), domain: Scale, levels: [lagging], source: manual, tier: 2, status: live, q: "How much of the planned business value did teams and the ART actually deliver?", aliases: [ { fw: SAFe, name: Flow Predictability, rel: "≡", note: "SAFe defines Flow Predictability as 'overall planned versus actual business value', measured with the ART Predictability Measure." } ] }
+- { id: feature-lead-time, name: Feature Lead Time, domain: Scale, levels: [lagging], source: tracker, tier: 2, status: live, q: "How long does a feature take from funnel to release?", aliases: [ { fw: SAFe, name: Flow Time (feature level), rel: "≈" } ] }
+- { id: epic-lead-time, name: Epic Lead Time, domain: Scale, levels: [lagging], source: tracker, tier: 3, status: live, q: "How long does a portfolio epic take from idea to value?" }
+- { id: portfolio-wip, name: Portfolio WIP, domain: Scale, levels: [current], source: tracker, tier: 3, status: live, q: "How many epics are in progress at once across the portfolio?", aliases: [ { fw: SAFe, name: Flow Load (portfolio level), rel: "≈" } ] }
+- { id: wsjf, name: WSJF Score, domain: Scale, levels: [leading], source: manual, tier: 3, status: live, q: "Which feature gives the most cost of delay per unit of job size?" }
+- { id: pi-objectives-status, name: PI Objectives — committed vs uncommitted, domain: Scale, levels: [current, leading], source: manual, tier: 2, status: live, q: "How many committed and uncommitted objectives does each team have, and how is each tracking?" }
+- { id: safe-competency, name: SAFe Competency Assessment, domain: Scale, levels: [lagging], source: survey, tier: 4, status: featured, q: "How mature are the teams and ART on SAFe's core competencies (self-assessment)?" }
+- { id: devops-health-radar, name: SAFe DevOps Health Radar, domain: Scale, levels: [lagging], source: survey, tier: 4, status: featured, q: "How mature is the continuous delivery pipeline, stage by stage (self-assessment)?" }
+
+# ─────────────────────── VALUE (EBM · product) ───────────────────────
+- { id: ebm-current-value, name: EBM Current Value, domain: Value, levels: [lagging], source: product-analytics, tier: 3, status: featured, q: "How much value does the product deliver to customers today?" }
+- { id: ebm-unrealized-value, name: EBM Unrealized Value, domain: Value, levels: [leading], source: product-analytics, tier: 4, status: synthetic, q: "How much potential value is still out there to capture?" }
+- { id: innovation-rate, name: Innovation Rate, domain: Value, levels: [lagging], source: tracker, tier: 3, status: synthetic, q: "What share of effort goes to new capabilities rather than maintenance?", aliases: [ { fw: EBM, name: Ability to Innovate (KVA), rel: "≈" }, { fw: DX Core 4, name: "% time on new capabilities", rel: "≈" } ] }
+- { id: feature-adoption, name: Feature Adoption Rate, domain: Value, levels: [lagging], source: product-analytics, tier: 3, status: synthetic, q: "What share of target users actually use a newly released feature?" }
+- { id: feature-usage-index, name: Feature Usage Index, domain: Value, levels: [lagging], source: product-analytics, tier: 4, status: synthetic, q: "What share of shipped features are used regularly?" }
+- { id: okr-progress, name: OKR Progress, domain: Value, levels: [leading], source: manual, tier: 3, status: synthetic, q: "How far along are we on this quarter's key results?" }
+- { id: okr-attainment, name: OKR Attainment, domain: Value, levels: [lagging], source: manual, tier: 3, status: synthetic, q: "How much of last quarter's key results did we achieve?" }
+- { id: csat, name: Customer Satisfaction (CSAT), domain: Value, levels: [lagging], source: survey, tier: 3, status: synthetic, q: "How satisfied are customers with recent releases?" }
+- { id: nps, name: Net Promoter Score (NPS), domain: Value, levels: [lagging], source: survey, tier: 4, status: synthetic, q: "Would customers recommend the product?" }
+- { id: support-ticket-inflow, name: Support Ticket Inflow, domain: Value, levels: [leading], source: manual, tier: 3, status: synthetic, q: "Did a release change the volume of support tickets?" }
+- { id: customer-reported-defects, name: Customer-Reported Defects, domain: Value, levels: [lagging], source: tracker, tier: 3, status: synthetic, q: "How many defects do customers find and report themselves?" }
+- { id: time-to-value, name: Time to Value, domain: Value, levels: [lagging], source: product-analytics, tier: 4, status: synthetic, q: "How long after release do customers get the benefit?" }
+- { id: cost-of-delay, name: Cost of Delay, domain: Value, levels: [leading], source: manual, tier: 4, status: synthetic, q: "How much value do we lose per week this item is not delivered?" }
+- { id: experiment-success-rate, name: Experiment Success Rate, domain: Value, levels: [lagging], source: product-analytics, tier: 4, status: synthetic, q: "What share of shipped hypotheses were validated by data?" }
+
+# ─────────────────────── PEOPLE (SPACE · DevEx · DX Core 4) ───────────────────────
+- { id: dxi, name: Developer Experience Index (DXI), domain: People, levels: [leading], source: survey, tier: 3, status: featured, q: "How good is the developer experience, on a standardised survey index?", aliases: [ { fw: DX Core 4, name: DXI (Effectiveness), rel: "≡" } ] }
+- { id: enps, name: Employee NPS (eNPS), domain: People, levels: [leading], source: survey, tier: 3, status: featured, q: "Would people recommend the team as a place to work?" }
+- { id: devex-flow-state, name: DevEx — Flow State, domain: People, levels: [leading], source: survey, tier: 4, status: synthetic, q: "Can engineers get into deep, uninterrupted work?" }
+- { id: devex-feedback-loops, name: DevEx — Feedback Loops, domain: People, levels: [leading], source: survey, tier: 4, status: synthetic, q: "How quickly do engineers get answers from builds, reviews and colleagues?" }
+- { id: devex-cognitive-load, name: DevEx — Cognitive Load, domain: People, levels: [leading], source: survey, tier: 4, status: synthetic, q: "How much mental effort does it take just to get work done here?" }
+- { id: perceived-delivery-rate, name: Perceived Rate of Delivery, domain: People, levels: [leading], source: survey, tier: 4, status: synthetic, q: "Do engineers feel the team is shipping at a good pace?", aliases: [ { fw: DX Core 4, name: Perceived rate of delivery (Speed), rel: "≡" } ] }
+- { id: focus-time, name: Focus Time, domain: People, levels: [leading], source: manual, tier: 3, status: synthetic, q: "How many hours a day do people get in uninterrupted blocks?" }
+- { id: meeting-load, name: Meeting Load, domain: People, levels: [leading], source: manual, tier: 3, status: synthetic, q: "What share of the working week goes to meetings?" }
+- { id: regrettable-attrition, name: Regrettable Attrition, domain: People, levels: [lagging], source: manual, tier: 3, status: synthetic, q: "How many people we wanted to keep have left?", aliases: [ { fw: DX Core 4, name: Regrettable attrition (Effectiveness), rel: "≡" } ] }
+- { id: time-to-10th-pr, name: Time to 10th PR, domain: People, levels: [lagging], source: vcs, tier: 3, status: synthetic, q: "How long does a new engineer take to become productive (10 merged PRs)?", aliases: [ { fw: DX Core 4, name: Time to 10th PR (Effectiveness), rel: "≡" } ] }
+- { id: knowledge-concentration, name: Knowledge Concentration (Bus Factor), domain: People, levels: [leading], source: vcs, tier: 3, status: synthetic, q: "How many components would stall if one person left?" }
+- { id: team-stability, name: Team Stability, domain: People, levels: [leading], source: manual, tier: 3, status: synthetic, q: "How much has team membership changed this quarter?" }
+- { id: space-satisfaction, name: SPACE — Satisfaction & Well-being, domain: People, levels: [leading], source: survey, tier: 4, status: synthetic, q: "How satisfied and healthy do people feel about their work?" }
+- { id: psychological-safety, name: Psychological Safety Index, domain: People, levels: [leading], source: survey, tier: 4, status: synthetic, q: "Do people feel safe to raise problems and admit mistakes?" }
+- { id: after-hours-work, name: After-hours Work, domain: People, levels: [leading], source: vcs, tier: 4, status: synthetic, q: "How much activity happens outside working hours (team-level)?" }
+- { id: interruptions, name: Interruptions per Day, domain: People, levels: [leading], source: survey, tier: 4, status: synthetic, q: "How often are people pulled out of planned work each day?" }
+
+# ─────────────────────── FINANCE ───────────────────────
+- { id: cpi, name: Cost Performance Index (CPI), domain: Finance, levels: [lagging, leading], source: finance, tier: 3, status: featured, q: "How much value do we earn for each unit of money spent?", aliases: [ { fw: PMBOK / EVM, name: CPI = EV / AC, rel: "≡" } ] }
+- { id: spi, name: Schedule Performance Index (SPI), domain: Finance, levels: [lagging, leading], source: finance, tier: 4, status: synthetic, q: "Are we earning value as fast as planned?" }
+- { id: cost-variance, name: Cost Variance (CV), domain: Finance, levels: [lagging], source: finance, tier: 4, status: synthetic, q: "How far over or under budget are we for the work done?" }
+- { id: schedule-variance, name: Schedule Variance (SV), domain: Finance, levels: [lagging], source: finance, tier: 4, status: synthetic, q: "How far ahead of or behind plan are we, in money terms?" }
+- { id: eac, name: Estimate at Completion (EAC), domain: Finance, levels: [leading], source: finance, tier: 4, status: synthetic, q: "What will the whole thing cost if trends continue?" }
+- { id: tcpi, name: To-Complete Performance Index (TCPI), domain: Finance, levels: [leading], source: finance, tier: 4, status: synthetic, q: "How efficient must the remaining work be to finish on budget?" }
+- { id: budget-burn-rate, name: Budget Burn Rate, domain: Finance, levels: [current, leading], source: finance, tier: 4, status: synthetic, q: "How fast are we spending the budget, and when does it run out?" }
+- { id: cost-per-item, name: Cost per Delivered Item, domain: Finance, levels: [lagging], source: finance, tier: 4, status: synthetic, q: "What does a delivered item cost on average (team cost / throughput)?" }
+- { id: cloud-cost-per-service, name: Cloud Cost per Service, domain: Finance, levels: [lagging, leading], source: finance, tier: 4, status: synthetic, q: "What does each service cost to run, and is it trending up?" }
+- { id: rd-share-of-revenue, name: R&D as % of Revenue, domain: Finance, levels: [lagging], source: finance, tier: 4, status: synthetic, q: "How much of revenue is spent on engineering?", aliases: [ { fw: DX Core 4, name: R&D as % of revenue (Impact), rel: "≡" } ] }
+- { id: capex-opex-split, name: CapEx / OpEx Split, domain: Finance, levels: [lagging], source: finance, tier: 4, status: synthetic, q: "What share of engineering effort can be capitalised as new capability?" }
+
+# ─────────────────────── AI IMPACT ───────────────────────
+- { id: ai-assisted-change-share, name: AI-assisted Change Share, domain: AI Impact, levels: [lagging], source: vcs, tier: 2, status: live, q: "What share of merged changes were written with AI assistance?" }
+- { id: ai-vs-non-ai-quality, name: Change Fail & Rework — AI vs non-AI, domain: AI Impact, levels: [lagging], source: incident, tier: 2, status: live, q: "Do AI-assisted changes fail or need rework more often than the rest?" }
+- { id: ai-tool-adoption, name: AI Tool Adoption, domain: AI Impact, levels: [leading], source: manual, tier: 3, status: synthetic, q: "What share of engineers use AI tools every week?" }
+- { id: ai-time-savings, name: AI Time Savings (self-reported), domain: AI Impact, levels: [lagging], source: survey, tier: 4, status: synthetic, q: "How many hours a week do engineers say AI saves them?" }
+- { id: ai-suggestion-acceptance, name: AI Suggestion Acceptance Rate, domain: AI Impact, levels: [current], source: manual, tier: 4, status: synthetic, q: "What share of AI code suggestions are accepted (a usage signal, not a value signal)?" }
+- { id: ai-change-review-time, name: Review Time — AI vs non-AI, domain: AI Impact, levels: [lagging], source: vcs, tier: 4, status: synthetic, q: "Do AI-assisted pull requests take longer to review?" }
+
+# ─────────────────────── ANTI-METRICS (catalog + Learn only) ───────────────────────
+- { id: lines-of-code, name: Lines of Code per Developer, domain: Anti-metrics, levels: [lagging], source: vcs, tier: 4, status: anti, q: "Why counting code rewards the wrong behaviour." }
+- { id: commits-per-developer, name: Commits per Developer, domain: Anti-metrics, levels: [lagging], source: vcs, tier: 4, status: anti, q: "Why commit counts measure habits, not outcomes." }
+- { id: points-per-developer, name: Story Points per Developer, domain: Anti-metrics, levels: [lagging], source: tracker, tier: 4, status: anti, q: "Why individual velocity destroys collaboration and estimates." }
+- { id: velocity-comparison, name: Velocity Comparison Between Teams, domain: Anti-metrics, levels: [lagging], source: tracker, tier: 4, status: anti, q: "Why points are not a currency across teams." }
+- { id: resource-utilization, name: 100 % Utilisation Target, domain: Anti-metrics, levels: [current], source: manual, tier: 4, status: anti, q: "Why fully loaded people make everything slower (queueing theory)." }
+- { id: hours-logged, name: Hours Logged, domain: Anti-metrics, levels: [lagging], source: manual, tier: 4, status: anti, q: "Why time spent is not value delivered." }
+- { id: bugs-per-developer, name: Bugs per Developer, domain: Anti-metrics, levels: [lagging], source: tracker, tier: 4, status: anti, q: "Why blaming individuals hides system causes and kills reporting." }
