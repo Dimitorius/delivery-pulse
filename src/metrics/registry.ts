@@ -27,6 +27,9 @@ export interface Source {
   year?: number
   url?: string
   altUrl?: string
+  /** Date the source was opened and checked (content/sources.yaml). */
+  checked?: string
+  note?: string
 }
 
 export interface Target {
@@ -50,6 +53,11 @@ export interface MetricMeta {
   pulse?: boolean
   /** SYNTHETIC: inputs are simulated survey/finance data (SPEC §6). */
   synthetic?: boolean
+  /**
+   * SYNTHETIC series generated in the browser from its own random stream (catalog
+   * metrics the simulator does not produce): where the data comes from in production.
+   */
+  generated?: { prodSource: string; what?: string }
   /** Rolling window override (default 28 days). */
   windowDays?: number
   related?: string[]

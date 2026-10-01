@@ -17,6 +17,9 @@ import { xmrCheck } from '../metrics/xmr'
 import { CHART, EChart, timeAxis, type EChartsOption } from './EChart'
 import { Sparkline } from './Sparkline'
 import { StatusBadge, TEAM_COLORS } from './Status'
+import { catalogEntry, TIER_LABEL } from '../content/catalog'
+import { symptomsForMetric } from '../content/symptoms'
+import { AliasChips, LearnSummary } from './catalogBits'
 
 const TIME_UNITS = new Set(['d', 'h', 'min', 'wd'])
 const tooltip = { trigger: 'axis', backgroundColor: CHART.surface, borderColor: CHART.grid, textStyle: { color: '#e6edf3', fontFamily: CHART.font } }
@@ -62,6 +65,8 @@ export function MetricPage({ id, teamIds }: { id: string; teamIds: string[] }) {
   const status = stable.shown
   const tab = TABS.find((t) => t.id === def.tab)
   const aka = lensAka(def, lens)
+  const entry = catalogEntry(def.id)
+  const symptoms = symptomsForMetric(def.id)
 
   return (
     <main className="page metric-page">
@@ -78,6 +83,7 @@ export function MetricPage({ id, teamIds }: { id: string; teamIds: string[] }) {
           <header>
             <div className="chips">
               <span className="chip">{def.domain}</span>
+              {entry ? <span className="chip subtle">{TIER_LABEL[entry.tier]}</span> : null}
               {def.synthetic ? <span className="chip synthetic">SYNTHETIC</span> : null}
               {def.levels.map((l) => (
                 <span key={l} className="chip subtle">
@@ -92,6 +98,7 @@ export function MetricPage({ id, teamIds }: { id: string; teamIds: string[] }) {
               </p>
             ) : null}
             <p className="question">{def.question}</p>
+            {entry ? <AliasChips aliases={entry.aliases} /> : null}
           </header>
 
           <section className="drawer-value">
@@ -136,6 +143,18 @@ export function MetricPage({ id, teamIds }: { id: string; teamIds: string[] }) {
           {TIME_UNITS.has(def.unit) && result.records.some((r) => r.to) ? <Distribution def={def} result={result} /> : null}
           {teamIds.length > 1 ? <TeamBreakdown def={def} teamIds={teamIds} now={now} version={version} /> : null}
           <Related def={def} teamIds={teamIds} now={now} version={version} />
+          {symptoms.length ? (
+            <section>
+              <h3>Appears in Diagnose</h3>
+              <ul className="small">
+                {symptoms.map((s) => (
+                  <li key={s.id}>
+                    <a href={`#/diagnose/${s.id}`}>{s.name}</a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
           <Records def={def} result={result} />
         </div>
         <SideCard def={def} teams={teamIds.length} lens={lens} />
@@ -147,6 +166,7 @@ export function MetricPage({ id, teamIds }: { id: string; teamIds: string[] }) {
 function SideCard({ def, teams, lens }: { def: MetricDef; teams: number; lens: Lens }) {
   return (
     <aside className="side-card">
+      <LearnSummary id={def.id} />
       <section>
         <h3>Definition</h3>
         <p>{def.definition}</p>
@@ -245,6 +265,7 @@ export function SourceList({ sources }: { sources: Source[] }) {
             — {s.publisher}
             {s.year ? `, ${s.year}` : ''}
           </span>
+          {s.checked ? <span className="muted"> · checked {s.checked}</span> : null}
           {s.altUrl ? (
             <>
               {' '}

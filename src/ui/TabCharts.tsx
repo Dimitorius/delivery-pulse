@@ -1,21 +1,21 @@
-// One or two key charts per tab — details stay on the metric pages.
+// One or two key charts per tab — details stay on the metric pages. Charts
+// that are catalog "views" (CFD, scatterplot, burn-downs…) live in ViewCharts
+// and are switched on and off in the Library.
 import { useMemo } from 'react'
-import { fmtDate, fmtNumber } from '../app/format'
+import { fmtDate } from '../app/format'
 import { eventStore, useApp } from '../app/state'
 import { weekAnchor } from '../app/pulse'
 import type { Tab } from '../metrics/registry'
 import { piForecastDetail, howManyAt } from '../metrics/defs/forecast'
 import { SLO_TARGET } from '../metrics/defs/quality'
-import { cycleTimeDays, isFlowItem } from '../metrics/flow'
-import { percentile } from '../metrics/stats'
 import { DAY_MS, WEEK_MS } from '../sim/calendar'
 import { CHART, EChart, timeAxis, type EChartsOption } from './EChart'
 import { DependencyGraph } from './DependencyGraph'
 import { TEAM_COLORS } from './Status'
 
-const tooltip = { trigger: 'axis', backgroundColor: CHART.surface, borderColor: CHART.grid, textStyle: { color: '#e6edf3', fontFamily: CHART.font } }
-const legend = { top: 0, textStyle: { color: CHART.text, fontFamily: CHART.font, fontSize: 11 }, itemWidth: 10, itemHeight: 10 }
-function axis() {
+export const tooltip = { trigger: 'axis', backgroundColor: CHART.surface, borderColor: CHART.grid, textStyle: { color: '#e6edf3', fontFamily: CHART.font } }
+export const legend = { top: 0, textStyle: { color: CHART.text, fontFamily: CHART.font, fontSize: 11 }, itemWidth: 10, itemHeight: 10 }
+export function axis() {
   return {
     axisLine: { lineStyle: { color: CHART.grid } },
     axisTick: { show: false },
@@ -24,12 +24,10 @@ function axis() {
   }
 }
 // Categorical slots (dark) for non-team series, fixed order.
-const SLOTS = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181']
+export const SLOTS = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181']
 
 export function TabCharts({ tab, teamIds }: { tab: Tab; teamIds: string[] }) {
   switch (tab) {
-    case 'flow':
-      return <FlowCharts teamIds={teamIds} />
     case 'delivery':
       return <DeliveryChart teamIds={teamIds} />
     case 'quality':
@@ -49,95 +47,9 @@ export function TabCharts({ tab, teamIds }: { tab: Tab; teamIds: string[] }) {
   }
 }
 
-function useNow() {
+export function useNow() {
   const { now, version } = useApp()
   return { now, version }
-}
-
-function FlowCharts({ teamIds }: { teamIds: string[] }) {
-  const { now, version } = useNow()
-  const { cfd, scatter } = useMemo(() => {
-    const start = weekAnchor(now) - 12 * WEEK_MS
-    const items = eventStore.itemList.filter((i) => isFlowItem(i) && teamIds.includes(i.teamId) && i.firstActiveAt !== undefined)
-    const firstAt = (i: (typeof items)[number], statuses: string[]) => i.transitions.find((t) => statuses.includes(t.to))?.at
-    const marks = items.map((i) => ({
-      started: i.firstActiveAt!,
-      review: firstAt(i, ['Ready for Review', 'In Review', 'Ready for QA', 'In QA', 'Done']),
-      qa: firstAt(i, ['Ready for QA', 'In QA', 'Done']),
-      done: i.doneAt,
-    }))
-    const days: number[] = []
-    for (let t = start; t <= now; t += DAY_MS) days.push(t)
-    const count = (t: number, k: 'started' | 'review' | 'qa' | 'done') => marks.filter((m) => m[k] !== undefined && m[k]! <= t).length
-    const base = count(start, 'done')
-    const rows = days.map((t) => {
-      const s = count(t, 'started')
-      const r = count(t, 'review')
-      const q = count(t, 'qa')
-      const d = count(t, 'done')
-      return { t, done: d - base, qa: q - d, review: r - q, progress: s - r }
-    })
-    const band = (name: string, key: 'done' | 'qa' | 'review' | 'progress', color: string) => ({
-      type: 'line',
-      name,
-      stack: 'cfd',
-      showSymbol: false,
-      lineStyle: { width: 1, color },
-      itemStyle: { color },
-      areaStyle: { color, opacity: 0.35 },
-      data: rows.map((r) => [r.t, r[key]]),
-    })
-    const cfd: EChartsOption = {
-      animation: false,
-      grid: { left: 44, right: 16, top: 32, bottom: 24 },
-      tooltip,
-      legend,
-      xAxis: timeAxis(),
-      yAxis: { type: 'value', ...axis() },
-      series: [band('Done', 'done', SLOTS[2]), band('QA stage', 'qa', SLOTS[3]), band('Review stage', 'review', SLOTS[1]), band('In progress', 'progress', SLOTS[0])],
-    }
-    const done = items.filter((i) => i.doneAt !== undefined && i.doneAt > start && i.doneAt <= now)
-    const ct = done.map(cycleTimeDays)
-    const scatter: EChartsOption = {
-      animation: false,
-      grid: { left: 40, right: 48, top: 16, bottom: 24 },
-      tooltip: { ...tooltip, trigger: 'item', formatter: (p: { data: [number, number, string] }) => `${p.data[2]} · ${fmtNumber(p.data[1], 1)} d` },
-      xAxis: timeAxis(),
-      yAxis: { type: 'value', name: 'days', nameTextStyle: { color: CHART.muted }, ...axis() },
-      series: [
-        {
-          type: 'scatter',
-          symbolSize: 6,
-          itemStyle: { color: CHART.line, opacity: 0.7 },
-          data: done.map((i, k) => [i.doneAt!, ct[k], i.id]),
-          markLine: {
-            symbol: 'none',
-            label: { color: CHART.text, fontFamily: CHART.font, position: 'end' },
-            lineStyle: { color: CHART.muted, type: 'dashed' },
-            data: [
-              { yAxis: percentile(ct, 50) ?? 0, label: { formatter: 'P50' } },
-              { yAxis: percentile(ct, 85) ?? 0, label: { formatter: 'P85' } },
-            ],
-          },
-        },
-      ],
-    }
-    return { cfd, scatter }
-  }, [teamIds, now, version])
-  return (
-    <div className="tab-charts two-col">
-      <section className="panel">
-        <h3>Cumulative flow · last 12 weeks</h3>
-        <EChart option={cfd} height={230} />
-        <p className="small muted">Band thickness = items in that stage; the top edge = everything started. Parallel bands = stable flow.</p>
-      </section>
-      <section className="panel">
-        <h3>Cycle time scatterplot · last 12 weeks</h3>
-        <EChart option={scatter} height={230} />
-        <p className="small muted">Each dot is a finished item. Dots above P85 are the tail worth a conversation.</p>
-      </section>
-    </div>
-  )
 }
 
 function DeliveryChart({ teamIds }: { teamIds: string[] }) {
@@ -353,7 +265,7 @@ function ForecastCharts({ teamIds }: { teamIds: string[] }) {
 
 function ScalePanels({ teamIds }: { teamIds: string[] }) {
   const { now, version } = useNow()
-  const { option, current } = useMemo(() => {
+  const option = useMemo(() => {
     const scored = eventStore.objectiveList.filter((o) => teamIds.includes(o.teamId) && o.scoredAt !== undefined && o.scoredAt <= now)
     const pis = [...new Set(scored.map((o) => o.piId))]
     const vals = pis.map((pi) => {
@@ -379,9 +291,7 @@ function ScalePanels({ teamIds }: { teamIds: string[] }) {
         },
       ],
     }
-    const pi = eventStore.iterationList.find((i) => i.kind === 'pi' && i.start <= now && now < i.end)
-    const current = eventStore.objectiveList.filter((o) => pi && o.piId === pi.id && teamIds.includes(o.teamId))
-    return { option, current }
+    return option
   }, [teamIds, now, version])
   return (
     <div className="tab-charts two-col">
@@ -390,30 +300,45 @@ function ScalePanels({ teamIds }: { teamIds: string[] }) {
         <EChart option={option} height={200} />
         <p className="small muted">Green band: 80–100 % — SAFe framework guidance for a predictable ART, not a benchmark.</p>
       </section>
-      <section className="panel">
-        <h3>Current PI objectives ({current.length})</h3>
-        <div className="table-wrap scroll-y">
-          <table className="records">
-            <tbody>
-              {current.map((o) => {
-                const done = o.featureIds.filter((id) => (eventStore.items.get(id)?.doneAt ?? Infinity) <= now).length
-                return (
-                  <tr key={o.id}>
-                    <td className="ellipsis">{o.title}</td>
-                    <td>{eventStore.teamById.get(o.teamId)?.key}</td>
-                    <td className="muted">{o.committed ? 'committed' : 'uncommitted'}</td>
-                    <td className="num right">BV {o.plannedBv}</td>
-                    <td className="muted num">
-                      {done}/{o.featureIds.length} features
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <ObjectivesPanel teamIds={teamIds} />
     </div>
+  )
+}
+
+/** Catalog view "PI Objectives — committed vs uncommitted": the current PI's objectives from the simulator. */
+export function ObjectivesPanel({ teamIds }: { teamIds: string[] }) {
+  const { now, version } = useNow()
+  const current = useMemo(() => {
+    const pi = eventStore.iterationList.find((i) => i.kind === 'pi' && i.start <= now && now < i.end)
+    return eventStore.objectiveList.filter((o) => pi && o.piId === pi.id && teamIds.includes(o.teamId))
+  }, [teamIds, now, version])
+  const committed = current.filter((o) => o.committed).length
+  return (
+    <section className="panel">
+      <h3>
+        Current PI objectives ({committed} committed · {current.length - committed} uncommitted)
+      </h3>
+      <div className="table-wrap scroll-y">
+        <table className="records">
+          <tbody>
+            {current.map((o) => {
+              const done = o.featureIds.filter((id) => (eventStore.items.get(id)?.doneAt ?? Infinity) <= now).length
+              return (
+                <tr key={o.id}>
+                  <td className="ellipsis">{o.title}</td>
+                  <td>{eventStore.teamById.get(o.teamId)?.key}</td>
+                  <td className="muted">{o.committed ? 'committed' : 'uncommitted'}</td>
+                  <td className="num right">BV {o.plannedBv}</td>
+                  <td className="muted num">
+                    {done}/{o.featureIds.length} features
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
   )
 }
 

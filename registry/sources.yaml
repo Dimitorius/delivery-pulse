@@ -1,4 +1,5 @@
 # Shared source list, referenced by key from metric files.
+# Merged with content/sources.yaml in stage 3a (2026-10-01): `checked` = date the source was opened and checked, `note` = what its public part says.
 dora-2024:
   title: Accelerate State of DevOps Report 2024
   publisher: DORA (Google Cloud)
@@ -35,11 +36,12 @@ vacanti-aamp:
   year: 2015
   url: https://leanpub.com/actionableagilemetrics
 vacanti-wwibd:
-  title: "When Will It Be Done? (print edition, ISBN 9780986436376)"
+  title: "When Will It Be Done? Lean-Agile Forecasting to Answer Your Customers' Most Important Question"
   publisher: D. Vacanti (book)
   year: 2020
   url: https://leanpub.com/whenwillitbedone
   altUrl: https://www.amazon.com/When-Will-Done-Lean-Agile-Forecasting/dp/0986436372
+  checked: 2026-09-25
 scrum-guide-2020:
   title: The Scrum Guide (2020)
   publisher: K. Schwaber & J. Sutherland
@@ -83,6 +85,7 @@ redmonk-dora-2025:
   publisher: RedMonk (R. Stephens)
   year: 2025
   url: https://redmonk.com/rstephens/2025/12/18/dora2025/
+  checked: 2026-09-25
 agility-at-scale-dora-2025:
   title: "DORA 2025 for AI Teams: Seven Archetypes Every SAFe RTE Should Know"
   publisher: Agility at Scale
@@ -93,16 +96,22 @@ safe-measure-and-grow:
   publisher: Scaled Agile Framework
   year: 2025
   url: https://framework.scaledagile.com/measure-and-grow
+  checked: 2026-09-30
+  note: "Outcomes / Flow / Competency domains in the public summary; details behind login. Last update 8 Sep 2025."
 safe-accelerating-flow:
   title: Accelerating Flow with SAFe (updated 12 Mar 2025, full text behind login)
   publisher: Scaled Agile Framework
   year: 2025
   url: https://framework.scaledagile.com/accelerating-flow-with-safe
+  checked: 2026-09-30
+  note: "Public part defines Flow Distribution, Velocity, Time ('from when a backlog item enters the workflow to its release'), Load, Efficiency, Predictability ('overall planned versus actual business value'). Last update 12 Mar 2025."
 safe-pi-objectives:
   title: PI Objectives (full text behind login)
   publisher: Scaled Agile Framework
   year: 2023
   url: https://framework.scaledagile.com/pi-objectives
+  checked: 2026-09-30
+  note: "Public part: objectives are committed or uncommitted; performance assessed via the ART Predictability Measure. Recommended count per team is behind login."
 agility-at-scale-flow:
   title: "SAFe Flow Metrics: Flow Distribution, Velocity, Time, Load, Efficiency, and Predictability"
   publisher: Agility at Scale
@@ -142,7 +151,51 @@ gao-cost-guide:
   publisher: U.S. Government Accountability Office
   year: 2020
   url: https://www.gao.gov/products/gao-20-195g
+  checked: 2026-09-30
 planview-flow-time:
   title: Flow Time vs. Lead Time
   publisher: Planview blog (Flow Framework)
   url: https://blog.planview.com/flow-time-vs-lead-time/
+  checked: 2026-09-25
+magennis-sampling:
+  title: "Sampling, applying to software forecasting"
+  publisher: T. Magennis, Forecasting Using Data (Medium)
+  year: 2017
+  url: https://medium.com/forecasting-using-data/sampling-applying-to-software-forecasting-a97cb10e2f23
+  checked: 2026-09-25
+expedia-monte-carlo:
+  title: "Monte Carlo Forecasting in Software Delivery"
+  publisher: B. Masters, Expedia Group Technology
+  year: 2020
+  url: https://medium.com/expedia-group-tech/monte-carlo-forecasting-in-software-delivery-474bb49cb3f9
+  checked: 2026-09-25
+planview-safe6-flow:
+  title: "A Deep Dive into SAFe 6.0 Flow Metrics"
+  publisher: Planview
+  url: https://www.planview.com/resources/articles/deep-dive-into-safe-6-flow-metrics/
+  checked: 2026-09-25
+kersten-project-to-product:
+  title: "Project to Product: How to Survive and Thrive in the Age of Digital Disruption with the Flow Framework"
+  publisher: M. Kersten, IT Revolution (book)
+  year: 2018
+  url: https://itrevolution.com/product/project-to-product/
+  checked: 2026-09-30
+safe-blog-pi-objectives:
+  title: "Your Guide to Writing Great Iteration and PI Objectives"
+  publisher: S. Olin, Scaled Agile (official blog)
+  year: 2023
+  url: https://scaledagile.com/blog/your-guide-to-writing-great-iteration-and-pi-objectives/
+  checked: 2026-09-30
+  note: "Public, official. Objectives are 'much more than a summary of the planned work'; business value 1 (lowest)–10 (highest); uncommitted objectives do not count towards predictability. No recommended count per team."
+getdx-dora-2023:
+  title: "2023 DORA Report"
+  publisher: A. Noda, Engineering Enablement newsletter (DX), quoting N. Harvey (DORA lead)
+  year: 2023
+  url: https://newsletter.getdx.com/p/2023-dora-report
+  checked: 2026-10-01
+google-code-review-2018:
+  title: "Modern Code Review: A Case Study at Google"
+  publisher: C. Sadowski et al., ICSE-SEIP 2018
+  year: 2018
+  url: https://dl.acm.org/doi/10.1145/3183519.3183525
+  checked: 2026-10-01

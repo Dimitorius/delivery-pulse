@@ -6,7 +6,8 @@ import { targetLabel } from '../metrics/evaluate'
 import { Sparkline } from './Sparkline'
 import { StatusBadge } from './Status'
 
-export function Tile({ tile, teams }: { tile: TileData; teams: number }) {
+/** `name` overrides the displayed name (e.g. the SAFe flow metrics on Scale); `eq` marks an approximate (≈) equivalent. */
+export function Tile({ tile, teams, name, eq }: { tile: TileData; teams: number; name?: string; eq?: { mark: string; note: string } }) {
   const select = useApp((s) => s.select)
   const lens = useApp((s) => s.lens)
   const { def, result, status } = tile
@@ -20,11 +21,17 @@ export function Tile({ tile, teams }: { tile: TileData; teams: number }) {
       className={`tile tile-${status}${dim ? ' dim' : ''}${def.synthetic ? ' synthetic' : ''}`}
       onClick={() => select(def.id)}
       aria-label={`${def.name}: details`}
-      title={dim ? conflictNote(def, lens) : undefined}
+      title={dim ? conflictNote(def, lens) : def.generated ? `SYNTHETIC — in production this comes from ${def.generated.prodSource}` : undefined}
     >
       <div className="tile-head">
         <span className="tile-name">
-          {displayName(def, lens, true)}
+          {name ?? displayName(def, lens, true)}
+          {eq ? (
+            <span className="eq-mark" title={eq.note}>
+              {' '}
+              {eq.mark}
+            </span>
+          ) : null}
           {def.synthetic ? <span className="badge-synthetic">SYNTHETIC</span> : null}
         </span>
         <StatusBadge status={status} pending={tile.pending} compact />
@@ -34,7 +41,9 @@ export function Tile({ tile, teams }: { tile: TileData; teams: number }) {
         <span className="unit">{unitLabel(def.unit)}</span>
       </div>
       <div className="tile-sub">
-        {status === 'low'
+        {def.generated
+          ? `in production: ${def.generated.prodSource}`
+          : status === 'low'
           ? `low confidence · n=${result.n} < ${def.minSample}`
           : result.value === null && result.note
             ? result.note
