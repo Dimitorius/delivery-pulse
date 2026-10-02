@@ -1,0 +1,30 @@
+id: epic-lead-time
+tab: scale
+name: Epic Lead Time
+short: Epic lead time P50
+domain: Scale
+levels: [lagging]
+source: tracker
+unit: d
+decimals: 0
+direction: lower-better
+window: epics finished in the last 4 PIs
+question: How long does a portfolio epic take from approval to its last feature being done?
+definition: >-
+  Elapsed calendar time from an Epic being created in the portfolio backlog to its last child feature being
+  Done. Epic samples are small, so the median is shown and the tile is low-confidence until 10 epics finish.
+formula: |-
+  epics = Epic items whose last child feature reached Done in the window
+  lead  = doneAt(last child feature) − createdAt(epic)   (calendar days)
+  value = P50(lead)
+events: [item.created, item.status]
+target:
+  note: No target — epics vary too much in size; read the trend and the scatterplot.
+benchmark:
+  kind: by-design
+  label: No benchmark by design
+  summary: Epic size and scope are organisation-specific; only the organisation's own trend is meaningful.
+  sources: [safe-accelerating-flow]
+minSample: 10
+xmr: false
+related: [feature-lead-time, portfolio-wip]

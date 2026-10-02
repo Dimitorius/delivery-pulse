@@ -1,0 +1,27 @@
+# Dimension lists for the two featured SAFe self-assessments (stage 3b: render as radars).
+devops-health-radar:
+  scale:
+    levels: [Sit, Crawl, Walk, Run, Fly]   # 1..5 in the UI
+    flag: "⚠ Level names from a 2018 SAFe/AgilityHealth webinar; numeric 1–5 mapping is ours."
+    sources: [agilityhealth-devops-radar-2018]
+  aspects:    # = the four aspects of SAFe's Continuous Delivery Pipeline, four activities each (16)
+    Continuous Exploration: [Hypothesize, Collaborate & Research, Architect, Synthesize]
+    Continuous Integration: [Develop, Build, Test end-to-end, Stage]
+    Continuous Deployment: [Deploy, Verify, Monitor, Respond]
+    Release on Demand: [Release, Stabilize, Measure, Learn]
+  verified:
+    - "Continuous Integration activities verified verbatim on framework.scaledagile.com/continuous-integration (public part), 2026-10-01."
+    - "4 aspects × 4 questions confirmed by Delb (2022)."
+  flag: "⚠ CE, CD and RoD activity names come from SAFe course material; their articles are behind login. One secondary blog (LeanWisdom) lists different names and disagrees with the verified CI list, so it was not used."
+  sources: [safe-continuous-integration, safe-release-on-demand, delb-devops-radar-2022]
+safe-competency:
+  scale: { min: 1, max: 5, flag: "⚠ 1–5 rating is an illustrative assumption; SAFe's assessment details are behind login." }
+  competencies:
+    - Lean-Agile Leadership
+    - Team and Technical Agility
+    - Agile Product Delivery
+    - Enterprise Solution Delivery
+    - Lean Portfolio Management
+    - Organizational Agility
+    - Continuous Learning Culture
+  sources: [safe-measure-and-grow, safe-continuous-exploration, agility-at-scale-competencies]

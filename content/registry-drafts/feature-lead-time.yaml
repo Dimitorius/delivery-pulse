@@ -1,0 +1,40 @@
+# Draft by Cowork for stage 3b — Code adds order/tab/column/compute/test. Review status: Dmitry pending.
+id: feature-lead-time
+tab: scale
+name: Feature Lead Time
+short: Feature lead time P85
+domain: Scale
+levels: [lagging]
+source: tracker
+unit: d
+decimals: 0
+direction: lower-better
+window: features finished in the last 2 PIs
+question: How long does a feature take from entering the ART backlog to being done?
+definition: >-
+  Elapsed calendar time of a Feature from its creation in the ART backlog until its last story is Done.
+  It is the feature-level view of SAFe Flow Time; ours stops at Done, not at release. Shown as P85 with the
+  median alongside, because feature durations are right-skewed like story cycle times.
+formula: |-
+  features = Feature items whose last child story reached Done in the window
+  lead     = doneAt(last child) − createdAt(feature)   (calendar days)
+  value    = P85(lead); also P50
+events: [item.created, item.status]
+target:
+  op: "<="
+  value: 70
+  warn: 84
+  note: "Team goal: a typical feature finishes within one PI (10 weeks = 70 days)."
+benchmark:
+  kind: method
+  label: SAFe guidance
+  summary: >-
+    SAFe sizes features so an ART can deliver them within a single PI; there is no published industry
+    distribution of feature lead times.
+  flag: "⚠ 'Fits in one PI' is SAFe framework guidance (public summary), not a research benchmark."
+  sources: [safe-accelerating-flow]
+minSample: 10
+xmr: false
+related: [lead-time, cycle-time, epic-lead-time]
+aka:
+  safe: { name: Flow Time (feature level), eq: "≈", note: "SAFe Flow Time runs to release; ours stops at Done.", sources: [safe-accelerating-flow] }

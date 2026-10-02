@@ -1,0 +1,36 @@
+id: wsjf
+tab: scale
+name: WSJF Sequencing Adherence
+short: Started in WSJF order
+domain: Scale
+levels: [leading]
+source: tracker
+unit: "%"
+decimals: 0
+direction: higher-better
+window: features started in the current and previous PI
+question: Do we actually start features in the order our WSJF says?
+definition: >-
+  WSJF itself is a ranking, not a performance metric. What a delivery or program manager can measure is
+  whether the ART follows it: the share of features started that were in the top third of the WSJF-ranked
+  ART backlog at the moment they started. The WSJF table (CoD components, job size, score) is shown under the tile.
+formula: |-
+  CoD   = user-business value + time criticality + risk reduction / opportunity enablement   (relative, Fibonacci)
+  WSJF  = CoD / job size   (job size = relative duration proxy)
+  value = 100 · count(started features ranked in top ⅓ by WSJF at start) / count(started features)
+events: [item.status, feature.wsjf]
+target:
+  op: ">="
+  value: 80
+  warn: 65
+  note: "Team goal: most features start in WSJF order; the rest should have a stated reason (dependency, enabler)."
+benchmark:
+  kind: method
+  label: SAFe method
+  summary: >-
+    SAFe defines WSJF as relative cost of delay divided by relative job duration, with CoD built from
+    user/business value, time criticality and risk reduction/opportunity enablement (Reinertsen's cost of delay).
+  flag: "⚠ The adherence measure and its 80 % goal are our construct; SAFe defines the score, not a compliance metric."
+  sources: [safe-wsjf, reinertsen-flow]
+xmr: false
+related: [investment-allocation, feature-lead-time]

@@ -30,9 +30,9 @@ flags: []
 
 **Worked example.** Weekly throughput history: 3, 5, 4, 6, 2, 5, 4, 7. Remaining: 20 items. 10 000 trials give:
 - done in ≤ 4 weeks in about 31 % of trials,
-- ≤ 5 weeks in about 83 %,
-- ≤ 6 weeks in about 99 %.
-So: **P50 = 5 weeks, P85 = 6 weeks**. Telling a stakeholder "most likely 5 weeks, 6 to be safe" is honest; "4 weeks" has about a one-in-three chance.
+- ≤ 5 weeks in about 81 %,
+- ≤ 6 weeks in about 98 %.
+So: **P50 = 5 weeks, P85 = 6 weeks**. (Exact convolution: 31.2 %, 81.2 %, 98.0 %.) Telling a stakeholder "most likely 5 weeks, 6 to be safe" is honest; "4 weeks" has about a one-in-three chance.
 
 **Deadline probability** is the same simulation read the other way: the share of trials that finish on or before the deadline.
 

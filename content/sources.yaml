@@ -86,3 +86,49 @@ google-code-review-2018:
   year: 2018
   url: https://dl.acm.org/doi/10.1145/3183519.3183525
   checked: 2026-10-01
+safe-wsjf:
+  title: Weighted Shortest Job First
+  publisher: Scaled Agile Framework
+  url: https://framework.scaledagile.com/wsjf
+  checked: 2026-10-01
+  note: "Public part: WSJF = relative cost of delay / relative job duration; CoD from user and business value, time criticality, risk reduction and/or opportunity enablement."
+reinertsen-flow:
+  title: "The Principles of Product Development Flow: Second Generation Lean Product Development"
+  publisher: D. G. Reinertsen (book, Celeritas)
+  year: 2009
+  checked: 2026-10-01
+safe-continuous-integration:
+  title: Continuous Integration
+  publisher: Scaled Agile Framework
+  url: https://framework.scaledagile.com/continuous-integration
+  checked: 2026-10-01
+  note: "Public part lists the four CI activities: Develop, Build, Test end-to-end, Stage."
+safe-continuous-exploration:
+  title: Continuous Exploration
+  publisher: Scaled Agile Framework
+  url: https://framework.scaledagile.com/continuous-exploration
+  checked: 2026-10-01
+  note: "Public part: 'Agile Product Delivery is one of the seven core competencies of SAFe'."
+safe-release-on-demand:
+  title: Release on Demand
+  publisher: Scaled Agile Framework
+  url: https://framework.scaledagile.com/release-on-demand
+  checked: 2026-10-01
+  note: "Public part: the CDP has four aspects (CE, CI, CD, RoD). Last update 25 Feb 2025."
+delb-devops-radar-2022:
+  title: "The DevOps Assessment of SAFe: DevOps Health Radar"
+  publisher: B. Delb, Medium (Open DevOps Academy)
+  year: 2022
+  url: https://medium.com/open-devops-academy/the-devops-assessment-of-safe-devops-hea-10360139a2d5
+  checked: 2026-10-01
+agilityhealth-devops-radar-2018:
+  title: "Assess Your DevOps Health with the SAFe DevOps Health Radar (webinar slides)"
+  publisher: S. Elatta (AgilityHealth) & I. Oren (SAFe Fellow, Scaled Agile)
+  year: 2018
+  url: https://agilityinsights.ai/wp-content/uploads/2018/09/SAFe-DevOps-Webinar-Final.pdf
+  checked: 2026-10-01
+agility-at-scale-competencies:
+  title: The 7 SAFe Core Competencies
+  publisher: Agility at Scale
+  url: https://agility-at-scale.com/safe/competencies/
+  checked: 2026-10-01

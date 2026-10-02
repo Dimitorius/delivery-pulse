@@ -1,0 +1,34 @@
+id: portfolio-wip
+tab: scale
+name: Portfolio WIP
+short: Epics in progress
+domain: Scale
+levels: [current, leading]
+source: tracker
+unit: epics
+decimals: 0
+direction: lower-better
+window: at this moment
+question: How many epics are in progress at once across the portfolio?
+definition: >-
+  Number of Epics that have at least one child feature started and not all children Done. In this demo the
+  portfolio has one ART, so this is the program-level stand-in for the portfolio Kanban's Implementing column.
+  Too many epics in flight at once spreads capacity thin and stretches every epic's lead time (Little's Law).
+formula: |-
+  value = count(Epics with ≥ 1 child feature started AND ≥ 1 child feature not Done)
+events: [item.status]
+target:
+  op: "<="
+  value: 3
+  warn: 4
+  note: "Team goal: a WIP limit of 3 epics in implementation for one ART."
+benchmark:
+  kind: team-goal
+  label: Team goal
+  summary: SAFe applies WIP limits to the portfolio Kanban; the limit itself is set by each portfolio.
+  flag: "⚠ Limit of 3 is our choice for a one-ART portfolio; SAFe does not publish a number."
+  sources: [safe-accelerating-flow, littles-law]
+xmr: false
+related: [epic-lead-time, wip]
+aka:
+  safe: { name: Flow Load (portfolio level), eq: "≈", sources: [safe-accelerating-flow] }

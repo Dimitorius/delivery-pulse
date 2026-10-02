@@ -36,3 +36,7 @@ The metric card (side panel) shows `answers`, the first paragraph of *Why it exi
 - `symptoms/<id>.md` — one file per symptom (written in batches; missing file → card shows "playbook coming").
 Front matter: `sounds_like` (what people say), `early_signals` / `confirming_signals` (metric id + what to look for — these drive the "anamnesis" bundle on screen), `hypotheses` (cause + the one check that separates it), `playbook` (`now`, `next_sprints`, `watch_after`), `anti_patterns`, `evidence` (claim + source keys + optional note), `flags`.
 Body sections: `What is going on` · `How it shows up in Delivery Pulse` · `Say it in an interview`.
+
+## Registry drafts
+- `registry-drafts/<id>.yaml` — metadata Cowork prepares for metrics that are `live` in the catalog but not yet in `registry/metrics/` (same schema as the registry; Code adds order/column, the compute function and the reference test, then moves the file into `registry/metrics/`).
+- `registry-drafts/dimensions-safe-assessments.yaml` — dimension lists and scales for the SAFe Competency and DevOps Health Radar featured tiles.

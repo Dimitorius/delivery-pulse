@@ -16,7 +16,7 @@ read_with:
 calculator: cycle-percentiles
 sources: [kanban-guide-2025, vacanti-aamp, vacanti-wwibd, littles-law, planview-flow-time]
 flags:
-  - "⚠ The 'P85 / P50 above ~3' rule of thumb is a practitioner heuristic (tail-ratio idea), not a published threshold — confirm or drop."
+  - "⚠ Practitioner heuristic: the 'P85 / P50 above ~3' rule of thumb (tail-ratio idea) is not a published threshold."
 ---
 
 ## Why it exists
