@@ -67,7 +67,6 @@ export function LearnSummary({ id }: { id: string }) {
   return (
     <section className="learn-summary">
       <h3>Learn</h3>
-      {article.flags.length ? <p className="flag small">{article.flags.length} ⚠ open in the article</p> : null}
       <ul className="small answers">
         {article.answers.map((a) => (
           <li key={a}>{a}</li>

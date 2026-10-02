@@ -12,6 +12,7 @@ import type { MetricCompute } from '../metrics/types'
 import { SIM_EPOCH, WEEK_MS } from '../sim/calendar'
 import { Rng } from '../sim/rng'
 import { DEFAULT_SEED } from '../sim/simulator'
+import { assessmentValue, isAssessment } from './assessments'
 import { SYNTH_SPECS, type SynthSpec } from './specs'
 
 /** 32-bit FNV-1a: a stable seed per (main seed, metric, team) stream. */
@@ -30,7 +31,12 @@ const clamp = (v: number, s: SynthSpec) => Math.min(s.max ?? Infinity, Math.max(
 export function teamSeries(id: string, team: number, weeks: number, seed = DEFAULT_SEED): number[] {
   const s = SYNTH_SPECS[id]
   if (!s) throw new Error(`No synthetic spec for "${id}"`)
-  const rng = new Rng(streamSeed(seed, 'synthetic', id, team))
+  return generate(s, weeks, seed, 'synthetic', id, team)
+}
+
+/** A series of `weeks` values shaped by `s`, from the stream named by (seed, ...stream). */
+export function generate(s: SynthSpec, weeks: number, seed: number, ...stream: (string | number)[]): number[] {
+  const rng = new Rng(streamSeed(seed, ...stream))
   const phi = s.phi ?? 0.7
   const every = s.every ?? 1
   // Each team has its own level around the typical value.
@@ -63,12 +69,18 @@ function cachedTeamSeries(id: string, team: number, week: number): number[] {
   return s
 }
 
+/** One team's value in week `w`. */
+function teamValue(id: string, team: number, w: number): number {
+  return isAssessment(id) ? assessmentValue(id, [team], w)! : cachedTeamSeries(id, team, w)[w]
+}
+
 export const weekIndex = (t: number) => Math.max(0, Math.floor((t - SIM_EPOCH) / WEEK_MS))
 
 /** Value for a set of teams (indices into the org's team list) at time t. */
 export function syntheticValue(id: string, teams: number[], t: number): number | null {
   if (!teams.length) return null
   const w = weekIndex(t)
+  if (isAssessment(id)) return assessmentValue(id, teams, w)
   const vals = teams.map((k) => cachedTeamSeries(id, k, w)[w])
   return SYNTH_SPECS[id].agg === 'sum' ? vals.reduce((a, b) => a + b, 0) : median(vals)
 }
@@ -86,7 +98,7 @@ function computeFor(entry: CatalogEntry): MetricCompute {
         teamId: ctx.store.teams[k].id,
         label: 'synthetic weekly value',
         from: SIM_EPOCH + w * WEEK_MS,
-        value: cachedTeamSeries(entry.id, k, w)[w],
+        value: teamValue(entry.id, k, w),
       })),
     }
   }

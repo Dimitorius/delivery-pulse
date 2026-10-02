@@ -3,6 +3,8 @@
 // metrics; per-team breakdown; related metrics; side card with definition,
 // sources, framework equivalents and the definition change log.
 
+import { Caveat, isFlagged } from './Caveat'
+import { WsjfPanel } from './WsjfPanel'
 import { useMemo, useState } from 'react'
 import { fmtDate, fmtDateTime, fmtNumber, fmtValue, unitLabel } from '../app/format'
 import { displayName, lensAka, LENS_NAME } from '../app/lens'
@@ -140,6 +142,7 @@ export function MetricPage({ id, teamIds }: { id: string; teamIds: string[] }) {
           </section>
 
           <TrendSection def={def} teamIds={teamIds} now={now} version={version} />
+          {def.id === 'wsjf' ? <WsjfPanel teamIds={teamIds} /> : null}
           {TIME_UNITS.has(def.unit) && result.records.some((r) => r.to) ? <Distribution def={def} result={result} /> : null}
           {teamIds.length > 1 ? <TeamBreakdown def={def} teamIds={teamIds} now={now} version={version} /> : null}
           <Related def={def} teamIds={teamIds} now={now} version={version} />
@@ -208,8 +211,8 @@ function SideCard({ def, teams, lens }: { def: MetricDef; teams: number; lens: L
             <SourceList sources={p.sources} />
           </div>
         ))}
-        {def.benchmark.note ? <p className="small muted">{def.benchmark.note}</p> : null}
-        {def.benchmark.flag ? <p className="flag small">{def.benchmark.flag}</p> : null}
+        {def.benchmark.note ? isFlagged(def.benchmark.note) ? <Caveat text={def.benchmark.note} /> : <p className="small muted">{def.benchmark.note}</p> : null}
+        {def.benchmark.flag ? <Caveat text={def.benchmark.flag} /> : null}
         <SourceList sources={def.benchmark.sources} />
       </section>
       <section>
@@ -221,7 +224,7 @@ function SideCard({ def, teams, lens }: { def: MetricDef; teams: number; lens: L
                 {a!.eq} {LENS_NAME[k as Lens]}: {a!.name}
               </span>
               <p className="muted">{a!.note}</p>
-              {a!.flag ? <p className="flag">{a!.flag}</p> : null}
+              {a!.flag ? <Caveat text={a!.flag} /> : null}
               {a!.verified ? <p className="muted">Checked against the source · accepted {a!.verified}</p> : null}
               <SourceList sources={a!.sources} />
             </div>

@@ -28,7 +28,7 @@ benchmark:
   summary: No universal target mix; the right distribution depends on product strategy.
   sources:
   - flow-framework
-  - kersten-p2p
+  - kersten-project-to-product
 xmr: false
 tileSecondary: 3
 related:
@@ -49,5 +49,5 @@ aka:
     note: Same four flow item types.
     sources:
     - flow-framework
-    - kersten-p2p
+    - kersten-project-to-product
 format: number

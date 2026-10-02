@@ -67,6 +67,11 @@ export type SimEvent = At<
   | { type: 'survey.snapshot'; survey: Omit<SurveySnapshot, 'at'> }
   | { type: 'cost.entry'; cost: Omit<CostEntry, 'at'> }
   | { type: 'value.snapshot'; value: Omit<ValueSnapshot, 'at'> }
+  /** WSJF estimate of a feature (re-estimated for the whole ART backlog at every PI Planning). */
+  | { type: 'feature.wsjf'; featureId: string; ubv: number; tc: number; rroe: number; jobSize: number }
+  /** Inject scenario (stage 3b): a named disturbance switched on / off from this moment. */
+  | { type: 'scenario.injected'; scenarioId: string; name: string }
+  | { type: 'scenario.cleared'; scenarioId: string }
 >
 
 export type SimEventType = SimEvent['type']

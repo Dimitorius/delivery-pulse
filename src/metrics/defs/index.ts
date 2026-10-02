@@ -19,7 +19,7 @@ import { agingWip, blockedItems, cycleTime, flowDistribution, flowEfficiency, le
 import { forecastAccuracy, mcHowMany, piForecast } from './forecast'
 import { criticalPathDrift, dependencyLeadTime, investmentAllocation, milestoneHitRate, overdueDependencies, programScopeGrowth, riskExposure } from './program'
 import { errorBudgetBurn, escapedDefects, incidentMttr, incidentsBySeverity, mtta, postmortemActionClosure, reopenRate, sloAttainment } from './quality'
-import { piPredictability } from './safe'
+import { epicLeadTime, featureLeadTime, piPredictability, portfolioWip, wsjfAdherence } from './safe'
 import { carryOver, sayDoRatio, sprintGoalSuccess, sprintScopeChange, velocity } from './scrum'
 import { cpi, dxi, ebmCurrentValue, enps } from './synthetic'
 
@@ -80,6 +80,11 @@ export const COMPUTE: Record<string, MetricCompute> = {
   'forecast-accuracy': forecastAccuracy,
   // SAFe (1)
   'pi-predictability': piPredictability,
+  // SAFe feature / epic level (stage 3b, registry drafts by Cowork)
+  'feature-lead-time': featureLeadTime,
+  'epic-lead-time': epicLeadTime,
+  'portfolio-wip': portfolioWip,
+  wsjf: wsjfAdherence,
   // AI (2)
   'ai-share': aiShare,
   'ai-cfr-ratio': aiCfrRatio,

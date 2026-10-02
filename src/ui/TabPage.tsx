@@ -8,6 +8,9 @@ import type { Tab } from '../metrics/registry'
 import { TabCharts } from './TabCharts'
 import { Tile } from './Tile'
 import { VIEW_PANELS } from './ViewCharts'
+import { WsjfPanel } from './WsjfPanel'
+import { AssessmentRadar } from './AssessmentRadar'
+import { ASSESSMENTS, isAssessment } from '../synthetic/assessments'
 
 export function TabPage({ tab, tiles, safeFlow, teamIds }: { tab: Tab; tiles: TileData[]; safeFlow?: TileData[]; teamIds: string[] }) {
   const lens = useApp((s) => s.lens)
@@ -60,6 +63,16 @@ export function TabPage({ tab, tiles, safeFlow, teamIds }: { tab: Tab; tiles: Ti
                 <Tile key={t.def.id} tile={t} teams={teamIds.length} />
               ))}
           </div>
+          {shown.some((t) => t.def.domain === g && t.def.id === 'wsjf') ? <WsjfPanel teamIds={teamIds} /> : null}
+          {shown.some((t) => t.def.domain === g && isAssessment(t.def.id)) ? (
+            <div className="tab-charts two-col">
+              {(Object.keys(ASSESSMENTS) as (keyof typeof ASSESSMENTS)[])
+                .filter((id) => shown.some((t) => t.def.domain === g && t.def.id === id))
+                .map((id) => (
+                  <AssessmentRadar key={id} id={id} teamIds={teamIds} compact />
+                ))}
+            </div>
+          ) : null}
         </section>
       ))}
       {shown.some((t) => t.def.synthetic) ? (

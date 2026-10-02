@@ -369,3 +369,5 @@ code { font-family: var(--mono); font-size: 11px; background: var(--surface-2); 
 @media (max-width: 700px) {
   .switch-list li, .read-with li, .signal-list li { grid-template-columns: 1fr; }
 }
+.caveat { color: var(--fg-2); }
+.caveat strong { color: var(--fg); font-weight: 600; }

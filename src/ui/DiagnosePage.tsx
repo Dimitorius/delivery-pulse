@@ -8,6 +8,7 @@ import { symptomOn, useLibrary } from '../app/library'
 import { useApp } from '../app/state'
 import { PLAYBOOK_BY_ID, SYMPTOM_BY_ID, SYMPTOM_GROUPS, SYMPTOMS, type Playbook, type SignalRef } from '../content/symptoms'
 import { MiniTile } from './catalogBits'
+import { Caveats } from './Caveat'
 import { Blocks } from './Markdown'
 import { SourceList } from './MetricPage'
 
@@ -125,16 +126,7 @@ function PlaybookBody({ pb, teamIds }: { pb: Playbook; teamIds: string[] }) {
   const what = section('What is going on')
   return (
     <div className="symptom-body">
-      {pb.flags.length ? (
-        <section className="notice warn">
-          <strong>Open for Dmitry's decision</strong>
-          <ul className="small">
-            {pb.flags.map((f) => (
-              <li key={f}>{f}</li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      <Caveats flags={pb.flags} />
       {pb.soundsLike.length ? (
         <section className="sounds-like">
           {pb.soundsLike.map((q) => (

@@ -1,8 +1,10 @@
 id: portfolio-wip
 tab: scale
+order: 540
 name: Portfolio WIP
 short: Epics in progress
 domain: Scale
+column: current
 levels: [current, leading]
 source: tracker
 unit: epics
@@ -31,4 +33,8 @@ benchmark:
 xmr: false
 related: [epic-lead-time, wip]
 aka:
-  safe: { name: Flow Load (portfolio level), eq: "≈", sources: [safe-accelerating-flow] }
+  safe: { name: Flow Load (portfolio level), eq: "≈", note: "SAFe Flow Load counts all work items in progress at a level; here only epics in implementation, program-level stand-in for the portfolio.", flag: "⚠ ≈ pair and its note not yet checked against the SAFe primary source by Dmitry.", sources: [safe-accelerating-flow] }
+format: number
+changelog:
+  - date: "2026-10-02"
+    change: "Added in stage 3b from the registry draft prepared in Cowork (content/registry-drafts/)."

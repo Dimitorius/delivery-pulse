@@ -8,8 +8,8 @@ const testSources = import.meta.glob<string>('./*.test.ts', { query: '?raw', imp
 const allTests = Object.values(testSources).join('\n')
 
 describe('metric registry', () => {
-  it('holds the core 50 (SPEC §6) plus the SYNTHETIC tiles', () => {
-    expect(METRICS.filter((m) => !m.synthetic)).toHaveLength(50)
+  it('holds the core 50 (SPEC §6), the 4 SAFe feature/epic metrics (stage 3b) and the SYNTHETIC tiles', () => {
+    expect(METRICS.filter((m) => !m.synthetic)).toHaveLength(54)
     expect(METRICS.filter((m) => m.pulse).length).toBeGreaterThanOrEqual(15)
   })
 

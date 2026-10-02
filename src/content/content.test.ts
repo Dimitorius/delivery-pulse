@@ -13,6 +13,8 @@ import { SPRINT_W } from '../sim/calendar'
 import { DEFAULT_SEED, Simulator } from '../sim/simulator'
 import { SYNTHETIC_DEFS, syntheticValue, teamSeries } from '../synthetic/series'
 import { SYNTH_SPECS } from '../synthetic/specs'
+import { ASSESSMENTS, dimensionScores, levelName } from '../synthetic/assessments'
+import { SIM_EPOCH, WEEK_MS } from '../sim/calendar'
 import { ARTICLES, CALCULATORS, OPTIONAL_SECTIONS, ROLES, SECTION_ORDER } from './articles'
 import { cyclePercentiles, monteCarloWeeks, parseNumbers, sayDo } from './calculators'
 import { CATALOG, CATALOG_BY_ID, CATALOG_TO_REGISTRY, catalogEntry, isGeneratedSynthetic, isPendingLive, LIVE_PANELS, resolveId } from './catalog'
@@ -47,9 +49,9 @@ describe('catalog (content/catalog.yaml)', () => {
   })
 
   it('a live catalog entry is computed, a panel, or explicitly "not computed yet"', () => {
-    const pending = CATALOG.filter(isPendingLive).map((e) => e.id).sort()
-    // ⚠ open question for Dmitry (docs/stage-3a.md): listed as live, but no registry definition yet.
-    expect(pending).toEqual(['epic-lead-time', 'feature-lead-time', 'portfolio-wip', 'wsjf'])
+    // Stage 3b: the four SAFe metrics that were "not computed yet" now have registry definitions (Dmitry, 02.10).
+    expect(CATALOG.filter(isPendingLive).map((e) => e.id)).toEqual([])
+    for (const id of ['epic-lead-time', 'feature-lead-time', 'portfolio-wip', 'wsjf']) expect(catalogEntry(id)?.def?.id, id).toBe(id)
     for (const id of LIVE_PANELS) expect(catalogEntry(id)?.status).toBe('live')
   })
 
@@ -168,6 +170,9 @@ describe('sources: content/sources.yaml merged into registry/sources.yaml', () =
       if (s.year) expect(SOURCES[k].year, k).toBe(s.year)
     }
     expect(SOURCES['vacanti-wwibd'].year).toBe(2020)
+    // one key per book (Dmitry, 02.10): kersten-p2p was merged into kersten-project-to-product
+    expect(SOURCES['kersten-p2p']).toBeUndefined()
+    expect(SOURCES['kersten-project-to-product']).toBeTruthy()
   })
 })
 
@@ -182,7 +187,7 @@ describe('Library', () => {
     expect(on('sprint-burndown')).toBe(false)
     expect(on('lines-of-code')).toBe(false)
     expect(on('pi-objectives-status')).toBe(true)
-    expect(on('wsjf')).toBe(false)
+    expect(on('wsjf')).toBe(true) // computed since stage 3b
     expect(symptomOn(EMPTY_LIBRARY, 'review-bottleneck')).toBe(true)
   })
 
@@ -278,5 +283,36 @@ describe('routes', () => {
     ]
     for (const r of routes) expect(parseHash(routeHash(r))).toEqual(r)
     expect(resolveId('flaky-test-rate')).toBe('flaky-rate')
+  })
+})
+
+describe('SAFe self-assessments as radars (content/registry-drafts/dimensions-safe-assessments.yaml)', () => {
+  it('dimensions and scales come from the content file', () => {
+    expect(ASSESSMENTS['safe-competency'].dimensions).toHaveLength(7)
+    expect(ASSESSMENTS['safe-competency'].dimensions[0].name).toBe('Lean-Agile Leadership')
+    const radar = ASSESSMENTS['devops-health-radar']
+    expect(radar.dimensions).toHaveLength(16)
+    expect([...new Set(radar.dimensions.map((d) => d.group))]).toEqual(['Continuous Exploration', 'Continuous Integration', 'Continuous Deployment', 'Release on Demand'])
+    expect(radar.levels).toEqual(['Sit', 'Crawl', 'Walk', 'Run', 'Fly'])
+    expect(levelName(radar, 1)).toBe('Sit')
+    expect(levelName(radar, 4.6)).toBe('Fly')
+    for (const a of Object.values(ASSESSMENTS)) {
+      expect(a.flags.length, a.id).toBeGreaterThan(0)
+      for (const f of a.flags) expect(f).toMatch(/^⚠/)
+      for (const k of a.sources) expect(SOURCES[k], k).toBeTruthy()
+    }
+  })
+
+  it('scores stay on the 1–5 scale; the tile value is the median over the dimensions', () => {
+    for (const id of ['safe-competency', 'devops-health-radar'] as const) {
+      for (const w of [0, 13, 40, 120]) {
+        const dims = dimensionScores(id, [0, 1, 2, 3, 4], w)
+        for (const v of dims) expect(v).toBeGreaterThanOrEqual(1), expect(v).toBeLessThanOrEqual(5)
+        const sorted = [...dims].sort((a, b) => a - b)
+        expect(syntheticValue(id, [0, 1, 2, 3, 4], SIM_EPOCH + w * WEEK_MS)).toBe(sorted[Math.ceil(sorted.length / 2) - 1])
+      }
+      // quarterly: unchanged inside a quarter
+      expect(dimensionScores(id, [0], 14)).toEqual(dimensionScores(id, [0], 25))
+    }
   })
 })

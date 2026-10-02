@@ -10,6 +10,7 @@ import {
   type Risk,
   type SliWindow,
   type SurveySnapshot,
+  type ScenarioRun,
   type ValueSnapshot,
   type DependencyLink,
   type Deployment,
@@ -24,7 +25,7 @@ import {
 
 export interface FeedEntry {
   t: number
-  kind: 'deploy' | 'rollback' | 'incident' | 'resolved' | 'sprint' | 'blocked' | 'ci' | 'dependency' | 'pi' | 'milestone' | 'risk' | 'postmortem'
+  kind: 'deploy' | 'rollback' | 'incident' | 'resolved' | 'sprint' | 'blocked' | 'ci' | 'dependency' | 'pi' | 'milestone' | 'risk' | 'postmortem' | 'scenario'
   tone: 'ok' | 'warn' | 'bad' | 'info'
   teamId?: string
   text: string
@@ -59,6 +60,7 @@ export interface Store {
   surveys: SurveySnapshot[]
   costs: CostEntry[]
   values: ValueSnapshot[]
+  scenarios: ScenarioRun[]
   feed: FeedEntry[]
 }
 
@@ -93,6 +95,7 @@ export function createStore(): Store {
     surveys: [],
     costs: [],
     values: [],
+    scenarios: [],
     feed: [],
   }
 }
@@ -377,6 +380,22 @@ export function apply(s: Store, e: SimEvent): void {
     }
     case 'value.snapshot': {
       s.values.push({ ...e.value, at: e.t })
+      break
+    }
+    case 'feature.wsjf': {
+      const f = must(s.items.get(e.featureId), 'item')
+      ;(f.wsjf ??= []).push({ at: e.t, ubv: e.ubv, tc: e.tc, rroe: e.rroe, jobSize: e.jobSize })
+      break
+    }
+    case 'scenario.injected': {
+      s.scenarios.push({ id: e.scenarioId, name: e.name, from: e.t })
+      feed(s, { t: e.t, kind: 'scenario', tone: 'bad', text: `scenario injected · ${e.name}` })
+      break
+    }
+    case 'scenario.cleared': {
+      const run = [...s.scenarios].reverse().find((r) => r.id === e.scenarioId && r.to === undefined)
+      if (run) run.to = e.t
+      feed(s, { t: e.t, kind: 'scenario', tone: 'info', text: `scenario cleared · ${run?.name ?? e.scenarioId}` })
       break
     }
   }

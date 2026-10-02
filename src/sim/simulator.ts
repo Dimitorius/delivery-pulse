@@ -22,7 +22,7 @@ import {
   timeToWork,
   workToTime,
 } from './calendar'
-import { BUG_SYMPTOMS, DEBT_TASKS, FEATURE_SUFFIXES, PI_OUTCOMES, POSTMORTEM_ACTIONS, PROGRAM, RISKS_BY_TEAM, SERVICE_TRAFFIC, STORY_VERBS, TEAMS, VOCAB } from './org'
+import { BUG_SYMPTOMS, DEBT_TASKS, FEATURE_SUFFIXES, PI_OUTCOMES, PORTFOLIO_EPICS, POSTMORTEM_ACTIONS, PROGRAM, RISKS_BY_TEAM, SERVICE_TRAFFIC, STORY_VERBS, TEAMS, VOCAB } from './org'
 import { ELITE_PROFILE, type Profile } from './profile'
 import { Rng } from './rng'
 import { Scheduler } from './scheduler'
@@ -77,7 +77,20 @@ interface SprintRt {
 interface FeatureRt {
   item: ItemRt
   stories: ItemRt[]
+  epic?: EpicRt
 }
+
+/** Portfolio epic: a program-level container of features from several teams. */
+interface EpicRt {
+  item: ItemRt
+  features: FeatureRt[]
+}
+
+/** Relative (modified Fibonacci) scale for WSJF components. */
+const FIB = [1, 2, 3, 5, 8, 13, 20] as const
+const nearestFib = (v: number) => FIB.reduce((best, f) => (Math.abs(f - v) < Math.abs(best - v) ? f : best), FIB[0] as number)
+/** Epics opened at each PI Planning: the PI's committed features split into thirds by priority. */
+const EPICS_PER_PI = 3
 
 interface DepRt {
   id: string
@@ -146,6 +159,9 @@ export class Simulator {
   private readonly ops: Rng
   private readonly obs: Rng
   private readonly sliRng: Rng
+  // Stage 3: portfolio epics and WSJF estimates (observational, own stream).
+  private readonly port: Rng
+  private epicSeq = 0
   private readonly mrAi = new Map<string, boolean>()
   private readonly outages: { service: string; sev: 1 | 2 | 3 | 4; startedAt: number; resolvedAt?: number }[] = []
   private milestonesRt: { id: string; features: FeatureRt[]; achieved: boolean }[] = []
@@ -159,6 +175,7 @@ export class Simulator {
     this.ops = new Rng((seed ^ 0x9e3779b9) >>> 0)
     this.obs = new Rng((seed ^ 0x85ebca6b) >>> 0)
     this.sliRng = new Rng((seed ^ 0xc2b2ae35) >>> 0)
+    this.port = new Rng((seed ^ 0x27d4eb2f) >>> 0)
     this.p = profile
     this.now = workToTime(0)
     this.teams = TEAMS.map((team) => ({
@@ -303,6 +320,7 @@ export class Simulator {
     })
     const platform = this.teams.find((t) => t.team.kind === 'platform')!
     const providers: { item: ItemRt; needBy: number }[] = []
+    const epics = Array.from({ length: EPICS_PER_PI }, () => this.createEpic())
     for (const tr of this.scrumTeams) {
       tr.features = []
       if (tr === platform) {
@@ -328,7 +346,9 @@ export class Simulator {
       const stretch: ItemRt[] = []
       while (points < capacity && count < storyCap) {
         const before = points
-        const stories = this.createFeatureWithStories(tr, id)
+        // Priority thirds of the commitment go to the PI's epics in rank order.
+        const epic = epics[Math.min(EPICS_PER_PI - 1, Math.max(0, Math.floor((EPICS_PER_PI * before) / Math.max(capacity, 1))))]
+        const stories = this.createFeatureWithStories(tr, id, false, epic)
         points += stories.reduce((s, i) => s + (i.points ?? 0), 0)
         count += stories.length
         planned.push(...stories)
@@ -373,7 +393,7 @@ export class Simulator {
       const stretchCapacity = this.velocity(tr) * DEV_ITERATIONS_PER_PI * this.p.piStretchLoad
       let stretchPoints = 0
       while (stretchPoints < stretchCapacity) {
-        const stories = this.createFeatureWithStories(tr, id, true)
+        const stories = this.createFeatureWithStories(tr, id, true, epics[EPICS_PER_PI - 1])
         stretchPoints += stories.reduce((s, i) => s + (i.points ?? 0), 0)
         stretch.push(...stories)
       }
@@ -381,6 +401,62 @@ export class Simulator {
       tr.piCommitted = [...leftover.filter((i) => i.piId === id && i.type === 'story'), ...planned]
       this.refillRoadmap(tr)
     }
+    this.estimateWsjf()
+  }
+
+  private createEpic(): EpicRt {
+    const n = this.epicSeq++
+    const round = Math.floor(n / PORTFOLIO_EPICS.length)
+    const title = PORTFOLIO_EPICS[n % PORTFOLIO_EPICS.length] + (round ? ` · wave ${round + 1}` : '')
+    const id = `EPIC-${n + 1}`
+    this.emit({ type: 'item.created', item: { id, teamId: PROGRAM.id, type: 'epic', title, planned: true, flowType: 'feature', investment: 'feature' } })
+    const item: ItemRt = {
+      id,
+      teamId: PROGRAM.id,
+      type: 'epic',
+      title,
+      status: 'Backlog',
+      effort: 0,
+      remaining: 0,
+      reviewRounds: 0,
+      qaRounds: 0,
+      randomBlockUsed: false,
+      blocked: false,
+      openDeps: new Set(),
+      done: false,
+    }
+    return { item, features: [] }
+  }
+
+  /**
+   * PI Planning re-estimates WSJF for every not-yet-started feature in the
+   * ART backlog. The teams' backlogs are already in priority order (the
+   * simulator plans that way); the estimates are drawn so their ranking
+   * follows that order, with the natural noise of relative Fibonacci
+   * estimates. Job size comes from the feature's real size (story points).
+   */
+  private estimateWsjf(): void {
+    const rows: { f: FeatureRt; key: number }[] = []
+    for (const tr of this.scrumTeams) {
+      const order: FeatureRt[] = []
+      for (const it of [...tr.ready, ...tr.backlog]) {
+        const f = it.parentId ? this.features.get(it.parentId) : undefined
+        if (f && f.epic && f.item.status === 'Backlog' && !order.includes(f)) order.push(f)
+      }
+      order.forEach((f, i) => rows.push({ f, key: (i + 0.5) / order.length }))
+    }
+    rows.sort((a, b) => a.key - b.key)
+    const draw = () => this.port.weighted(FIB.map((v, i) => [v, [3, 4, 5, 5, 4, 2, 1][i]] as const))
+    const targets = rows.map(() => (draw() + draw() + draw()) / draw()).sort((a, b) => b - a)
+    rows.forEach(({ f }, i) => {
+      const points = f.stories.reduce((s, x) => s + (x.points ?? 0), 0)
+      const jobSize = Math.min(20, Math.max(1, nearestFib(points / 2.5)))
+      const cod = Math.min(60, Math.max(3, targets[i] * jobSize))
+      const r = [this.port.uniform(0.5, 1.5), this.port.uniform(0.3, 1.5), this.port.uniform(0.2, 1.2)]
+      const k = cod / (r[0] + r[1] + r[2])
+      const [ubv, tc, rroe] = r.map((x) => Math.min(20, Math.max(1, nearestFib(x * k))))
+      this.emit({ type: 'feature.wsjf', featureId: f.item.id, ubv, tc, rroe, jobSize })
+    })
   }
 
   /** Keep a refined roadmap (not PI-committed) of 2+ sprints so capacity is never idle. */
@@ -568,14 +644,14 @@ export class Simulator {
     return it
   }
 
-  private createFeatureWithStories(tr: TeamRt, piId: string | undefined, piStretch = false): ItemRt[] {
-    const feature = this.createFeature(tr, piId, piStretch)
+  private createFeatureWithStories(tr: TeamRt, piId: string | undefined, piStretch = false, epic?: EpicRt): ItemRt[] {
+    const feature = this.createFeature(tr, piId, piStretch, epic)
     const count = this.rng.int(3, 6)
     for (let i = 0; i < count; i++) feature.stories.push(this.createStory(tr, piId, feature.item.id, piStretch))
     return feature.stories
   }
 
-  private createFeature(tr: TeamRt, piId: string | undefined, piStretch = false): FeatureRt {
+  private createFeature(tr: TeamRt, piId: string | undefined, piStretch = false, epic?: EpicRt): FeatureRt {
     const names = VOCAB[tr.team.id].features
     const n = tr.featureSeq++
     const round = Math.floor(n / names.length)
@@ -586,10 +662,12 @@ export class Simulator {
       planned: true,
       piId,
       piStretch: piStretch || undefined,
+      parentId: epic?.item.id,
       flowType: 'feature',
       investment: 'feature',
     })
-    const f: FeatureRt = { item, stories: [] }
+    const f: FeatureRt = { item, stories: [], epic }
+    epic?.features.push(f)
     this.features.set(item.id, f)
     tr.features.push(f)
     return f
@@ -759,7 +837,10 @@ export class Simulator {
     this.setStatus(it, 'In Progress')
     if (it.parentId) {
       const f = this.features.get(it.parentId)
-      if (f && f.item.status === 'Backlog') this.setStatus(f.item, 'In Progress')
+      if (f && f.item.status === 'Backlog') {
+        this.setStatus(f.item, 'In Progress')
+        if (f.epic && f.epic.item.status === 'Backlog') this.setStatus(f.epic.item, 'In Progress')
+      }
     }
     if (it.openDeps.size) {
       this.block(tr, it, 'dependency', [...it.openDeps][0])
@@ -908,6 +989,7 @@ export class Simulator {
       const f = this.features.get(it.parentId)
       if (f && f.stories.every((s) => s.done)) {
         this.setStatus(f.item, 'Done')
+        if (f.epic && f.epic.features.every((x) => x.item.status === 'Done')) this.setStatus(f.epic.item, 'Done')
         this.checkMilestones()
       }
     }

@@ -40,4 +40,4 @@ aka:
     name: Flow Load
     eq: "≡"
     note: "Flow items in progress (active or waiting)."
-    sources: [flow-framework, kersten-p2p]
+    sources: [flow-framework, kersten-project-to-product]

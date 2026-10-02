@@ -1,11 +1,11 @@
 // Minimal ECharts wrapper with tree-shaken imports.
-import { BarChart, GraphChart, LineChart, ScatterChart } from 'echarts/charts'
-import { GridComponent, LegendComponent, MarkAreaComponent, MarkLineComponent, TooltipComponent } from 'echarts/components'
+import { BarChart, GraphChart, LineChart, RadarChart, ScatterChart } from 'echarts/charts'
+import { GridComponent, LegendComponent, MarkAreaComponent, MarkLineComponent, RadarComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useRef } from 'react'
 
-echarts.use([LineChart, BarChart, GraphChart, ScatterChart, GridComponent, LegendComponent, TooltipComponent, MarkLineComponent, MarkAreaComponent, CanvasRenderer])
+echarts.use([LineChart, BarChart, GraphChart, RadarChart, ScatterChart, RadarComponent, GridComponent, LegendComponent, TooltipComponent, MarkLineComponent, MarkAreaComponent, CanvasRenderer])
 
 export type EChartsOption = echarts.EChartsCoreOption
 

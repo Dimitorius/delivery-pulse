@@ -1,8 +1,11 @@
 id: wsjf
 tab: scale
+order: 550
+windowDays: 140
 name: WSJF Sequencing Adherence
 short: Started in WSJF order
 domain: Scale
+column: leading
 levels: [leading]
 source: tracker
 unit: "%"
@@ -34,3 +37,7 @@ benchmark:
   sources: [safe-wsjf, reinertsen-flow]
 xmr: false
 related: [investment-allocation, feature-lead-time]
+format: number
+changelog:
+  - date: "2026-10-02"
+    change: "Added in stage 3b from the registry draft prepared in Cowork (content/registry-drafts/)."

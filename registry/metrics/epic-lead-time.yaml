@@ -1,8 +1,11 @@
 id: epic-lead-time
 tab: scale
+order: 530
+windowDays: 280
 name: Epic Lead Time
 short: Epic lead time P50
 domain: Scale
+column: lagging
 levels: [lagging]
 source: tracker
 unit: d
@@ -28,3 +31,7 @@ benchmark:
 minSample: 10
 xmr: false
 related: [feature-lead-time, portfolio-wip]
+format: number
+changelog:
+  - date: "2026-10-02"
+    change: "Added in stage 3b from the registry draft prepared in Cowork (content/registry-drafts/)."

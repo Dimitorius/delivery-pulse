@@ -104,8 +104,9 @@ export const SYNTH_SPECS: Record<string, SynthSpec> = {
   'milestone-slippage': num('d', 2, 2, 1),
   'interrupt-rate': cnt('per wk', 3, 1),
   // Scale (featured): self-assessments, quarterly
-  'safe-competency': num('score', 3.6, 0.15, 1, { every: 13, min: 1, max: 5, what: 'self-assessment score on a 1–5 scale' }),
-  'devops-health-radar': num('score', 3.4, 0.2, 1, { every: 13, min: 1, max: 5, what: 'self-assessment score on a 1–5 scale' }),
+  // (the value is the median over the dimensions — src/synthetic/assessments.ts; shown as a radar)
+  'safe-competency': num('score', 3.6, 0.15, 1, { every: 13, min: 1, max: 5, what: 'median of the 7 competency scores (1–5 self-assessment)' }),
+  'devops-health-radar': num('score', 3.4, 0.2, 1, { every: 13, min: 1, max: 5, what: 'median of the 16 pipeline activity scores (Sit … Fly = 1–5)' }),
   // Value
   'ebm-unrealized-value': num('pts', 60, 3, 0, { every: 4, max: 100, what: 'unrealized-value index (0–100)' }),
   'innovation-rate': pct(58, 4),

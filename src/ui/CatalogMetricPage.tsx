@@ -2,6 +2,8 @@
 // SYNTHETIC series (generated), views (charts), anti-metrics and entries
 // that the catalog lists as live but that are not computed yet.
 
+import { AssessmentRadar } from './AssessmentRadar'
+import { isAssessment } from '../synthetic/assessments'
 import { useMemo } from 'react'
 import { fmtNumber, fmtValue, unitLabel } from '../app/format'
 import { metricOn, switchable, useLibrary } from '../app/library'
@@ -84,14 +86,14 @@ export function CatalogMetricPage({ id, teamIds }: { id: string; teamIds: string
           ) : null}
 
           {isPendingLive(entry) ? (
-            <section className="notice warn">
-              <strong>⚠ Not computed yet.</strong> The catalog lists this metric as live, but it has no registry definition (formula,
-              target, benchmark) and no compute function yet, so there is nothing honest to show. Waiting for Dmitry's decision — see
-              docs/stage-3a.md.
+            <section className="notice">
+              <strong>Not computed yet.</strong> The catalog lists this metric as live, but it has no registry definition (formula,
+              target, benchmark) and no compute function yet, so there is nothing honest to show.
             </section>
           ) : null}
 
           {def ? <SyntheticSection id={entry.id} teamIds={teamIds} /> : null}
+          {isAssessment(entry.id) ? <AssessmentRadar id={entry.id} teamIds={teamIds} /> : null}
           {Panel ? (
             <section>
               {LIVE_PANELS.has(entry.id) ? <p className="small muted">Computed from simulator events; always shown on the {tab?.title} tab.</p> : null}

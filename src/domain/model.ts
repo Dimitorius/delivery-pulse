@@ -110,6 +110,28 @@ export interface WorkItem {
   firstActiveAt?: number
   /** First completion (a later reopen does not move it: metrics as of a past time never change). */
   doneAt?: number
+  /** Features: WSJF estimates in time order (the latest one ≤ asOf applies). */
+  wsjf?: WsjfEstimate[]
+}
+
+/** SAFe WSJF = cost of delay / job size; CoD = user-business value + time criticality + risk reduction / opportunity enablement. */
+export interface WsjfEstimate {
+  at: number
+  ubv: number
+  tc: number
+  rroe: number
+  jobSize: number
+}
+
+export const wsjfCod = (e: WsjfEstimate) => e.ubv + e.tc + e.rroe
+export const wsjfScore = (e: WsjfEstimate) => wsjfCod(e) / e.jobSize
+
+/** An injected scenario and the time it was active (`to` undefined = still active). */
+export interface ScenarioRun {
+  id: string
+  name: string
+  from: number
+  to?: number
 }
 
 // ---- Iterations & dependencies ---------------------------------------------

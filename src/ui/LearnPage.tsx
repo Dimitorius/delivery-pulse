@@ -2,6 +2,7 @@
 // reading paths by role. A metric without an article says "article coming" —
 // no invented text.
 
+import { Caveats } from './Caveat'
 import { useState } from 'react'
 import { useApp } from '../app/state'
 import { ARTICLES, articleFor, CALCULATORS, ROLES, SECTION_ORDER, type Article, type Role } from '../content/articles'
@@ -94,7 +95,7 @@ function LearnIndex() {
                         </button>
                         <span className="small muted"> · {e.q}</span>
                         {a ? (
-                          <span className="small ok-text"> · article{a.flags.length ? ` · ${a.flags.length} ⚠` : ''}</span>
+                          <span className="small ok-text"> · article</span>
                         ) : (
                           <span className="small muted"> · article coming</span>
                         )}
@@ -163,16 +164,7 @@ function ArticleBody({ article, teamIds }: { article: Article; teamIds: string[]
   ]
   return (
     <>
-      {article.flags.length ? (
-        <section className="notice warn">
-          <strong>Open for Dmitry's decision</strong>
-          <ul className="small">
-            {article.flags.map((f) => (
-              <li key={f}>{f}</li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      <Caveats flags={article.flags} />
       <p className="small muted">
         {TIER_LABEL[article.tier]} · reading paths: {article.roles.map((r) => ROLES.find((x) => x.id === r)?.long ?? r).join(', ') || '—'}
       </p>

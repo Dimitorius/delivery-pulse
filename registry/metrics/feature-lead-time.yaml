@@ -1,9 +1,11 @@
-# Draft by Cowork for stage 3b — Code adds order/tab/column/compute/test. Review status: Dmitry pending.
 id: feature-lead-time
 tab: scale
+order: 520
+windowDays: 140
 name: Feature Lead Time
 short: Feature lead time P85
 domain: Scale
+column: lagging
 levels: [lagging]
 source: tracker
 unit: d
@@ -16,7 +18,7 @@ definition: >-
   It is the feature-level view of SAFe Flow Time; ours stops at Done, not at release. Shown as P85 with the
   median alongside, because feature durations are right-skewed like story cycle times.
 formula: |-
-  features = Feature items whose last child story reached Done in the window
+  features = Feature items planned at PI Planning (under an epic) whose last child story reached Done in the window
   lead     = doneAt(last child) − createdAt(feature)   (calendar days)
   value    = P85(lead); also P50
 events: [item.created, item.status]
@@ -37,4 +39,8 @@ minSample: 10
 xmr: false
 related: [lead-time, cycle-time, epic-lead-time]
 aka:
-  safe: { name: Flow Time (feature level), eq: "≈", note: "SAFe Flow Time runs to release; ours stops at Done.", sources: [safe-accelerating-flow] }
+  safe: { name: Flow Time (feature level), eq: "≈", note: "SAFe Flow Time runs to release; ours stops at Done.", flag: "⚠ ≈ pair not yet checked against the SAFe primary source by Dmitry.", sources: [safe-accelerating-flow] }
+format: number
+changelog:
+  - date: "2026-10-02"
+    change: "Added in stage 3b from the registry draft prepared in Cowork (content/registry-drafts/)."

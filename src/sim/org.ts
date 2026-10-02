@@ -161,3 +161,19 @@ export const PI_OUTCOMES: Record<string, string[]> = {
   ],
   onboarding: ['Shorten merchant onboarding time'],
 }
+
+/** Portfolio epics (program-level initiatives), opened three per PI at PI Planning. */
+export const PORTFOLIO_EPICS = [
+  'Faster checkout conversion',
+  'Payments compliance 2027',
+  'Merchant self-service',
+  'Search that sells',
+  'Platform reliability',
+  'Cross-border commerce',
+  'Lower cost to serve',
+  'Mobile-first shopping',
+  'Fraud and risk controls',
+  'Partner integrations',
+  'Data-driven merchandising',
+  'Operational excellence',
+]
