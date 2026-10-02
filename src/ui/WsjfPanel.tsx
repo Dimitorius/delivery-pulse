@@ -44,6 +44,13 @@ export function WsjfPanel({ teamIds }: { teamIds: string[] }) {
               </tr>
             </thead>
             <tbody>
+              {rows.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="muted small">
+                    Every feature planned for this PI has started. The next PI's features get their WSJF estimates at PI Planning (inside the IP iteration).
+                  </td>
+                </tr>
+              ) : null}
               {rows.map((r) => (
                 <tr key={r.feature.id} className={r.rank <= cut ? '' : 'muted'}>
                   <td className="num">{r.rank}</td>

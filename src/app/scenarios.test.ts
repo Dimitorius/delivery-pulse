@@ -90,3 +90,24 @@ describe('inject and clear', () => {
     expect(SCENARIO_BY_ID.get('too-much-started')!.slotsPerDev).toBe(2)
   })
 })
+
+describe('Tour promise: inject review-bottleneck → the Monte Carlo date moves', () => {
+  it('within 15 working days the P50 date is at least a week later than without the scenario, and the forecast is lower', async () => {
+    const { buildStore, apply } = await import('../domain/store')
+    const { COMPUTE } = await import('../metrics/defs')
+    const { workToTime, DAY_MS } = await import('../sim/calendar')
+    const at = INJECT_POINTS[0].w
+    const a = new Simulator()
+    const b = new Simulator()
+    const sa = buildStore(a.advanceToWork(at))
+    const sb = buildStore(b.advanceToWork(at))
+    b.inject('review-bottleneck')
+    const end = at + 15 * 8
+    for (const e of a.advanceToWork(end)) apply(sa, e)
+    for (const e of b.advanceToWork(end)) apply(sb, e)
+    const fc = (s: typeof sa) => COMPUTE['pi-forecast']({ store: s, asOf: workToTime(end), teamIds: s.teams.map((t) => t.id), windowDays: 28 })
+    const p50 = (s: typeof sa) => fc(s).secondary!.find((x) => x.label === 'P50 date')!.value!
+    expect(p50(sb) - p50(sa)).toBeGreaterThanOrEqual(7 * DAY_MS)
+    expect(fc(sb).value!).toBeLessThan(fc(sa).value! - 20)
+  })
+})

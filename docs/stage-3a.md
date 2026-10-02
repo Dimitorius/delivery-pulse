@@ -86,3 +86,7 @@
 - Learn → Tier 1 → Cycle Time / Say/Do / PI Forecast: калькулятор показывает разобранный пример из статьи; у остальных метрик — «Article coming».
 - Diagnose → Flow → «Work gets stuck in review…»: шесть живых мини-плиток меняются вместе с часами симуляции.
 - Scale: сверху шесть SAFe flow-метрик.
+
+## Решения Дмитрия (02.10.2026)
+
+Все пять ⚠ решены, реализация — в [stage-3b.md](stage-3b.md), часть 1.

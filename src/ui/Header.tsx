@@ -2,6 +2,7 @@ import { fmtDateTime } from '../app/format'
 import { PROGRAM_SCOPE } from '../app/pulse'
 import { term } from '../app/lens'
 import { LENSES, SPEEDS, eventStore, useApp, type Lens } from '../app/state'
+import { ScenarioMenu } from './Scenario'
 
 function iterationLabel(now: number, scope: string, lens: Lens): string {
   const pi = eventStore.iterationList.find((i) => i.kind === 'pi' && i.start <= now && now < i.end)
@@ -14,7 +15,7 @@ function iterationLabel(now: number, scope: string, lens: Lens): string {
 }
 
 export function Header({ signalCount, onSignals }: { signalCount: number; onSignals: () => void }) {
-  const { now, speed, setSpeed, scope, setScope, lens, setLens, ended } = useApp()
+  const { now, speed, setSpeed, scope, setScope, lens, setLens, ended, setTour } = useApp()
   return (
     <header className="header">
       <div className="brand">
@@ -57,9 +58,10 @@ export function Header({ signalCount, onSignals }: { signalCount: number; onSign
           </button>
         ))}
       </div>
-      <button className="ghost" disabled title="Scenarios arrive in stage 3">
-        Inject scenario
+      <button className="tour-start" onClick={() => setTour(0)} disabled={ended} title="A 3-minute guided tour">
+        Tour
       </button>
+      <ScenarioMenu />
       <button className={`signals-count ${signalCount ? 'has' : ''}`} onClick={onSignals} title="Signals fired">
         <span className="num">{signalCount}</span> signals
       </button>

@@ -5,9 +5,11 @@
 
 import { useState } from 'react'
 import { symptomOn, useLibrary } from '../app/library'
-import { useApp } from '../app/state'
+import { activeScenario, useApp } from '../app/state'
 import { PLAYBOOK_BY_ID, SYMPTOM_BY_ID, SYMPTOM_GROUPS, SYMPTOMS, type Playbook, type SignalRef } from '../content/symptoms'
 import { MiniTile } from './catalogBits'
+import { ScenarioControl } from './Scenario'
+import { SCENARIO_BY_ID } from '../sim/scenarios'
 import { Caveats } from './Caveat'
 import { Blocks } from './Markdown'
 import { SourceList } from './MetricPage'
@@ -22,6 +24,8 @@ function SymptomList() {
   const [showHidden, setShowHidden] = useState(false)
   const on = (id: string) => symptomOn({ metrics: {}, symptoms: lib.symptoms }, id)
   const hidden = SYMPTOMS.filter((s) => !on(s.id))
+  useApp((s) => s.version)
+  const active = activeScenario()
   return (
     <main className="page diagnose-page">
       <header className="tab-head">
@@ -29,7 +33,8 @@ function SymptomList() {
         <p className="muted">
           Start from what people say. Each symptom names the metrics that move first (early signals) and the ones that confirm it later,
           competing hypotheses with the check that separates them, and a playbook. {PLAYBOOK_BY_ID.size} of {SYMPTOMS.length} playbooks are
-          written; the rest say “playbook coming”.
+          written; the rest say “playbook coming”. {SYMPTOMS.filter((s) => s.scenario).length} symptoms can be reproduced in the simulator
+          with Inject scenario.
         </p>
       </header>
       {SYMPTOM_GROUPS.map((g) => {
@@ -44,7 +49,7 @@ function SymptomList() {
                   <span className="symptom-name">{s.name}</span>
                   <span className="small">
                     {PLAYBOOK_BY_ID.has(s.id) ? <span className="ok-text">playbook</span> : <span className="muted">playbook coming</span>}
-                    {s.scenario ? <span className="muted"> · scenario (stage 3b)</span> : null}
+                    {s.scenario ? <span className={active?.id === s.scenario ? 'bad-text' : 'muted'}> · {active?.id === s.scenario ? 'scenario active' : 'scenario'}</span> : null}
                     {on(s.id) ? null : <span className="muted"> · hidden in Library</span>}
                   </span>
                 </button>
@@ -92,11 +97,19 @@ function SymptomCard({ id, teamIds }: { id: string; teamIds: string[] }) {
       <header>
         <div className="chips">
           <span className="chip">{s.group}</span>
-          {s.scenario ? <span className="chip subtle">scenario: {s.scenario} (Inject arrives in stage 3b)</span> : <span className="chip subtle">no simulator scenario</span>}
+          {s.scenario ? <span className="chip subtle">simulator scenario</span> : <span className="chip subtle">no simulator scenario</span>}
         </div>
         <h1>{s.name}</h1>
       </header>
-      {pb ? <PlaybookBody pb={pb} teamIds={teamIds} /> : <p className="notice">Playbook coming — this symptom's card is being written and reviewed; nothing is shown until then.</p>}
+      {s.scenario ? <ScenarioControl scenarioId={s.scenario} /> : null}
+      {pb ? (
+        <PlaybookBody pb={pb} teamIds={teamIds} />
+      ) : (
+        <>
+          <p className="notice">Playbook coming — this symptom's card is being written and reviewed; nothing is shown until then.</p>
+          {s.scenario ? <ScenarioSignals scenarioId={s.scenario} teamIds={teamIds} /> : null}
+        </>
+      )}
     </main>
   )
 }
@@ -140,7 +153,7 @@ function PlaybookBody({ pb, teamIds }: { pb: Playbook; teamIds: string[] }) {
           <Blocks blocks={what.blocks} />
         </section>
       ) : null}
-      <div className="two-col">
+      <div className="two-col" data-tour="signals">
         <Signals title="Early signals" hint="move first (leading)" signals={pb.earlySignals} teamIds={teamIds} />
         <Signals title="Confirming signals" hint="move later (lagging)" signals={pb.confirmingSignals} teamIds={teamIds} />
       </div>
@@ -166,7 +179,7 @@ function PlaybookBody({ pb, teamIds }: { pb: Playbook; teamIds: string[] }) {
           </table>
         </section>
       ) : null}
-      <section className="playbook">
+      <section className="playbook" data-tour="playbook">
         <h2>Playbook</h2>
         <div className="two-col">
           <div>
@@ -226,5 +239,44 @@ function PlaybookBody({ pb, teamIds }: { pb: Playbook; teamIds: string[] }) {
           </section>
         ))}
     </div>
+  )
+}
+
+/**
+ * No playbook yet, but a simulator scenario: the metrics the scenario test
+ * checks (src/sim/scenarios.ts), labelled as such — not the symptom's content.
+ */
+function ScenarioSignals({ scenarioId, teamIds }: { scenarioId: string; teamIds: string[] }) {
+  const sc = SCENARIO_BY_ID.get(scenarioId)
+  if (!sc) return null
+  const list = (xs: { id: string }[]) => (
+    <ul className="signal-list">
+      {xs.map((x) => (
+        <li key={x.id}>
+          <MiniTile id={x.id} teamIds={teamIds} />
+        </li>
+      ))}
+    </ul>
+  )
+  return (
+    <section>
+      <h2>
+        What the simulator check watches <span className="small muted">· until the playbook is written</span>
+      </h2>
+      <p className="small muted">
+        The scenario test injects this scenario and checks that the first group moves before the second against a run without it. This is
+        the test's choice of metrics, not a reviewed playbook.
+      </p>
+      <div className="two-col">
+        <div>
+          <h3 className="small">Moves first</h3>
+          {list(sc.early)}
+        </div>
+        <div>
+          <h3 className="small">Moves later</h3>
+          {list(sc.confirming)}
+        </div>
+      </div>
+    </section>
   )
 }

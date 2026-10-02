@@ -47,6 +47,9 @@ interface AppState {
   /** Inject a scenario from the current simulated moment (replaces an active one). */
   injectScenario(id: string): void
   clearScenario(): void
+  /** Guided tour (stage 3b): current step, or null when closed. */
+  tour: number | null
+  setTour(step: number | null): void
 }
 
 export const eventStore: Store = createStore()
@@ -92,6 +95,10 @@ export const useApp = create<AppState>((set) => ({
   },
   clearScenario() {
     post({ type: 'clear' })
+  },
+  tour: null,
+  setTour(step) {
+    set({ tour: step })
   },
 }))
 

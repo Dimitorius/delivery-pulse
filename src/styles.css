@@ -271,7 +271,7 @@ code { font-family: var(--mono); font-size: 11px; background: var(--surface-2); 
   .header { padding: 8px 16px; gap: 10px; }
   .clock { margin-left: 0; text-align: left; }
   .layout { padding: 12px 16px; }
-  .ghost { display: none; }
+  .ghost, .scenario-menu { display: none; }
   .drawer { padding: 16px; }
   .footer { padding: 0 16px 20px; }
 }
@@ -371,3 +371,40 @@ code { font-family: var(--mono); font-size: 11px; background: var(--surface-2); 
 }
 .caveat { color: var(--fg-2); }
 .caveat strong { color: var(--fg); font-weight: 600; }
+
+/* ---- Inject scenario (stage 3b) ---- */
+.scenario-menu { position: relative; }
+button.inject { background: transparent; border: 1px solid var(--bad); color: var(--fg); border-radius: 6px; padding: 6px 10px; cursor: pointer; }
+button.inject.on { background: rgba(208, 59, 59, 0.15); }
+button.inject:disabled { opacity: 0.5; cursor: not-allowed; }
+.scenario-pop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; width: min(460px, 92vw); max-height: 70vh; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5); }
+.scenario-pop h4 { margin: 10px 0 4px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
+.scenario-item { display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 6px 8px; cursor: pointer; }
+.scenario-item:hover, .scenario-item:focus-visible { background: var(--surface-2); border-color: var(--border); }
+.scenario-item.on { border-color: var(--bad); }
+.scenario-banner { display: flex; align-items: center; gap: 12px; margin: 0; padding: 8px 24px; background: rgba(208, 59, 59, 0.12); border-bottom: 1px solid rgba(208, 59, 59, 0.45); }
+.scenario-banner > div { flex: 1; min-width: 0; }
+.scenario-banner p { margin: 2px 0 0; color: var(--fg-2); }
+.scenario-banner .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); flex: none; animation: blink 1.6s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: 0.3; } }
+button.clear { padding: 5px 14px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--fg); cursor: pointer; flex: none; }
+.scenario-control { display: flex; align-items: center; gap: 16px; }
+.scenario-control > div { flex: 1; }
+.scenario-control p { margin: 4px 0 0; }
+.scenario-control.on { border-left-color: var(--bad); }
+@media (max-width: 720px) { .scenario-banner { padding: 8px 16px; flex-wrap: wrap; } }
+
+/* ---- Tour (stage 3b) ---- */
+.tour { position: fixed; right: 20px; bottom: 20px; z-index: 40; width: min(380px, calc(100vw - 32px)); max-height: calc(100vh - 120px); overflow-y: auto; background: var(--surface-2); border: 1px solid var(--accent); border-radius: 10px; padding: 12px 14px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55); }
+.tour h3 { margin: 4px 0 6px; font-size: 15px; }
+.tour p { margin: 6px 0; line-height: 1.45; }
+.tour-head { display: flex; justify-content: space-between; align-items: center; }
+.tour-nav { display: flex; justify-content: space-between; margin-top: 10px; }
+.tour-say { border-left: 2px solid var(--accent); padding-left: 8px; color: var(--fg-2); }
+.tour-say p { margin: 4px 0; }
+.tour-compare { width: 100%; margin: 6px 0; }
+.tour-compare tr.group-start td { border-top: 1px solid var(--border); }
+button.primary { padding: 5px 14px; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent); color: #fff; cursor: pointer; }
+.tour-target { outline: 2px solid var(--accent) !important; outline-offset: 3px; border-radius: 8px; transition: outline-color 0.2s; }
+button.tour-start { background: transparent; border: 1px solid var(--accent); color: var(--fg); border-radius: 6px; padding: 6px 10px; cursor: pointer; }
+@media (max-width: 600px) { .tour, button.tour-start { display: none; } }

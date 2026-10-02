@@ -43,6 +43,11 @@ function annotations(from: number, to: number) {
     if (it.kind === 'pi') out.push({ xAxis: it.start, label: { formatter: it.name } })
     if (it.kind === 'sprint' && it.ip && it.teamId === eventStore.teams[0]?.id) out.push({ xAxis: it.start, label: { formatter: 'IP' } })
   }
+  // Injected scenarios (stage 3b) are annotations too: the number moved because the simulation was disturbed.
+  for (const r of eventStore.scenarios) {
+    if (r.from >= from && r.from <= to) out.push({ xAxis: r.from, label: { formatter: `▲ ${r.name}` } })
+    if (r.to !== undefined && r.to >= from && r.to <= to) out.push({ xAxis: r.to, label: { formatter: 'cleared' } })
+  }
   return out
 }
 

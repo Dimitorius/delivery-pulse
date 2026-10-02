@@ -27,7 +27,7 @@ export function ForecastBar({ tile, now }: { tile?: TileData; now: number }) {
   const hi = Math.max(p85, end) + 3 * DAY
   const x = (t: number) => (100 * (t - lo)) / (hi - lo)
   return (
-    <button className={`forecast tile-${status}`} onClick={() => select(def.id)} aria-label="PI forecast: details">
+    <button className={`forecast tile-${status}`} onClick={() => select(def.id)} aria-label="PI forecast: details" data-tour="forecast">
       <div className="forecast-main">
         <h2>On track for the PI?</h2>
         <div className="forecast-prob">

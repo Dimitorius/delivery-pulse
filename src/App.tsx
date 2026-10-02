@@ -8,6 +8,8 @@ import { ForecastBar } from './ui/ForecastBar'
 import { Header } from './ui/Header'
 import { MetricPage } from './ui/MetricPage'
 import { Nav } from './ui/Nav'
+import { ScenarioBanner } from './ui/Scenario'
+import { Tour } from './ui/Tour'
 import { EventFeed, SignalsPanel, WatchPanel } from './ui/SideRail'
 import { TabPage } from './ui/TabPage'
 import { Tile } from './ui/Tile'
@@ -89,6 +91,8 @@ export default function App() {
           setTimeout(() => document.getElementById('signals')?.scrollIntoView({ behavior: 'smooth' }), 50)
         }}
       />
+      <ScenarioBanner />
+      <Tour />
       <Nav />
       {route.page === 'metric' ? (
         METRICS.some((m) => m.id === route.metricId) ? (
@@ -112,7 +116,7 @@ export default function App() {
             <ForecastBar tile={pulse.forecast} now={now} />
             <div className="columns">
               {COLUMNS.map((c) => (
-                <section key={c.id} className="column" aria-label={`${c.title} metrics`}>
+                <section key={c.id} className="column" aria-label={`${c.title} metrics`} data-tour={`col-${c.id}`}>
                   <h2 className="column-title">
                     {c.title} <span className="muted">· {c.hint}</span>
                   </h2>

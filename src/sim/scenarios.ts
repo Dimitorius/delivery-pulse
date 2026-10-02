@@ -58,8 +58,8 @@ export const SCENARIOS: ScenarioDef[] = [
   {
     id: 'review-bottleneck',
     label: 'Review bottleneck',
-    mechanics: 'Reviews and QA become a queue: pull requests wait about 5× longer for a first review, reviews take longer, and finished work waits about 3× longer for QA. Developers keep starting new work.',
-    scale: { reviewPickupMedian: 5, reviewDurationMedian: 1.5, qaPickupMedian: 3, qaEffortMedian: 1.4 },
+    mechanics: 'Reviews and QA become a queue: pull requests wait about 5× longer for a first review, finished work waits about 3× longer for QA, and each QA check takes 2.5× longer, so QA caps how much the team can finish. Developers keep starting new work.',
+    scale: { reviewPickupMedian: 5, reviewDurationMedian: 1.5, qaPickupMedian: 3, qaEffortMedian: 2.5 },
     early: [{ id: 'queue-size' }, { id: 'pr-pickup-time' }, { id: 'aging-wip' }],
     confirming: [{ id: 'flow-efficiency' }, { id: 'cycle-time' }, { id: 'time-to-merge' }],
   },
