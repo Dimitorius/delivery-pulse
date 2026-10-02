@@ -25,6 +25,7 @@ import {
 import { BUG_SYMPTOMS, DEBT_TASKS, FEATURE_SUFFIXES, PI_OUTCOMES, PORTFOLIO_EPICS, POSTMORTEM_ACTIONS, PROGRAM, RISKS_BY_TEAM, SERVICE_TRAFFIC, STORY_VERBS, TEAMS, VOCAB } from './org'
 import { ELITE_PROFILE, type Profile } from './profile'
 import { Rng } from './rng'
+import { SCENARIO_BY_ID, scenarioProfile, type ScenarioDef } from './scenarios'
 import { Scheduler } from './scheduler'
 
 // Chosen with scripts/seed-search.ts against the elite baseline criteria (docs/stage-1.md).
@@ -57,12 +58,16 @@ interface ItemRt {
   dev?: DevRt
   reopened?: boolean
   escapeRolled?: boolean
+  /** Fat-tail scenario: already checked whether this item turns out bigger than estimated. */
+  stuckRolled?: boolean
 }
 
 interface DevRt {
   item?: ItemRt
   /** Away from item work (reviews, meetings, support) after finishing a stint. */
   away?: boolean
+  /** Extra parallel work slot while a multitasking scenario is active (not a person). */
+  virtual?: boolean
 }
 
 interface SprintRt {
@@ -142,7 +147,11 @@ const STORY_POINTS: [number, number][] = [
 export class Simulator {
   now: number
   private readonly rng: Rng
-  private readonly p: Profile
+  /** Effective profile: the base profile, changed while a scenario is active. */
+  private p: Profile
+  private readonly base: Profile
+  /** Injected scenario (stage 3b); undefined = the organisation as calibrated. */
+  private sc?: ScenarioDef
   private readonly sched = new Scheduler()
   private out: SimEvent[] = []
   private readonly teams: TeamRt[]
@@ -177,6 +186,7 @@ export class Simulator {
     this.sliRng = new Rng((seed ^ 0xc2b2ae35) >>> 0)
     this.port = new Rng((seed ^ 0x27d4eb2f) >>> 0)
     this.p = profile
+    this.base = profile
     this.now = workToTime(0)
     this.teams = TEAMS.map((team) => ({
       team,
@@ -224,6 +234,127 @@ export class Simulator {
 
   advanceToWork(w: number): SimEvent[] {
     return this.advanceTo(workToTime(w))
+  }
+
+  // ---- Inject scenario (stage 3b) -------------------------------------------
+
+  get scenario(): string | undefined {
+    return this.sc?.id
+  }
+
+  /** Switch a scenario on from the current moment (replaces an active one). */
+  inject(id: string): void {
+    const def = SCENARIO_BY_ID.get(id)
+    if (!def) throw new Error(`Unknown scenario "${id}"`)
+    if (this.sc) this.clearScenario()
+    this.sc = def
+    this.p = scenarioProfile(this.base, def)
+    this.emit({ type: 'scenario.injected', scenarioId: def.id, name: def.label })
+    if (def.slotsPerDev) {
+      for (const tr of this.teams) {
+        const extra = Math.round(tr.team.devs * (def.slotsPerDev - 1))
+        for (let i = 0; i < extra; i++) tr.devs.push({ virtual: true })
+      }
+    }
+    if (def.platformBusy) {
+      const platform = this.platform
+      const enablers = (list: ItemRt[]) => list.filter((i) => this.providerDeps.has(i.id) && i.status !== 'In Progress' && !i.done)
+      const moved = [...enablers(platform.ready), ...enablers(platform.backlog)]
+      platform.ready = platform.ready.filter((i) => !moved.includes(i))
+      platform.backlog = [...platform.backlog.filter((i) => !moved.includes(i)), ...moved]
+    }
+    for (const tr of this.teams) this.tryAssign(tr)
+  }
+
+  /** Switch the active scenario off: the organisation behaves as calibrated again. */
+  clearScenario(): void {
+    const def = this.sc
+    if (!def) return
+    this.sc = undefined
+    this.p = this.base
+    this.emit({ type: 'scenario.cleared', scenarioId: def.id })
+    // Idle extra slots go now; busy ones when their current item is released.
+    for (const tr of this.teams) tr.devs = tr.devs.filter((d) => !d.virtual || d.item)
+  }
+
+  private get platform(): TeamRt {
+    return this.teams.find((t) => t.team.kind === 'platform')!
+  }
+
+  /** Daily scenario mechanics that create or move work (only while a scenario that needs them is active). */
+  private dailyScenario(tr: TeamRt): void {
+    const sc = this.sc!
+    const sprint = tr.sprint
+    if (!sprint || sprint.ip || !this.piId) return
+    if (sc.discoverPerDay && this.rng.chance(sc.discoverPerDay)) {
+      const open = tr.features.filter((f) => f.item.status !== 'Done' && f.item.piId === this.piId && !f.item.piStretch)
+      if (open.length) {
+        const f = this.rng.pick(open)
+        const story = this.createStory(tr, this.piId, f.item.id)
+        f.stories.push(story)
+        tr.piCommitted.push(story)
+        this.assignToSprint(story, sprint.id)
+        sprint.assigned.add(story)
+        tr.ready.unshift(story)
+      }
+    }
+    if (sc.reprioritizePerDay && this.rng.chance(sc.reprioritizePerDay)) {
+      const candidates = tr.ready.filter((i) => i.type === 'story' && i.status === 'To Do' && !i.dev && i.piId && !i.piStretch)
+      if (candidates.length) {
+        const victim = candidates[candidates.length - 1]
+        tr.ready = tr.ready.filter((i) => i !== victim)
+        tr.backlog.unshift(victim)
+        const story = this.createItem(tr, {
+          type: 'story',
+          title: `Top priority: ${this.rng.pick(STORY_VERBS)} ${this.rng.pick(VOCAB[tr.team.id].objects)}`,
+          points: this.rng.weighted(STORY_POINTS),
+          planned: true,
+          piId: this.piId,
+          flowType: 'feature',
+          investment: 'feature',
+        })
+        tr.piCommitted.push(story)
+        this.assignToSprint(story, sprint.id)
+        sprint.assigned.add(story)
+        tr.ready.unshift(story)
+      }
+    }
+    if (sc.platformBusy && tr.team.kind === 'stream' && this.rng.chance(sc.platformBusy.newDepPerDay)) {
+      const candidates = tr.ready.filter((i) => i.type === 'story' && i.status === 'To Do' && !i.dev && !i.done)
+      if (candidates.length) {
+        const consumer = this.rng.pick(candidates)
+        const platform = this.platform
+        const provider = this.createItem(platform, {
+          type: 'story',
+          title: `Enabler: ${this.rng.pick(VOCAB.platform.objects)} for ${consumer.id}`,
+          points: this.rng.weighted([
+            [2, 3],
+            [3, 4],
+            [5, 3],
+          ]),
+          planned: true,
+          piId: this.piId,
+          flowType: 'feature',
+          investment: 'feature',
+        })
+        const dep: DepRt = { id: `LINK-${++this.seq.dep}`, consumer, provider }
+        this.emit({
+          type: 'dependency.created',
+          dependency: {
+            id: dep.id,
+            fromItemId: consumer.id,
+            toItemId: provider.id,
+            fromTeamId: tr.team.id,
+            toTeamId: platform.team.id,
+            needBy: addWorkingHours(this.now, sc.platformBusy.needByHours),
+          },
+        })
+        consumer.openDeps.add(dep.id)
+        this.providerDeps.set(provider.id, [dep])
+        platform.backlog.push(provider)
+      }
+    }
+    this.tryAssign(tr)
   }
 
   // ---- scheduling helpers ---------------------------------------------------
@@ -282,6 +413,7 @@ export class Simulator {
     for (const tr of this.teams) {
       if (tr.team.method === 'scrum') {
         if (w % HOURS_PER_DAY === 0) tr.focus = this.behindPlan(tr, w)
+        if (w % HOURS_PER_DAY === 0 && this.sc && (this.sc.discoverPerDay || this.sc.reprioritizePerDay || this.sc.platformBusy)) this.dailyScenario(tr)
         const n = this.rng.poisson(p.unplannedPerHour)
         for (let i = 0; i < n; i++) this.afterMinutes(this.rng.uniform(0, 60), () => this.unplannedArrival(tr))
       } else {
@@ -327,7 +459,8 @@ export class Simulator {
         // Platform plans last: the enablers it owes the stream teams are part
         // of its commitment and use up its capacity first.
         providers.sort((a, b) => a.needBy - b.needBy)
-        platform.backlog.unshift(...providers.map((p) => p.item))
+        if (this.sc?.platformBusy) platform.backlog.push(...providers.map((p) => p.item)) // scenario: enablers wait behind Platform's own work
+        else platform.backlog.unshift(...providers.map((p) => p.item))
       }
       const perSprint = this.velocity(tr) * this.p.commitFactor * (1 - this.p.debtShare)
       // Unfinished PI scope from earlier PIs goes first, the roadmap last.
@@ -797,7 +930,7 @@ export class Simulator {
     if (tr.assigning) return
     tr.assigning = true
     for (const dev of tr.devs) {
-      while (!dev.item && !dev.away) {
+      while (!dev.item && !dev.away && (!dev.virtual || tr.devs.includes(dev))) {
         const it = this.nextFor(tr)
         if (!it) break
         this.startWork(tr, dev, it)
@@ -846,6 +979,14 @@ export class Simulator {
       this.block(tr, it, 'dependency', [...it.openDeps][0])
       return
     }
+    if (this.sc?.stuck && !it.stuckRolled) {
+      it.stuckRolled = true
+      if (this.rng.chance(this.sc.stuck.prob)) {
+        const extra = this.rng.lognormal(this.sc.stuck.extraHours, 0.6)
+        it.remaining += extra
+        it.effort += extra
+      }
+    }
     let chunk = it.remaining
     let blockAfter = false
     if (!it.randomBlockUsed && this.rng.chance(this.p.blockProb)) {
@@ -865,8 +1006,14 @@ export class Simulator {
   }
 
   private release(it: ItemRt): void {
-    if (it.dev) it.dev.item = undefined
+    const dev = it.dev
+    if (dev) dev.item = undefined
     it.dev = undefined
+    // An extra multitasking slot left over from a cleared scenario retires with its item.
+    if (dev?.virtual && !this.sc?.slotsPerDev) {
+      const tr = this.byTeam.get(it.teamId)!
+      tr.devs = tr.devs.filter((d) => d !== dev)
+    }
   }
 
   private block(tr: TeamRt, it: ItemRt, reason: 'dependency' | 'external', dependencyId?: string): void {

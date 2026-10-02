@@ -6,7 +6,12 @@ import type { SimEvent } from '../domain/events'
 import { HISTORY_W, HORIZON_W, workToTime } from './calendar'
 import { Simulator } from './simulator'
 
-export type ToWorker = { type: 'start'; seed: number; speed: number } | { type: 'speed'; speed: number }
+export type ToWorker =
+  | { type: 'start'; seed: number; speed: number }
+  | { type: 'speed'; speed: number }
+  /** Inject scenario (stage 3b): from the current simulated moment until cleared. */
+  | { type: 'inject'; scenarioId: string }
+  | { type: 'clear' }
 /** `ended`: the clock reached the end of the simulated horizon (end of PI 14) and stopped. */
 export type FromWorker = { type: 'events'; events: SimEvent[]; now: number; history: boolean; ended: boolean }
 
@@ -30,6 +35,11 @@ ctx.onmessage = (e) => {
     setInterval(tick, TICK_MS)
   } else if (msg.type === 'speed') {
     speed = msg.speed
+  } else if (sim && (msg.type === 'inject' || msg.type === 'clear')) {
+    if (msg.type === 'inject') sim.inject(msg.scenarioId)
+    else sim.clearScenario()
+    // Deliver the scenario event now, also while paused.
+    ctx.postMessage({ type: 'events', events: sim.advanceToWork(w), now: workToTime(w), history: false, ended: w >= HORIZON_W })
   }
 }
 

@@ -10,7 +10,8 @@
     "test": "vitest run --passWithNoTests",
     "calibrate": "vite-node scripts/calibrate.ts",
     "baseline": "vite-node scripts/baseline.ts",
-    "seed-search": "vite-node scripts/seed-search.ts"
+    "seed-search": "vite-node scripts/seed-search.ts",
+    "scenarios": "vite-node scripts/scenarios.ts"
   },
   "dependencies": {
     "echarts": "^5.6.0",

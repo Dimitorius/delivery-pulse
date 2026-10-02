@@ -2,6 +2,7 @@
 // projection lives outside React; `version` bumps when new events arrive.
 
 import { create } from 'zustand'
+import type { ScenarioRun } from '../domain/model'
 import { apply, createStore, type Store } from '../domain/store'
 import type { FromWorker, ToWorker } from '../sim/worker'
 import { DEFAULT_SEED } from '../sim/simulator'
@@ -43,6 +44,9 @@ interface AppState {
   navigate(route: Route): void
   /** Open a metric's page. */
   select(metricId: string | null): void
+  /** Inject a scenario from the current simulated moment (replaces an active one). */
+  injectScenario(id: string): void
+  clearScenario(): void
 }
 
 export const eventStore: Store = createStore()
@@ -83,7 +87,19 @@ export const useApp = create<AppState>((set) => ({
   select(metricId) {
     if (metricId) useApp.getState().navigate({ page: 'metric', metricId })
   },
+  injectScenario(id) {
+    post({ type: 'inject', scenarioId: id })
+  },
+  clearScenario() {
+    post({ type: 'clear' })
+  },
 }))
+
+/** The scenario active at the end of the event log, if any (derived from events, so it matches the data). */
+export function activeScenario(): ScenarioRun | undefined {
+  const last = eventStore.scenarios[eventStore.scenarios.length - 1]
+  return last && last.to === undefined ? last : undefined
+}
 
 if (typeof window !== 'undefined') {
   window.addEventListener('hashchange', () => useApp.setState({ route: parseHash(location.hash) }))
